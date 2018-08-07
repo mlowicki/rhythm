@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"strings"
 	"time"
@@ -33,39 +31,6 @@ var (
 	registrationMinBackoff = 1 * time.Second
 	registrationMaxBackoff = 15 * time.Second
 )
-
-func getConfig(path string) (*Config, error) {
-	file, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var conf = &Config{
-		API: ConfigAPI{
-			Address: "localhost:8000",
-		},
-		Vault: ConfigVault{
-			Timeout: 3,
-		},
-		FailoverTimeout: (time.Hour * 24 * 7).Seconds(),
-		Verbose:         false,
-		Mesos: ConfigMesos{
-			BaseURL: "http://127.0.0.1:5050",
-		},
-	}
-	err = json.Unmarshal(file, conf)
-	if err != nil {
-		return nil, err
-	}
-	checkConfig(conf)
-	return conf, nil
-}
-
-func checkConfig(conf *Config) {
-	_, err := newGitLabClient(conf, "")
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 /* TODO Periodic reconciliation
 
