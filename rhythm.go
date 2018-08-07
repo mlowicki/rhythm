@@ -194,17 +194,6 @@ func main() {
 			callrules.New(
 				callrules.WithFrameworkID(store.GetIgnoreErrors(fidStore)),
 				logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "Connecting to Mesos..."}),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_TEARDOWN: "teardown..."}),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_ACCEPT: "accept..."}),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_DECLINE: "decline..."}),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_REVIVE: "revive..."}),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_KILL: "kill..."}),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_SHUTDOWN: "shutdown..."}),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_ACKNOWLEDGE: "acknowledge..."}),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_RECONCILE: "reconcile..."}),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_MESSAGE: "message..."}),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_REQUEST: "request..."}),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUPPRESS: "suppress..."}),
 			).Caller(cli),
 			controller.WithRegistrationTokens(
 				backoff.Notifier(registrationMinBackoff, registrationMaxBackoff, ctx.Done()),
