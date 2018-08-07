@@ -34,6 +34,39 @@ var (
 	registrationMaxBackoff = 15 * time.Second
 )
 
+func getConfig(path string) (*Config, error) {
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var conf = &Config{
+		API: ConfigAPI{
+			Address: "localhost:8000",
+		},
+		Vault: ConfigVault{
+			Timeout: 3,
+		},
+		FailoverTimeout: (time.Hour * 24 * 7).Seconds(),
+		Verbose:         false,
+		Mesos: ConfigMesos{
+			BaseURL: "http://127.0.0.1:5050",
+		},
+	}
+	err = json.Unmarshal(file, conf)
+	if err != nil {
+		return nil, err
+	}
+	checkConfig(conf)
+	return conf, nil
+}
+
+func checkConfig(conf *Config) {
+	_, err := newGitLabClient(conf, "")
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 /* TODO Periodic reconciliation
 
 reconcile := calls.Reconcile(calls.ReconcileTasks(nil))
@@ -51,42 +84,15 @@ log.Printf("response: %#v\n", resp)
 func main() {
 	confPath := flag.String("config", "config.json", "Path to configuration file")
 	flag.Parse()
-	file, err := ioutil.ReadFile(*confPath)
+	var conf, err = getConfig(*confPath)
 	if err != nil {
-		log.Fatalf("Error reading configuration file: %s\n", err)
-	}
-	var conf = Config{
-		API: ConfigAPI{
-			Address: "localhost:8000",
-		},
-		Vault: ConfigVault{
-			Timeout: 3,
-		},
-		FailoverTimeout: (time.Hour * 24 * 7).Seconds(),
-		Verbose:         false,
-		Mesos: ConfigMesos{
-			BaseURL: "http://127.0.0.1:5050",
-		},
-	}
-	err = json.Unmarshal(file, &conf)
-	if err != nil {
-		log.Fatalf("Error parsing configuration file: %s\n", err)
-	}
-
-	// Verify configuration before connecting to Mesos.
-	_, err = newGitLabClient(&conf, "")
-	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error getting configuration: %s\n", err)
 	}
 	storage, err := newZKStorage(conf.ZooKeeper.BasePath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error initializing storage: %s\n", err)
 	}
-	err = storage.init()
-	if err != nil {
-		log.Fatal(err)
-	}
-	initAPI(&conf, storage)
+	initAPI(conf, storage)
 	vaultConf := vault.Config{
 		Address: conf.Vault.Address,
 		Timeout: time.Duration(conf.Vault.Timeout) * time.Second,
