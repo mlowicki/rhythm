@@ -58,17 +58,10 @@ func main() {
 		log.Fatalf("Error initializing storage: %s\n", err)
 	}
 	initAPI(conf, storage)
-	vaultConf := vault.Config{
-		Address: conf.Vault.Address,
-		Timeout: time.Duration(conf.Vault.Timeout) * time.Second,
-	}
-
-	vc, err := vault.NewClient(&vaultConf)
+	vaultC, err := getVaultClient(&conf.Vault)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error initializing Vault client: %s\n", err)
 	}
-
-	vc.SetToken(conf.Vault.Token)
 
 	var authConfigOpt httpcli.ConfigOpt
 
@@ -169,7 +162,7 @@ func main() {
 			controller.WithRegistrationTokens(
 				backoff.Notifier(registrationMinBackoff, registrationMaxBackoff, ctx.Done()),
 			),
-			controller.WithEventHandler(buildEventHandler(cli, fidStore, vc, storage, conf.Verbose)),
+			controller.WithEventHandler(buildEventHandler(cli, fidStore, vaultC, storage, conf.Verbose)),
 		)
 		if err != nil {
 			log.Println(err)
@@ -186,7 +179,7 @@ func logCalls(messages map[scheduler.Call_Type]string) callrules.Rule {
 	}
 }
 
-func handleOffer(ctx context.Context, cli calls.Caller, offer *mesos.Offer, jobs []*Job, vc *vault.Client, s Storage) []*Job {
+func handleOffer(ctx context.Context, cli calls.Caller, offer *mesos.Offer, jobs []*Job, vaultC *vault.Client, s Storage) []*Job {
 	var jobsToLaunch []*Job
 	tasks := []mesos.TaskInfo{}
 	// TODO Handle reservations
@@ -228,7 +221,7 @@ func handleOffer(ctx context.Context, cli calls.Caller, offer *mesos.Offer, jobs
 			}
 
 			/*
-				secret, err := vc.Logical().Read("secret/bar")
+				secret, err := vaultC.Logical().Read("secret/bar")
 				if err != nil {
 					panic(err)
 				}
@@ -326,7 +319,7 @@ func taskID2JobID(id string) string {
 	return id[:strings.LastIndexByte(id, ':')]
 }
 
-func buildEventHandler(cli calls.Caller, fidStore store.Singleton, vc *vault.Client, s Storage, verbose bool) events.Handler {
+func buildEventHandler(cli calls.Caller, fidStore store.Singleton, vaultC *vault.Client, s Storage, verbose bool) events.Handler {
 	logger := controller.LogEvents(nil).Unless(false)
 	return eventrules.New(
 		logAllEvents().If(verbose),
@@ -395,7 +388,7 @@ func buildEventHandler(cli calls.Caller, fidStore store.Singleton, vc *vault.Cli
 				return nil
 			}
 			for i := range offers {
-				runnable = handleOffer(ctx, cli, &offers[i], runnable, vc, s)
+				runnable = handleOffer(ctx, cli, &offers[i], runnable, vaultC, s)
 			}
 			return nil
 		}),
