@@ -1,8 +1,0 @@
-
-
-docker run --cap-add=IPC_LOCK -d --name=dev-vault -p 127.0.0.1:8200:8200 -e 'VAULT_DEV_ROOT_TOKEN_ID=myroot' vault:0.9.1
-
-MESOS_DIR/build/bin/mesos-master.sh --ip=127.0.0.1 --work_dir=/tmp/mesos
-MESOS_DIR/mesos/build/bin/mesos-agent.sh --master=127.0.0.1:5050 --work_dir=/tmp/mesos --containerizers=docker
-
-docker run -p 2181:2181 -v=data:/data -v=datalog:/datalog zookeeper
