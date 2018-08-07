@@ -8,6 +8,7 @@ type Config struct {
 	ZooKeeper       ConfigZooKeeper
 	FailoverTimeout float64
 	Verbose         bool
+	Mesos           ConfigMesos
 }
 
 type ConfigAPI struct {
@@ -26,4 +27,8 @@ type ConfigGitLab struct {
 
 type ConfigZooKeeper struct {
 	BasePath string
+}
+
+type ConfigMesos struct {
+	BaseURL string
 }

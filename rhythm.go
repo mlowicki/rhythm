@@ -64,6 +64,9 @@ func main() {
 		},
 		FailoverTimeout: (time.Hour * 24 * 7).Seconds(),
 		Verbose:         false,
+		Mesos: ConfigMesos{
+			BaseURL: "http://127.0.0.1:5050",
+		},
 	}
 	err = json.Unmarshal(file, &conf)
 	if err != nil {
@@ -110,7 +113,7 @@ func main() {
 		callrules.WithFrameworkID(store.GetIgnoreErrors(fidStore)),
 	).Caller(httpsched.NewCaller(
 		httpcli.New(
-			httpcli.Endpoint("http://127.0.0.1:5050/api/v1/scheduler"),
+			httpcli.Endpoint(conf.Mesos.BaseURL+"/api/v1/scheduler"),
 			httpcli.Codec(codecs.ByMediaType[codecs.MediaTypeProtobuf]),
 			httpcli.Do(httpcli.With(
 				authConfigOpt,
@@ -155,8 +158,6 @@ func main() {
 		panic(err)
 	}
 
-	//ctx := context.TODO()
-
 	for {
 		elected, ch, err := isLeader(conn, num)
 		if err != nil {
@@ -185,9 +186,6 @@ func main() {
 		go func() {
 			e := <-ch
 			log.Print("Event: %s\n", e)
-			//<-time.After(1000 * time.Second)
-			//cancel()
-			//log.Println("canceled")
 		}()
 
 		err = controller.Run(
@@ -214,7 +212,6 @@ func main() {
 			controller.WithEventHandler(buildEventHandler(cli, fidStore, vc, storage, conf.Verbose)),
 		)
 		if err != nil {
-			//log.Println("eeee")
 			log.Println(err)
 		}
 	}
