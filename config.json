@@ -1,0 +1,16 @@
+{
+    "gitlab": {
+        "baseURL": "https://gitlab.services.ams.osa"
+    },
+	"api": {
+	},
+	"storage": "zookeeper",
+	"zookeeper": {
+		"basePath": "/rhythm"
+	},
+	"vault": {
+		"token": "myroot",
+        "address": "http://localhost:8200"
+	},
+    "verbose": false
+}
