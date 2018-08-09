@@ -9,7 +9,7 @@
 	    "basePath": "/rhythm"
     },
     "vault": {
-	    "token": "token",
+        "token": "token",
         "address": "http://localhost:8200"
     },
     "verbose": false,
