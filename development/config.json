@@ -12,5 +12,14 @@
 		"token": "token",
         "address": "http://localhost:8200"
 	},
-    "verbose": false
+    "verbose": false,
+    "mesos": {
+        "auth": {
+            "type": "basic",
+            "basic": {
+                "username": "foo",
+                "password": "bar"
+            }
+        }
+    }
 }

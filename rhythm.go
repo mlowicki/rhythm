@@ -13,12 +13,10 @@ import (
 	vault "github.com/hashicorp/vault/api"
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
-	"github.com/mesos/mesos-go/api/v1/lib/encoding/codecs"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/callrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
-	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpsched"
 	"github.com/mesos/mesos-go/api/v1/lib/resources"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
@@ -63,8 +61,6 @@ func main() {
 		log.Fatalf("Error initializing Vault client: %s\n", err)
 	}
 
-	var authConfigOpt httpcli.ConfigOpt
-
 	fidStore := store.DecorateSingleton(
 		store.NewInMemorySingleton(),
 		store.DoSet().AndThen(func(_ store.Setter, v string, _ error) error {
@@ -75,15 +71,7 @@ func main() {
 
 	cli := callrules.New(
 		callrules.WithFrameworkID(store.GetIgnoreErrors(fidStore)),
-	).Caller(httpsched.NewCaller(
-		httpcli.New(
-			httpcli.Endpoint(conf.Mesos.BaseURL+"/api/v1/scheduler"),
-			httpcli.Codec(codecs.ByMediaType[codecs.MediaTypeProtobuf]),
-			httpcli.Do(httpcli.With(
-				authConfigOpt,
-				httpcli.Timeout(time.Second*10),
-			)),
-		)))
+	).Caller(httpsched.NewCaller(getMesosHTTPClient(&conf.Mesos)))
 
 	checkpoint := false
 	frameworkInfo := &mesos.FrameworkInfo{
@@ -163,6 +151,13 @@ func main() {
 				backoff.Notifier(registrationMinBackoff, registrationMaxBackoff, ctx.Done()),
 			),
 			controller.WithEventHandler(buildEventHandler(cli, fidStore, vaultC, storage, conf.Verbose)),
+			controller.WithSubscriptionTerminated(func(err error) {
+				if err != nil {
+					log.Printf("Connection to Mesos closed: %s\n", err)
+				} else {
+					log.Println("Connection to Mesos closed")
+				}
+			}),
 		)
 		if err != nil {
 			log.Println(err)

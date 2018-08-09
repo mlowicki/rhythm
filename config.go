@@ -38,6 +38,22 @@ type ConfigZooKeeper struct {
 
 type ConfigMesos struct {
 	BaseURL string
+	Auth    ConfigMesosAuth
+}
+
+const (
+	AuthModeBasic = "basic"
+	AuthModeNone  = "none"
+)
+
+type ConfigMesosAuth struct {
+	Type  string
+	Basic ConfigMesosAuthBasic
+}
+
+type ConfigMesosAuthBasic struct {
+	Username string
+	Password string
 }
 
 func getConfig(path string) (*Config, error) {
