@@ -51,7 +51,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error getting configuration: %s\n", err)
 	}
-	storage, err := newZKStorage(conf.ZooKeeper.BasePath)
+	storage, err := newZKStorage(&conf.ZooKeeper)
 	if err != nil {
 		log.Fatalf("Error initializing storage: %s\n", err)
 	}
@@ -87,7 +87,7 @@ func main() {
 	}
 	frameworkInfo.ID = &mesos.FrameworkID{Value: *proto.String(frameworkID)}
 
-	conn, _, err := zk.Connect([]string{"127.0.0.1"}, time.Second*10)
+	conn, _, err := zk.Connect(conf.ZooKeeper.Servers, time.Second*10)
 	if err != nil {
 		panic(err)
 	}

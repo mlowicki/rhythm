@@ -11,7 +11,6 @@ type Config struct {
 	GitLab          ConfigGitLab
 	API             ConfigAPI
 	Vault           ConfigVault
-	Storage         string
 	ZooKeeper       ConfigZooKeeper
 	FailoverTimeout float64
 	Verbose         bool
@@ -34,6 +33,7 @@ type ConfigGitLab struct {
 
 type ConfigZooKeeper struct {
 	BasePath string
+	Servers  []string
 }
 
 type ConfigMesos struct {
@@ -72,6 +72,9 @@ func getConfig(path string) (*Config, error) {
 		Verbose:         false,
 		Mesos: ConfigMesos{
 			BaseURL: "http://127.0.0.1:5050",
+		},
+		ZooKeeper: ConfigZooKeeper{
+			Servers: []string{"127.0.0.1"},
 		},
 	}
 	err = json.Unmarshal(file, conf)
