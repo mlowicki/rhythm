@@ -2,16 +2,16 @@
     "gitlab": {
         "baseURL": "https://gitlab.services.ams.osa"
     },
-	"api": {
-	},
-	"storage": "zookeeper",
-	"zookeeper": {
-		"basePath": "/rhythm"
-	},
-	"vault": {
-		"token": "token",
+    "api": {
+    },
+    "storage": "zookeeper",
+    "zookeeper": {
+	    "basePath": "/rhythm"
+    },
+    "vault": {
+	    "token": "token",
         "address": "http://localhost:8200"
-	},
+    },
     "verbose": false,
     "mesos": {
         "auth": {
