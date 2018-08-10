@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 )
 
@@ -22,4 +23,22 @@ func getMesosHTTPClient(conf *ConfigMesos) *httpcli.Client {
 			authConf,
 			httpcli.Timeout(time.Second*10),
 		)))
+}
+
+func getFrameworkInfo(conf *ConfigMesos) *mesos.FrameworkInfo {
+	// https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto
+	// TODO Option to set `roles` (or `role`)
+	// TODO Option to set `capabilities`
+	// TODO Option to set `labels`
+	return &mesos.FrameworkInfo{
+		User:            conf.User,
+		Name:            name,
+		Checkpoint:      &conf.Checkpoint,
+		Capabilities:    []mesos.FrameworkInfo_Capability{},
+		Labels:          &mesos.Labels{},
+		FailoverTimeout: &conf.FailoverTimeout,
+		WebUiURL:        &conf.WebUiURL,
+		Hostname:        &conf.Hostname,
+		Principal:       &conf.Principal,
+	}
 }

@@ -28,7 +28,18 @@ import (
 var (
 	registrationMinBackoff = 1 * time.Second
 	registrationMaxBackoff = 15 * time.Second
+	name                   = "rhythm"
 )
+
+func getFrameworkIDStore(storage Storage) store.Singleton {
+	return store.DecorateSingleton(
+		store.NewInMemorySingleton(),
+		store.DoSet().AndThen(func(_ store.Setter, v string, _ error) error {
+			log.Printf("Framework ID: %s\n", v)
+			err := storage.SetFrameworkID(v)
+			return err
+		}))
+}
 
 /* TODO Periodic reconciliation
 
@@ -60,32 +71,27 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error initializing Vault client: %s\n", err)
 	}
-
-	fidStore := store.DecorateSingleton(
-		store.NewInMemorySingleton(),
+	frameworkInfo := getFrameworkInfo(&conf.Mesos)
+	fidStore := store.NewInMemorySingleton()
+	frameworkID, err := storage.GetFrameworkID()
+	if err != nil {
+		log.Fatalf("Error reading framework ID: %s\n", err)
+	}
+	if frameworkID != "" {
+		log.Printf("Framework ID: %s\n", frameworkID)
+		fidStore.Set(frameworkID)
+	}
+	frameworkInfo.ID = &mesos.FrameworkID{Value: *proto.String(frameworkID)}
+	fidStore = store.DecorateSingleton(
+		fidStore,
 		store.DoSet().AndThen(func(_ store.Setter, v string, _ error) error {
 			log.Printf("Framework ID: %s\n", v)
 			err := storage.SetFrameworkID(v)
 			return err
 		}))
-
 	cli := callrules.New(
 		callrules.WithFrameworkID(store.GetIgnoreErrors(fidStore)),
 	).Caller(httpsched.NewCaller(getMesosHTTPClient(&conf.Mesos)))
-
-	checkpoint := false
-	frameworkInfo := &mesos.FrameworkInfo{
-		User:            "mlowicki",
-		Name:            "rhythm",
-		Checkpoint:      &checkpoint,
-		Capabilities:    []mesos.FrameworkInfo_Capability{},
-		FailoverTimeout: &conf.FailoverTimeout,
-	}
-	frameworkID, err := storage.GetFrameworkID()
-	if err != nil {
-		log.Fatal(err)
-	}
-	frameworkInfo.ID = &mesos.FrameworkID{Value: *proto.String(frameworkID)}
 
 	conn, _, err := zk.Connect(conf.ZooKeeper.Servers, time.Second*10)
 	if err != nil {
@@ -348,6 +354,9 @@ func buildEventHandler(cli calls.Caller, fidStore store.Singleton, vaultC *vault
 			case mesos.TASK_FAILED:
 				// TODO Store last error(s) in job.
 				log.Printf("Task '%s' failed: %s (reason: %s, source: %s)\n", id, status.GetMessage(), status.GetReason(), status.GetSource())
+				job.State = JOB_FAILED
+			case mesos.TASK_LOST:
+				log.Printf("Task '%s' lost: %s (reason: %s, source: %s)\n", id, status.GetMessage(), status.GetReason(), status.GetSource())
 				job.State = JOB_FAILED
 			default:
 				log.Panicf("Unknown state: %s\n", state)

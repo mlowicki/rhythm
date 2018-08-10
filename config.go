@@ -8,13 +8,12 @@ import (
 )
 
 type Config struct {
-	GitLab          ConfigGitLab
-	API             ConfigAPI
-	Vault           ConfigVault
-	ZooKeeper       ConfigZooKeeper
-	FailoverTimeout float64
-	Verbose         bool
-	Mesos           ConfigMesos
+	GitLab    ConfigGitLab
+	API       ConfigAPI
+	Vault     ConfigVault
+	ZooKeeper ConfigZooKeeper
+	Verbose   bool
+	Mesos     ConfigMesos
 }
 
 type ConfigAPI struct {
@@ -37,8 +36,14 @@ type ConfigZooKeeper struct {
 }
 
 type ConfigMesos struct {
-	BaseURL string
-	Auth    ConfigMesosAuth
+	Auth            ConfigMesosAuth
+	BaseURL         string
+	Checkpoint      bool
+	FailoverTimeout float64
+	Hostname        string
+	User            string
+	WebUiURL        string
+	Principal       string
 }
 
 const (
@@ -68,10 +73,10 @@ func getConfig(path string) (*Config, error) {
 		Vault: ConfigVault{
 			Timeout: 3,
 		},
-		FailoverTimeout: (time.Hour * 24 * 7).Seconds(),
-		Verbose:         false,
+		Verbose: false,
 		Mesos: ConfigMesos{
-			BaseURL: "http://127.0.0.1:5050",
+			BaseURL:         "http://127.0.0.1:5050",
+			FailoverTimeout: (time.Hour * 24 * 7).Seconds(),
 		},
 		ZooKeeper: ConfigZooKeeper{
 			Servers: []string{"127.0.0.1"},

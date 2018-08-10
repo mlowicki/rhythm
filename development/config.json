@@ -14,6 +14,7 @@
     },
     "verbose": false,
     "mesos": {
+        "principal": "foo",
         "auth": {
             "type": "basic",
             "basic": {
