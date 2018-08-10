@@ -20,3 +20,8 @@ Run *rhythm*:
 ```
 go run *.go --config development/config.json
 ```
+
+How to add new job:
+```
+curl -X POST -d '{"id": "foo", "group": "group1", "project": "project1"}' -H "X-Token: GITLAB_TOKEN" API_ADDRESS/v1/task -v
+```

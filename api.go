@@ -13,6 +13,7 @@ func initAPI(conf *Config, s Storage) {
 		http.HandleFunc("/v1/task", func(w http.ResponseWriter, r *http.Request) {
 			taskHandler(w, r, conf, s)
 		})
+		// TODO Support for HTTPS
 		log.Fatal(http.ListenAndServe(conf.API.Address, nil))
 	}()
 }
