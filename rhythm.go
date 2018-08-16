@@ -22,7 +22,6 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
-	"github.com/samuel/go-zookeeper/zk"
 )
 
 var (
@@ -54,7 +53,7 @@ log.Printf("response: %#v\n", resp)
 // TODO GitLab as authentication backend should be opt-in
 // TODO Enforce HTTPS while talking with Vault
 // TODO Handle "Framework has been removed" error
-// TODO Handle re-connect to ZooKeeper
+// TODO Configure ACLs for ZooKeeper
 func main() {
 	confPath := flag.String("config", "config.json", "Path to configuration file")
 	flag.Parse()
@@ -91,62 +90,19 @@ func main() {
 		}))
 	cli := callrules.New(
 		callrules.WithFrameworkID(store.GetIgnoreErrors(fidStore)),
-	).Caller(httpsched.NewCaller(getMesosHTTPClient(&conf.Mesos)))
-
-	conn, _, err := zk.Connect(conf.ZooKeeper.Servers, time.Second*10)
+	).Caller(httpsched.NewCaller(getMesosHTTPClient(&conf.Mesos), httpsched.AllowReconnection(true)))
+	elec, err := newElection(&conf.ZooKeeper)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error creating election: %s\n", err)
 	}
-
-	// TODO make sure that /rhythm exists
-	electionDir := "/rhythm/election"
-	exists, _, err := conn.Exists(electionDir)
-	if err != nil {
-		panic(err)
-	}
-	if !exists {
-		_, err = conn.Create(electionDir, []byte{}, 0, zk.WorldACL(zk.PermAll))
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	num, err := registerForElection(conn)
-	if err != nil {
-		panic(err)
-	}
-
 	for {
-		elected, ch, err := isLeader(conn, num)
+		ctx, err := elec.WaitUntilLeader()
 		if err != nil {
-			log.Println(err)
+			log.Printf("Error waiting for being a leader: %s\n", err)
+			<-time.After(time.Second)
 			continue
 		}
-		if !elected {
-			for {
-				<-ch
-				elected, ch, err = isLeader(conn, num)
-				if err != nil {
-					log.Println(err)
-					continue
-				}
-				if elected {
-					break
-				}
-			}
-		}
-		ctx := context.Background()
-		// Create a new context, with its cancellation function
-		// from the original context
-		ctx, cancel := context.WithCancel(ctx)
-		_ = cancel
-
-		go func() {
-			e := <-ch
-			log.Print("Event: %s\n", e)
-		}()
-
-		err = controller.Run(
+		controller.Run(
 			ctx,
 			frameworkInfo,
 			callrules.New(
@@ -158,16 +114,9 @@ func main() {
 			),
 			controller.WithEventHandler(buildEventHandler(cli, fidStore, vaultC, storage, conf.Verbose)),
 			controller.WithSubscriptionTerminated(func(err error) {
-				if err != nil {
-					log.Printf("Connection to Mesos closed: %s\n", err)
-				} else {
-					log.Println("Connection to Mesos closed")
-				}
+				log.Printf("Connection to Mesos terminated: %v\n", err)
 			}),
 		)
-		if err != nil {
-			log.Println(err)
-		}
 	}
 }
 

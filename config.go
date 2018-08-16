@@ -23,7 +23,7 @@ type ConfigAPI struct {
 type ConfigVault struct {
 	Token   string
 	Address string
-	Timeout int
+	Timeout time.Duration
 }
 
 type ConfigGitLab struct {
@@ -31,15 +31,17 @@ type ConfigGitLab struct {
 }
 
 type ConfigZooKeeper struct {
-	BasePath string
-	Servers  []string
+	BasePath    string
+	ElectionDir string
+	Servers     []string
+	Timeout     time.Duration
 }
 
 type ConfigMesos struct {
 	Auth            ConfigMesosAuth
 	BaseURL         string
 	Checkpoint      bool
-	FailoverTimeout float64
+	FailoverTimeout time.Duration
 	Hostname        string
 	User            string
 	WebUiURL        string
@@ -71,18 +73,23 @@ func getConfig(path string) (*Config, error) {
 			Address: "localhost:8000",
 		},
 		Vault: ConfigVault{
-			Timeout: 3,
+			Timeout: 3000, // 3s
 		},
 		Verbose: false,
 		Mesos: ConfigMesos{
 			BaseURL:         "http://127.0.0.1:5050",
-			FailoverTimeout: (time.Hour * 24 * 7).Seconds(),
+			FailoverTimeout: time.Hour * 24 * 7,
 		},
 		ZooKeeper: ConfigZooKeeper{
-			Servers: []string{"127.0.0.1"},
+			Servers:     []string{"127.0.0.1"},
+			Timeout:     10000, // 10s
+			BasePath:    "/rhythm",
+			ElectionDir: "election",
 		},
 	}
 	err = json.Unmarshal(file, conf)
+	conf.Vault.Timeout *= time.Millisecond
+	conf.ZooKeeper.Timeout *= time.Millisecond
 	if err != nil {
 		return nil, err
 	}

@@ -36,7 +36,7 @@ func getFrameworkInfo(conf *ConfigMesos) *mesos.FrameworkInfo {
 		Checkpoint:      &conf.Checkpoint,
 		Capabilities:    []mesos.FrameworkInfo_Capability{},
 		Labels:          &mesos.Labels{},
-		FailoverTimeout: &conf.FailoverTimeout,
+		FailoverTimeout: func() *float64 { ft := conf.FailoverTimeout.Seconds(); return &ft }(),
 		WebUiURL:        &conf.WebUiURL,
 		Hostname:        &conf.Hostname,
 		Principal:       &conf.Principal,

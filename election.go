@@ -1,50 +1,151 @@
 package main
 
 import (
-	"strconv"
+	"context"
+	"fmt"
+	"log"
+	"sort"
 	"strings"
+	"sync"
 
 	"github.com/samuel/go-zookeeper/zk"
 )
 
-func registerForElection(conn *zk.Conn) (int64, error) {
-	// TODO Use CreateProtectedEphemeralSequential
-	name, err := conn.Create("/rhythm/election/", []byte(""), zk.FlagEphemeral|zk.FlagSequence, zk.WorldACL(zk.PermAll))
+type election struct {
+	basePath    string
+	electionDir string
+	conn        *zk.Conn
+	ticket      string
+	eventChan   <-chan zk.Event
+	cancel      context.CancelFunc
+	sync.Mutex
+}
+
+func (elec *election) WaitUntilLeader() (context.Context, error) {
+	isLeader, ch, err := elec.isLeader()
 	if err != nil {
-		return 0, err
+		return nil, err
+	}
+	if !isLeader {
+		for {
+			log.Println("election: Not elected as leader. Waiting...")
+			<-ch
+			isLeader, ch, err = elec.isLeader()
+			if err != nil {
+				return nil, err
+			} else if isLeader {
+				break
+			}
+		}
+	}
+	log.Println("election: Elected as leader")
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	elec.Lock()
+	elec.cancel = cancel
+	elec.Unlock()
+	return ctx, nil
+}
+
+func (elec *election) register() error {
+	// TODO Consider using `CreateProtectedEphemeralSequential`
+	name, err := elec.conn.Create(elec.basePath+"/"+elec.electionDir+"/", []byte(""), zk.FlagEphemeral|zk.FlagSequence, zk.WorldACL(zk.PermAll))
+	if err != nil {
+		return err
 	}
 	parts := strings.Split(name, "/")
-	num, err := strconv.ParseInt(parts[len(parts)-1], 10, 64)
-	return num, err
+	elec.Lock()
+	elec.ticket = parts[len(parts)-1]
+	elec.Unlock()
+	return nil
 }
 
-func getNumbers(conn *zk.Conn) ([]int64, <-chan zk.Event, error) {
-	names, _, ch, err := conn.ChildrenW("/rhythm/election")
-	if err != nil {
-		return nil, nil, err
-	}
-	nums := make([]int64, len(names))
-	for i, name := range names {
-		num, err := strconv.ParseInt(name, 10, 64)
+func (elec *election) isLeader() (bool, <-chan zk.Event, error) {
+	elec.Lock()
+	ticket := elec.ticket
+	elec.Unlock()
+	if ticket == "" {
+		err := elec.register()
 		if err != nil {
-			return nil, nil, err
+			return false, nil, fmt.Errorf("election: Registration failed: %s\n", err)
 		}
-		nums[i] = num
 	}
-	return nums, ch, nil
+	tickets, _, eventChan, err := elec.conn.ChildrenW(elec.basePath + "/" + elec.electionDir)
+	if err != nil {
+		return false, nil, fmt.Errorf("election: Failed getting registration tickets: %s\n", err)
+	}
+	elec.Lock()
+	ticket = elec.ticket
+	elec.Unlock()
+	isLeader := false
+	sort.Strings(tickets)
+	if len(tickets) > 0 {
+		if tickets[0] == ticket {
+			isLeader = true
+		}
+	}
+	log.Printf("election: All registration tickets: %v\n", tickets)
+	log.Printf("election: My registration ticket: %s\n", ticket)
+	for _, cur := range tickets {
+		if ticket == cur {
+			return isLeader, eventChan, nil
+		}
+	}
+	return false, nil, fmt.Errorf("election: Registration ticket doesn't exist")
 }
 
-func isLeader(conn *zk.Conn, num int64) (bool, <-chan zk.Event, error) {
-	ns, ch, err := getNumbers(conn)
+func (elec *election) initZK() error {
+	electionPath := elec.basePath + "/" + elec.electionDir
+	exists, _, err := elec.conn.Exists(electionPath)
 	if err != nil {
-		return false, nil, err
+		return fmt.Errorf("election: Failed checking if election directory exists: %s\n", err)
 	}
-	min := ns[0]
-	for _, n := range ns {
-		if n < min {
-			min = n
+	if !exists {
+		_, err = elec.conn.Create(electionPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
+		if err != nil {
+			return fmt.Errorf("election: Failed creating election directory: %s\n", err)
 		}
 	}
-	// TODO close this channel if leader?
-	return num == min, ch, nil
+	return nil
+}
+
+func newElection(conf *ConfigZooKeeper) (*election, error) {
+	conn, eventChan, err := zk.Connect(conf.Servers, conf.Timeout)
+	if err != nil {
+		return nil, fmt.Errorf("election: Failed connecting to ZooKeeper: %s\n", err)
+	}
+	elec := election{
+		conn:        conn,
+		basePath:    conf.BasePath,
+		electionDir: conf.ElectionDir,
+		eventChan:   eventChan,
+	}
+	err = elec.initZK()
+	if err != nil {
+		conn.Close()
+		return nil, err
+	}
+	go func() {
+		for {
+			select {
+			case ev := <-elec.eventChan:
+				log.Printf("election: ZooKeeper event: %s\n", ev)
+				if ev.State == zk.StateDisconnected {
+					log.Printf("election: Disconnected from ZooKeeper: %s\n", ev)
+					elec.Lock()
+					if elec.cancel != nil {
+						elec.cancel()
+						elec.cancel = nil
+					}
+					elec.Unlock()
+				} else if ev.State == zk.StateExpired {
+					log.Printf("election: Session expired: %s\n", ev)
+					elec.Lock()
+					elec.ticket = ""
+					elec.Unlock()
+				}
+			}
+		}
+	}()
+	return &elec, nil
 }

@@ -16,7 +16,12 @@ type ZKRootDirConfig struct {
 }
 
 func newZKStorage(conf *ConfigZooKeeper) (*ZKStorage, error) {
-	storage := &ZKStorage{rootDirPath: conf.BasePath, jobsDirName: "jobs", servers: conf.Servers}
+	storage := &ZKStorage{
+		rootDirPath: conf.BasePath,
+		jobsDirName: "jobs",
+		servers:     conf.Servers,
+		timeout:     conf.Timeout,
+	}
 	err := storage.connect()
 	if err != nil {
 		return nil, err
@@ -33,10 +38,11 @@ type ZKStorage struct {
 	jobsDirName string
 	servers     []string
 	conn        *zk.Conn
+	timeout     time.Duration
 }
 
 func (s *ZKStorage) connect() error {
-	conn, _, err := zk.Connect(s.servers, time.Second*10)
+	conn, _, err := zk.Connect(s.servers, s.timeout)
 	if err != nil {
 		return err
 	}
