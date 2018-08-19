@@ -22,6 +22,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
+	"github.com/mlowicki/rhythm/conf"
 )
 
 var (
@@ -57,7 +58,7 @@ log.Printf("response: %#v\n", resp)
 func main() {
 	confPath := flag.String("config", "config.json", "Path to configuration file")
 	flag.Parse()
-	var conf, err = getConfig(*confPath)
+	var conf, err = conf.NewConf(*confPath)
 	if err != nil {
 		log.Fatalf("Error getting configuration: %s\n", err)
 	}

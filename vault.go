@@ -2,16 +2,17 @@ package main
 
 import (
 	vault "github.com/hashicorp/vault/api"
+	"github.com/mlowicki/rhythm/conf"
 )
 
-func getVaultClient(conf *ConfigVault) (*vault.Client, error) {
+func getVaultClient(c *conf.Vault) (*vault.Client, error) {
 	vaultC, err := vault.NewClient(&vault.Config{
-		Address: conf.Address,
-		Timeout: conf.Timeout,
+		Address: c.Address,
+		Timeout: c.Timeout,
 	})
 	if err != nil {
 		return nil, err
 	}
-	vaultC.SetToken(conf.Token)
+	vaultC.SetToken(c.Token)
 	return vaultC, nil
 }

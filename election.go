@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/mlowicki/rhythm/conf"
 	"github.com/samuel/go-zookeeper/zk"
 )
 
@@ -109,7 +110,7 @@ func (elec *election) initZK() error {
 	return nil
 }
 
-func newElection(conf *ConfigZooKeeper) (*election, error) {
+func newElection(conf *conf.ZooKeeper) (*election, error) {
 	conn, eventChan, err := zk.Connect(conf.Servers, conf.Timeout)
 	if err != nil {
 		return nil, fmt.Errorf("election: Failed connecting to ZooKeeper: %s\n", err)

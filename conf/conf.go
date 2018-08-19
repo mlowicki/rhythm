@@ -1,4 +1,4 @@
-package main
+package conf
 
 import (
 	"encoding/json"
@@ -6,38 +6,38 @@ import (
 	"time"
 )
 
-type Config struct {
-	GitLab    ConfigGitLab
-	API       ConfigAPI
-	Vault     ConfigVault
-	ZooKeeper ConfigZooKeeper
+type Conf struct {
+	GitLab    GitLab
+	API       API
+	Vault     Vault
+	ZooKeeper ZooKeeper
 	Verbose   bool
-	Mesos     ConfigMesos
+	Mesos     Mesos
 }
 
-type ConfigAPI struct {
+type API struct {
 	Address string
 }
 
-type ConfigVault struct {
+type Vault struct {
 	Token   string
 	Address string
 	Timeout time.Duration
 }
 
-type ConfigGitLab struct {
+type GitLab struct {
 	BaseURL string
 }
 
-type ConfigZooKeeper struct {
+type ZooKeeper struct {
 	BasePath    string
 	ElectionDir string
 	Servers     []string
 	Timeout     time.Duration
 }
 
-type ConfigMesos struct {
-	Auth            ConfigMesosAuth
+type Mesos struct {
+	Auth            MesosAuth
 	BaseURL         string
 	Checkpoint      bool
 	FailoverTimeout time.Duration
@@ -52,34 +52,34 @@ const (
 	AuthModeNone  = "none"
 )
 
-type ConfigMesosAuth struct {
+type MesosAuth struct {
 	Type  string
-	Basic ConfigMesosAuthBasic
+	Basic MesosAuthBasic
 }
 
-type ConfigMesosAuthBasic struct {
+type MesosAuthBasic struct {
 	Username string
 	Password string
 }
 
-func getConfig(path string) (*Config, error) {
+func NewConf(path string) (*Conf, error) {
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	var conf = &Config{
-		API: ConfigAPI{
+	var conf = &Conf{
+		API: API{
 			Address: "localhost:8000",
 		},
-		Vault: ConfigVault{
+		Vault: Vault{
 			Timeout: 3000, // 3s
 		},
 		Verbose: false,
-		Mesos: ConfigMesos{
+		Mesos: Mesos{
 			BaseURL:         "http://127.0.0.1:5050",
 			FailoverTimeout: time.Hour * 24 * 7,
 		},
-		ZooKeeper: ConfigZooKeeper{
+		ZooKeeper: ZooKeeper{
 			Servers:     []string{"127.0.0.1"},
 			Timeout:     10000, // 10s
 			BasePath:    "/rhythm",

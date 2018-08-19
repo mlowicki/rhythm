@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/mlowicki/rhythm/conf"
 	"github.com/robfig/cron"
 	"github.com/samuel/go-zookeeper/zk"
 )
@@ -15,12 +16,12 @@ type ZKRootDirConfig struct {
 	FrameworkID string
 }
 
-func newZKStorage(conf *ConfigZooKeeper) (*ZKStorage, error) {
+func newZKStorage(c *conf.ZooKeeper) (*ZKStorage, error) {
 	storage := &ZKStorage{
-		rootDirPath: conf.BasePath,
+		rootDirPath: c.BasePath,
 		jobsDirName: "jobs",
-		servers:     conf.Servers,
-		timeout:     conf.Timeout,
+		servers:     c.Servers,
+		timeout:     c.Timeout,
 	}
 	err := storage.connect()
 	if err != nil {

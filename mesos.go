@@ -6,26 +6,27 @@ import (
 
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
+	"github.com/mlowicki/rhythm/conf"
 )
 
-func getMesosHTTPClient(conf *ConfigMesos) *httpcli.Client {
+func getMesosHTTPClient(c *conf.Mesos) *httpcli.Client {
 	var authConf httpcli.ConfigOpt
 
-	if conf.Auth.Type == AuthModeBasic {
-		authConf = httpcli.BasicAuth(conf.Auth.Basic.Username, conf.Auth.Basic.Password)
-	} else if conf.Auth.Type != AuthModeNone {
-		log.Fatalf("Unknown authentication mode: %s\n", conf.Auth.Type)
+	if c.Auth.Type == conf.AuthModeBasic {
+		authConf = httpcli.BasicAuth(c.Auth.Basic.Username, c.Auth.Basic.Password)
+	} else if c.Auth.Type != conf.AuthModeNone {
+		log.Fatalf("Unknown authentication mode: %s\n", c.Auth.Type)
 	}
 
 	return httpcli.New(
-		httpcli.Endpoint(conf.BaseURL+"/api/v1/scheduler"),
+		httpcli.Endpoint(c.BaseURL+"/api/v1/scheduler"),
 		httpcli.Do(httpcli.With(
 			authConf,
 			httpcli.Timeout(time.Second*10),
 		)))
 }
 
-func getFrameworkInfo(conf *ConfigMesos) *mesos.FrameworkInfo {
+func getFrameworkInfo(conf *conf.Mesos) *mesos.FrameworkInfo {
 	// https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto
 	// TODO Option to set `roles` (or `role`)
 	// TODO Option to set `capabilities`

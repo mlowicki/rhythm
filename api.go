@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/mlowicki/rhythm/auth"
+	"github.com/mlowicki/rhythm/conf"
 )
 
 var (
@@ -79,9 +80,18 @@ func getProjectJobs(_ Authorizer, s Storage, w http.ResponseWriter, r *http.Requ
 	return nil
 }
 
-func getJob(_ Authorizer, s Storage, w http.ResponseWriter, r *http.Request) error {
+func getJob(a Authorizer, s Storage, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
-	job, err := s.GetJob(vars["group"], vars["project"], vars["id"])
+	group := vars["group"]
+	project := vars["project"]
+	accessLevel, err := a.GetProjectAccessLevel(r, group, project)
+	if err != nil {
+		return &apiErr{err.Error(), http.StatusInternalServerError}
+	}
+	if accessLevel == auth.NoAccess {
+		return &apiErr{apiErrAccessForbidden.Error(), http.StatusForbidden}
+	}
+	job, err := s.GetJob(group, project, vars["id"])
 	if err != nil {
 		return &apiErr{err.Error(), http.StatusInternalServerError}
 	}
@@ -166,7 +176,7 @@ func updateJob(_ Authorizer, s Storage, w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
-func initAPI(conf *Config, s Storage) {
+func initAPI(conf *conf.Conf, s Storage) {
 	r := mux.NewRouter()
 	v1 := r.PathPrefix("/v1").Subrouter()
 	auth := auth.GitLabAuthorizer{BaseURL: conf.GitLab.BaseURL}
