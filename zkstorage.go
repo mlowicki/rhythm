@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mlowicki/rhythm/conf"
+	"github.com/mlowicki/rhythm/model"
 	"github.com/robfig/cron"
 	"github.com/samuel/go-zookeeper/zk"
 )
@@ -109,7 +110,7 @@ func (s *ZKStorage) init() error {
 	return nil
 }
 
-func (s *ZKStorage) GetJob(group string, project string, id string) (*Job, error) {
+func (s *ZKStorage) GetJob(group string, project string, id string) (*model.Job, error) {
 	jobs, err := s.GetJobs()
 	if err != nil {
 		return nil, err
@@ -122,12 +123,12 @@ func (s *ZKStorage) GetJob(group string, project string, id string) (*Job, error
 	return nil, nil
 }
 
-func (s *ZKStorage) GetGroupJobs(group string) ([]*Job, error) {
+func (s *ZKStorage) GetGroupJobs(group string) ([]*model.Job, error) {
 	jobs, err := s.GetJobs()
 	if err != nil {
-		return []*Job{}, err
+		return []*model.Job{}, err
 	}
-	filtered := make([]*Job, 0, len(jobs))
+	filtered := make([]*model.Job, 0, len(jobs))
 	for _, job := range jobs {
 		if job.Group == group {
 			filtered = append(filtered, job)
@@ -136,12 +137,12 @@ func (s *ZKStorage) GetGroupJobs(group string) ([]*Job, error) {
 	return filtered, nil
 }
 
-func (s *ZKStorage) GetProjectJobs(group string, project string) ([]*Job, error) {
+func (s *ZKStorage) GetProjectJobs(group string, project string) ([]*model.Job, error) {
 	jobs, err := s.GetJobs()
 	if err != nil {
-		return []*Job{}, err
+		return []*model.Job{}, err
 	}
-	filtered := make([]*Job, 0, len(jobs))
+	filtered := make([]*model.Job, 0, len(jobs))
 	for _, job := range jobs {
 		if job.Group == group && job.Project == project {
 			filtered = append(filtered, job)
@@ -150,8 +151,8 @@ func (s *ZKStorage) GetProjectJobs(group string, project string) ([]*Job, error)
 	return filtered, nil
 }
 
-func (s *ZKStorage) GetJobs() ([]*Job, error) {
-	jobs := []*Job{}
+func (s *ZKStorage) GetJobs() ([]*model.Job, error) {
+	jobs := []*model.Job{}
 	jobsPath := s.rootDirPath + "/" + s.jobsDirName
 	children, _, err := s.conn.Children(jobsPath)
 	if err != nil {
@@ -162,7 +163,7 @@ func (s *ZKStorage) GetJobs() ([]*Job, error) {
 		if err != nil {
 			return jobs, err
 		}
-		var job Job
+		var job model.Job
 		err = json.Unmarshal(payload, &job)
 		if err != nil {
 			return jobs, err
@@ -172,19 +173,19 @@ func (s *ZKStorage) GetJobs() ([]*Job, error) {
 	return jobs, nil
 }
 
-func (s *ZKStorage) GetRunnableJobs() ([]*Job, error) {
-	runnable := []*Job{}
+func (s *ZKStorage) GetRunnableJobs() ([]*model.Job, error) {
+	runnable := []*model.Job{}
 	jobs, err := s.GetJobs()
 	if err != nil {
 		return runnable, err
 	}
 
 	for _, job := range jobs {
-		if job.State == JOB_RUNNING {
+		if job.State == model.RUNNING {
 			continue
 		}
 		parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-		if job.Schedule.Kind != Cron { // TODO
+		if job.Schedule.Kind != model.Cron { // TODO
 			panic("Only Cron schedules are supported")
 		}
 		sched, err := parser.Parse(job.Schedule.Cron)
@@ -214,13 +215,13 @@ func (s *ZKStorage) GetRunnableJobs() ([]*Job, error) {
 	return runnable, nil
 }
 
-func (s *ZKStorage) SaveJob(j *Job) error {
-	encoded, err := json.Marshal(j)
+func (s *ZKStorage) SaveJob(job *model.Job) error {
+	encoded, err := json.Marshal(job)
 	if err != nil {
 		return err
 	}
 	jobsPath := s.rootDirPath + "/" + s.jobsDirName
-	jobPath := fmt.Sprintf("%s/%s:%s:%s", jobsPath, j.Group, j.Project, j.ID)
+	jobPath := fmt.Sprintf("%s/%s:%s:%s", jobsPath, job.Group, job.Project, job.ID)
 	exists, stat, err := s.conn.Exists(jobPath)
 	if err != nil {
 		return err

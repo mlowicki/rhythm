@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mlowicki/rhythm/auth"
 	"github.com/mlowicki/rhythm/conf"
+	"github.com/mlowicki/rhythm/model"
 )
 
 var (
@@ -140,12 +141,12 @@ func createJob(a Authorizer, s Storage, w http.ResponseWriter, r *http.Request) 
 	}
 	// TODO input validation
 	// TODO remove hardcoded values
-	j := &Job{
+	j := &model.Job{
 		Group:   payload.Group,
 		Project: payload.Project,
 		ID:      payload.ID,
-		Schedule: JobSchedule{
-			Kind: Cron,
+		Schedule: model.JobSchedule{
+			Kind: model.Cron,
 			Cron: "*/1 * * * *",
 		},
 		CreatedAt: time.Now(),
@@ -153,9 +154,9 @@ func createJob(a Authorizer, s Storage, w http.ResponseWriter, r *http.Request) 
 			"BAR": "bar",
 		},
 		Cmd: "echo $BAR",
-		Container: JobContainer{
-			Kind: Docker,
-			Docker: JobDocker{
+		Container: model.JobContainer{
+			Kind: model.Docker,
+			Docker: model.JobDocker{
 				Image: "alpine:3.7",
 			},
 		},
@@ -176,7 +177,16 @@ func updateJob(_ Authorizer, s Storage, w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
-func initAPI(conf *conf.Conf, s Storage) {
+type Storage interface {
+	GetJobs() ([]*model.Job, error)
+	GetGroupJobs(group string) ([]*model.Job, error)
+	GetProjectJobs(group string, project string) ([]*model.Job, error)
+	GetJob(group string, project string, id string) (*model.Job, error)
+	SaveJob(j *model.Job) error
+	DeleteJob(group string, project string, id string) error
+}
+
+func NewAPI(conf *conf.Conf, s Storage) {
 	r := mux.NewRouter()
 	v1 := r.PathPrefix("/v1").Subrouter()
 	auth := auth.GitLabAuthorizer{BaseURL: conf.GitLab.BaseURL}

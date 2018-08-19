@@ -22,7 +22,9 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
+	"github.com/mlowicki/rhythm/api"
 	"github.com/mlowicki/rhythm/conf"
+	"github.com/mlowicki/rhythm/model"
 )
 
 var (
@@ -66,7 +68,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error initializing storage: %s\n", err)
 	}
-	initAPI(conf, storage)
+	api.NewAPI(conf, storage)
 	vaultC, err := getVaultClient(&conf.Vault)
 	if err != nil {
 		log.Fatalf("Error initializing Vault client: %s\n", err)
@@ -130,8 +132,8 @@ func logCalls(messages map[scheduler.Call_Type]string) callrules.Rule {
 	}
 }
 
-func handleOffer(ctx context.Context, cli calls.Caller, offer *mesos.Offer, jobs []*Job, vaultC *vault.Client, s Storage) []*Job {
-	var jobsToLaunch []*Job
+func handleOffer(ctx context.Context, cli calls.Caller, offer *mesos.Offer, jobs []*model.Job, vaultC *vault.Client, s Storage) []*model.Job {
+	var jobsToLaunch []*model.Job
 	tasks := []mesos.TaskInfo{}
 	// TODO Handle reservations
 	remaining := mesos.Resources(offer.Resources)
@@ -190,7 +192,7 @@ func handleOffer(ctx context.Context, cli calls.Caller, offer *mesos.Offer, jobs
 				}
 			*/
 
-			if job.Container.Kind != Docker { // TODO
+			if job.Container.Kind != model.Docker { // TODO
 				panic("Only Docker containers are supported")
 			}
 
@@ -227,7 +229,7 @@ accept:
 		return nil
 	} else {
 		for _, job := range jobsToLaunch {
-			job.State = JOB_RUNNING
+			job.State = model.RUNNING
 			job.LastStartAt = time.Now()
 			err := s.SaveJob(job)
 			if err != nil {
@@ -235,8 +237,8 @@ accept:
 			}
 			log.Printf("Job launched: %s\n", job)
 		}
-		left := make([]*Job, len(jobs)-len(jobsToLaunch))
-		contains := func(js []*Job, j *Job) bool {
+		left := make([]*model.Job, len(jobs)-len(jobsToLaunch))
+		contains := func(js []*model.Job, j *model.Job) bool {
 			for _, c := range js {
 				if c.Group == j.Group && c.Project == j.Project && c.ID == j.ID {
 					return true
@@ -295,19 +297,19 @@ func buildEventHandler(cli calls.Caller, fidStore store.Singleton, vaultC *vault
 			// TODO Handle all states (https://github.com/mesos/mesos-go/blob/master/api/v1/lib/mesos.proto#L2212).
 			switch state := status.GetState(); state {
 			case mesos.TASK_STARTING:
-				job.State = JOB_STARTING
+				job.State = model.STARTING
 			case mesos.TASK_RUNNING:
-				job.State = JOB_RUNNING
+				job.State = model.RUNNING
 			case mesos.TASK_FINISHED:
 				log.Printf("Task finished: %s\n", status.TaskID.Value)
-				job.State = JOB_IDLE
+				job.State = model.IDLE
 			case mesos.TASK_FAILED:
 				// TODO Store last error(s) in job.
 				log.Printf("Task '%s' failed: %s (reason: %s, source: %s)\n", id, status.GetMessage(), status.GetReason(), status.GetSource())
-				job.State = JOB_FAILED
+				job.State = model.FAILED
 			case mesos.TASK_LOST:
 				log.Printf("Task '%s' lost: %s (reason: %s, source: %s)\n", id, status.GetMessage(), status.GetReason(), status.GetSource())
-				job.State = JOB_FAILED
+				job.State = model.FAILED
 			default:
 				log.Panicf("Unknown state: %s\n", state)
 			}

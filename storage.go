@@ -1,13 +1,12 @@
 package main
 
+import "github.com/mlowicki/rhythm/model"
+
 type Storage interface {
+	GetJobs() ([]*model.Job, error)
+	GetJob(group string, project string, id string) (*model.Job, error)
 	SetFrameworkID(id string) error
 	GetFrameworkID() (string, error)
-	GetJobs() ([]*Job, error)
-	GetGroupJobs(group string) ([]*Job, error)
-	GetProjectJobs(group string, project string) ([]*Job, error)
-	GetJob(group string, project string, id string) (*Job, error)
-	GetRunnableJobs() ([]*Job, error)
-	SaveJob(j *Job) error
-	DeleteJob(group string, project string, id string) error
+	GetRunnableJobs() ([]*model.Job, error)
+	SaveJob(j *model.Job) error
 }

@@ -1,17 +1,17 @@
-package main
+package model
 
 import (
 	"fmt"
 	"time"
 )
 
-type JobState int
+type State int
 
 const (
-	JOB_IDLE JobState = iota
-	JOB_STARTING
-	JOB_RUNNING
-	JOB_FAILED
+	IDLE State = iota
+	STARTING
+	RUNNING
+	FAILED
 )
 
 type JobDocker struct {
@@ -53,7 +53,7 @@ type Job struct {
 	LastStartAt time.Time
 	Env         map[string]string
 	Container   JobContainer
-	State       JobState
+	State       State
 	CPUs        float64
 	Mem         float64
 	Cmd         string
