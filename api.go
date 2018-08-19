@@ -8,14 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-)
-
-type AccessLevel int
-
-const (
-	NoAccess AccessLevel = iota
-	ReadOnly
-	ReadWrite
+	"github.com/mlowicki/rhythm/auth"
 )
 
 var (
@@ -24,7 +17,7 @@ var (
 )
 
 type Authorizer interface {
-	GetProjectAccessLevel(r *http.Request, group string, project string) (AccessLevel, error)
+	GetProjectAccessLevel(r *http.Request, group string, project string) (auth.AccessLevel, error)
 }
 
 type apiHandler struct {
@@ -100,13 +93,13 @@ func getJob(_ Authorizer, s Storage, w http.ResponseWriter, r *http.Request) err
 	return nil
 }
 
-func deleteJob(auth Authorizer, s Storage, w http.ResponseWriter, r *http.Request) error {
+func deleteJob(a Authorizer, s Storage, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
-	accessLevel, err := auth.GetProjectAccessLevel(r, vars["group"], vars["project"])
+	accessLevel, err := a.GetProjectAccessLevel(r, vars["group"], vars["project"])
 	if err != nil {
 		return &apiErr{err.Error(), http.StatusInternalServerError}
 	}
-	if accessLevel != ReadWrite {
+	if accessLevel != auth.ReadWrite {
 		return &apiErr{apiErrAccessForbidden.Error(), http.StatusForbidden}
 	}
 	err = s.DeleteJob(vars["group"], vars["project"], vars["id"])
@@ -116,7 +109,7 @@ func deleteJob(auth Authorizer, s Storage, w http.ResponseWriter, r *http.Reques
 	return nil
 }
 
-func createJob(auth Authorizer, s Storage, w http.ResponseWriter, r *http.Request) error {
+func createJob(a Authorizer, s Storage, w http.ResponseWriter, r *http.Request) error {
 	var payload struct {
 		ID      string
 		Project string
@@ -128,11 +121,11 @@ func createJob(auth Authorizer, s Storage, w http.ResponseWriter, r *http.Reques
 		// TODO
 		log.Fatal(err)
 	}
-	accessLevel, err := auth.GetProjectAccessLevel(r, payload.Group, payload.Project)
+	accessLevel, err := a.GetProjectAccessLevel(r, payload.Group, payload.Project)
 	if err != nil {
 		return &apiErr{err.Error(), http.StatusInternalServerError}
 	}
-	if accessLevel != ReadWrite {
+	if accessLevel != auth.ReadWrite {
 		return &apiErr{apiErrAccessForbidden.Error(), http.StatusForbidden}
 	}
 	// TODO input validation
@@ -176,7 +169,7 @@ func updateJob(_ Authorizer, s Storage, w http.ResponseWriter, r *http.Request) 
 func initAPI(conf *Config, s Storage) {
 	r := mux.NewRouter()
 	v1 := r.PathPrefix("/v1").Subrouter()
-	auth := GitLabAuthorizer{Config: &conf.GitLab}
+	auth := auth.GitLabAuthorizer{BaseURL: conf.GitLab.BaseURL}
 	v1.Handle("/jobs", &apiHandler{&auth, s, getJobs}).Methods("GET")
 	v1.Handle("/jobs", &apiHandler{&auth, s, createJob}).Methods("POST")
 	v1.Handle("/jobs/{group}", &apiHandler{&auth, s, getGroupJobs}).Methods("GET")

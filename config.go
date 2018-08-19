@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"time"
 )
 
@@ -93,13 +92,5 @@ func getConfig(path string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	checkConfig(conf)
 	return conf, nil
-}
-
-func checkConfig(conf *Config) {
-	_, err := newGitLabClient(&conf.GitLab, "")
-	if err != nil {
-		log.Fatal(err)
-	}
 }

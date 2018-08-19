@@ -1,4 +1,4 @@
-package main
+package auth
 
 import (
 	"errors"
@@ -9,28 +9,28 @@ import (
 	"github.com/xanzy/go-gitlab"
 )
 
-func newGitLabClient(conf *ConfigGitLab, token string) (*gitlab.Client, error) {
+type GitLabAuthorizer struct {
+	BaseURL string
+}
+
+func newClient(baseURL string, token string) (*gitlab.Client, error) {
 	client := gitlab.NewClient(nil, token)
-	url, err := url.Parse(conf.BaseURL)
+	url, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("Error parsing GitLab base URL: %s\n", err)
 	}
 	if url.Scheme != "https" {
 		return nil, errors.New("GitLab base URL must use HTTPS scheme")
 	}
-	err = client.SetBaseURL(conf.BaseURL)
+	err = client.SetBaseURL(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("Error setting GitLab base URL: %s\n", err)
 	}
 	return client, nil
 }
 
-type GitLabAuthorizer struct {
-	Config *ConfigGitLab
-}
-
 func (g *GitLabAuthorizer) GetProjectAccessLevel(r *http.Request, group string, project string) (AccessLevel, error) {
-	client, err := newGitLabClient(g.Config, r.Header.Get("X-Token"))
+	client, err := newClient(g.BaseURL, r.Header.Get("X-Token"))
 	if err != nil {
 		return NoAccess, err
 	}
