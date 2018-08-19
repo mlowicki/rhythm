@@ -109,7 +109,7 @@ func (s *ZKStorage) init() error {
 }
 
 func (s *ZKStorage) GetJob(group string, project string, id string) (*Job, error) {
-	jobs, err := s.getJobs()
+	jobs, err := s.GetJobs()
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,35 @@ func (s *ZKStorage) GetJob(group string, project string, id string) (*Job, error
 	return nil, nil
 }
 
-func (s *ZKStorage) getJobs() ([]*Job, error) {
+func (s *ZKStorage) GetGroupJobs(group string) ([]*Job, error) {
+	jobs, err := s.GetJobs()
+	if err != nil {
+		return []*Job{}, err
+	}
+	filtered := make([]*Job, 0, len(jobs))
+	for _, job := range jobs {
+		if job.Group == group {
+			filtered = append(filtered, job)
+		}
+	}
+	return filtered, nil
+}
+
+func (s *ZKStorage) GetProjectJobs(group string, project string) ([]*Job, error) {
+	jobs, err := s.GetJobs()
+	if err != nil {
+		return []*Job{}, err
+	}
+	filtered := make([]*Job, 0, len(jobs))
+	for _, job := range jobs {
+		if job.Group == group && job.Project == project {
+			filtered = append(filtered, job)
+		}
+	}
+	return filtered, nil
+}
+
+func (s *ZKStorage) GetJobs() ([]*Job, error) {
 	jobs := []*Job{}
 	jobsPath := s.rootDirPath + "/" + s.jobsDirName
 	children, _, err := s.conn.Children(jobsPath)
@@ -145,7 +173,7 @@ func (s *ZKStorage) getJobs() ([]*Job, error) {
 
 func (s *ZKStorage) GetRunnableJobs() ([]*Job, error) {
 	runnable := []*Job{}
-	jobs, err := s.getJobs()
+	jobs, err := s.GetJobs()
 	if err != nil {
 		return runnable, err
 	}
@@ -203,6 +231,21 @@ func (s *ZKStorage) SaveJob(j *Job) error {
 		}
 	} else {
 		_, err = s.conn.Create(jobPath, encoded, 0, zk.WorldACL(zk.PermAll))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *ZKStorage) DeleteJob(group string, project string, id string) error {
+	path := fmt.Sprintf("%s/%s:%s:%s", s.rootDirPath+"/"+s.jobsDirName, group, project, id)
+	exists, stat, err := s.conn.Exists(path)
+	if err != nil {
+		return err
+	}
+	if exists {
+		err = s.conn.Delete(path, stat.Version)
 		if err != nil {
 			return err
 		}

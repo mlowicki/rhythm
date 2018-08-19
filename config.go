@@ -98,7 +98,7 @@ func getConfig(path string) (*Config, error) {
 }
 
 func checkConfig(conf *Config) {
-	_, err := newGitLabClient(conf, "")
+	_, err := newGitLabClient(&conf.GitLab, "")
 	if err != nil {
 		log.Fatal(err)
 	}
