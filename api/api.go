@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -48,29 +49,71 @@ type errResp struct {
 	Error string `json:"error"`
 }
 
-func getJobs(_ authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
+func filterReadableJobs(a authorizer, r *http.Request, jobs []*model.Job) ([]*model.Job, error) {
+	readable := make([]*model.Job, 0, len(jobs))
+	acl := make(map[string]auth.AccessLevel)
+	var err error
+	for _, job := range jobs {
+		key := fmt.Sprintf("%s/%s", job.Group, job.Project)
+		lvl, found := acl[key]
+		if !found {
+			lvl, err = a.GetProjectAccessLevel(r, job.Group, job.Project)
+			if err != nil {
+				return nil, err
+			}
+			acl[key] = lvl
+		}
+		if lvl != auth.NoAccess {
+			readable = append(readable, job)
+		}
+	}
+	return readable, nil
+}
+
+func getJobs(a authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
 	jobs, err := s.GetJobs()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	json.NewEncoder(w).Encode(jobs)
+	readable, err := filterReadableJobs(a, r, jobs)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	json.NewEncoder(w).Encode(readable)
 	return nil
 }
 
-func getGroupJobs(_ authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
+func getGroupJobs(a authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
 	jobs, err := s.GetGroupJobs(mux.Vars(r)["group"])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	json.NewEncoder(w).Encode(jobs)
+	readable, err := filterReadableJobs(a, r, jobs)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	json.NewEncoder(w).Encode(readable)
 	return nil
 }
 
-func getProjectJobs(_ authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
+func getProjectJobs(a authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
-	jobs, err := s.GetProjectJobs(vars["group"], vars["project"])
+	group := vars["group"]
+	project := vars["project"]
+	lvl, err := a.GetProjectAccessLevel(r, group, project)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	if lvl == auth.NoAccess {
+		w.WriteHeader(http.StatusForbidden)
+		return errForbidden
+	}
+	jobs, err := s.GetProjectJobs(group, project)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
@@ -83,12 +126,12 @@ func getJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) err
 	vars := mux.Vars(r)
 	group := vars["group"]
 	project := vars["project"]
-	accessLevel, err := a.GetProjectAccessLevel(r, group, project)
+	lvl, err := a.GetProjectAccessLevel(r, group, project)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	if accessLevel == auth.NoAccess {
+	if lvl == auth.NoAccess {
 		w.WriteHeader(http.StatusForbidden)
 		return errForbidden
 	}
@@ -107,16 +150,18 @@ func getJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) err
 
 func deleteJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
-	accessLevel, err := a.GetProjectAccessLevel(r, vars["group"], vars["project"])
+	group := vars["group"]
+	project := vars["project"]
+	lvl, err := a.GetProjectAccessLevel(r, group, project)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	if accessLevel != auth.ReadWrite {
+	if lvl != auth.ReadWrite {
 		w.WriteHeader(http.StatusForbidden)
 		return errForbidden
 	}
-	err = s.DeleteJob(vars["group"], vars["project"], vars["id"])
+	err = s.DeleteJob(group, project, vars["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
@@ -136,12 +181,12 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		// TODO
 		log.Fatal(err)
 	}
-	accessLevel, err := a.GetProjectAccessLevel(r, payload.Group, payload.Project)
+	lvl, err := a.GetProjectAccessLevel(r, payload.Group, payload.Project)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	if accessLevel != auth.ReadWrite {
+	if lvl != auth.ReadWrite {
 		w.WriteHeader(http.StatusForbidden)
 		return errForbidden
 	}
