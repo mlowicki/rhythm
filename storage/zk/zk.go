@@ -1,4 +1,4 @@
-package main
+package zk
 
 import (
 	"encoding/json"
@@ -13,11 +13,11 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 )
 
-type ZKRootDirConfig struct {
+type rootDirConfig struct {
 	FrameworkID string
 }
 
-func newZKStorage(c *conf.ZooKeeper) (*ZKStorage, error) {
+func NewStorage(c *conf.ZooKeeper) (*ZKStorage, error) {
 	storage := &ZKStorage{
 		rootDirPath: c.BasePath,
 		jobsDirName: "jobs",
@@ -55,7 +55,7 @@ func (s *ZKStorage) connect() error {
 func (s *ZKStorage) SetFrameworkID(id string) error {
 	payload, stat, err := s.conn.Get(s.rootDirPath)
 	version := stat.Version
-	conf := ZKRootDirConfig{}
+	conf := rootDirConfig{}
 	err = json.Unmarshal(payload, &conf)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (s *ZKStorage) SetFrameworkID(id string) error {
 }
 
 func (s *ZKStorage) GetFrameworkID() (string, error) {
-	conf := ZKRootDirConfig{}
+	conf := rootDirConfig{}
 	payload, _, err := s.conn.Get(s.rootDirPath)
 	err = json.Unmarshal(payload, &conf)
 	if err != nil {
@@ -87,7 +87,7 @@ func (s *ZKStorage) init() error {
 	if exists {
 		return nil
 	}
-	conf := ZKRootDirConfig{}
+	conf := rootDirConfig{}
 	encoded, err := json.Marshal(&conf)
 	if err != nil {
 		return err

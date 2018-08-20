@@ -25,6 +25,7 @@ import (
 	"github.com/mlowicki/rhythm/api"
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/model"
+	"github.com/mlowicki/rhythm/storage/zk"
 )
 
 var (
@@ -64,7 +65,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error getting configuration: %s\n", err)
 	}
-	storage, err := newZKStorage(&conf.ZooKeeper)
+	storage, err := zk.NewStorage(&conf.ZooKeeper)
 	if err != nil {
 		log.Fatalf("Error initializing storage: %s\n", err)
 	}
