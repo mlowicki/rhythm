@@ -171,15 +171,28 @@ func deleteJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 
 func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
 	var payload struct {
-		ID      string
-		Project string
-		Group   string
+		Group    string
+		Project  string
+		ID       string
+		Schedule struct {
+			Cron string
+		}
+		Env       map[string]string
+		Container struct {
+			Docker struct {
+				Image string
+			}
+		}
+		CPUs float64
+		Mem  float64
+		Cmd  string
+		User string
 	}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
-		// TODO
-		log.Fatal(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return fmt.Errorf("JSON decoding failed: %s", err)
 	}
 	lvl, err := a.GetProjectAccessLevel(r, payload.Group, payload.Project)
 	if err != nil {
@@ -191,28 +204,26 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		return errForbidden
 	}
 	// TODO input validation
-	// TODO remove hardcoded values
 	j := &model.Job{
 		Group:   payload.Group,
 		Project: payload.Project,
 		ID:      payload.ID,
 		Schedule: model.JobSchedule{
 			Kind: model.Cron,
-			Cron: "*/1 * * * *",
+			Cron: payload.Schedule.Cron,
 		},
 		CreatedAt: time.Now(),
-		Env: map[string]string{
-			"BAR": "bar",
-		},
-		Cmd: "echo $BAR",
+		Env:       payload.Env,
 		Container: model.JobContainer{
 			Kind: model.Docker,
 			Docker: model.JobDocker{
-				Image: "alpine:3.7",
+				Image: payload.Container.Docker.Image,
 			},
 		},
-		CPUs: 4,
-		Mem:  7168,
+		CPUs: payload.CPUs,
+		Mem:  payload.Mem,
+		Cmd:  payload.Cmd,
+		User: payload.User,
 	}
 	err = s.SaveJob(j)
 	if err != nil {

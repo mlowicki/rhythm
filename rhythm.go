@@ -141,7 +141,6 @@ func handleOffer(ctx context.Context, cli calls.Caller, offer *mesos.Offer, jobs
 	if len(jobs) == 0 {
 		goto accept
 	}
-
 	for _, job := range jobs {
 		rs := mesos.Resources{}
 		rs.Add(
@@ -171,7 +170,7 @@ func handleOffer(ctx context.Context, cli calls.Caller, offer *mesos.Offer, jobs
 				},
 			}
 			for k, v := range job.Env {
-				env.Variables = append(env.Variables, mesos.Environment_Variable{Name: k, Value: &v})
+				env.Variables = append(env.Variables, mesos.Environment_Variable{Name: k, Value: func(v string) *string { return &v }(v)})
 			}
 
 			/*
@@ -196,7 +195,6 @@ func handleOffer(ctx context.Context, cli calls.Caller, offer *mesos.Offer, jobs
 			if job.Container.Kind != model.Docker { // TODO
 				panic("Only Docker containers are supported")
 			}
-
 			task := mesos.TaskInfo{
 				TaskID:    mesos.TaskID{Value: taskID},
 				AgentID:   offer.AgentID,
@@ -205,6 +203,7 @@ func handleOffer(ctx context.Context, cli calls.Caller, offer *mesos.Offer, jobs
 					Value:       proto.String(job.Cmd), // TODO Cmd should be optional
 					Environment: &env,
 					// TODO Make 'Shell' configurable
+					User: func(u string) *string { return &u }(job.User),
 				},
 				Container: &mesos.ContainerInfo{
 					Type: mesos.ContainerInfo_DOCKER.Enum(),

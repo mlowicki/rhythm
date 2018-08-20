@@ -57,6 +57,7 @@ type Job struct {
 	CPUs        float64
 	Mem         float64
 	Cmd         string
+	User        string
 }
 
 func (j *Job) String() string {
