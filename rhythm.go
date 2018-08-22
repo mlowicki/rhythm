@@ -54,7 +54,6 @@ if err != nil {
 log.Printf("response: %#v\n", resp)
 
 */
-// TODO Enforce HTTPS while talking with Vault
 // TODO Handle "Framework has been removed" error
 // TODO Configure ACLs for ZooKeeper
 func main() {

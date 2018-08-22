@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -20,7 +20,7 @@ func newClient(baseURL string, token string) (*gitlab.Client, error) {
 		return nil, fmt.Errorf("Error parsing GitLab base URL: %s\n", err)
 	}
 	if url.Scheme != "https" {
-		return nil, errors.New("GitLab base URL must use HTTPS scheme")
+		log.Printf("GitLab base URL uses HTTP scheme which is insecure. It's recommented to use HTTPS instead.")
 	}
 	err = client.SetBaseURL(baseURL)
 	if err != nil {
