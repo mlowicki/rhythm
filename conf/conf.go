@@ -7,7 +7,6 @@ import (
 )
 
 type Conf struct {
-	GitLab    GitLab
 	API       API
 	Vault     Vault
 	ZooKeeper ZooKeeper
@@ -17,12 +16,23 @@ type Conf struct {
 
 type API struct {
 	Address string
+	Auth    APIAuth
 }
 
 type Vault struct {
 	Token   string
 	Address string
 	Timeout time.Duration
+}
+
+const (
+	APIAuthModeGitLab = "gitlab"
+	APIAuthModeNone   = "none"
+)
+
+type APIAuth struct {
+	Type   string
+	GitLab GitLab
 }
 
 type GitLab struct {
@@ -48,8 +58,8 @@ type Mesos struct {
 }
 
 const (
-	AuthModeBasic = "basic"
-	AuthModeNone  = "none"
+	MesosAuthModeBasic = "basic"
+	MesosAuthModeNone  = "none"
 )
 
 type MesosAuth struct {
@@ -70,6 +80,9 @@ func NewConf(path string) (*Conf, error) {
 	var conf = &Conf{
 		API: API{
 			Address: "localhost:8000",
+			Auth: APIAuth{
+				Type: APIAuthModeNone,
+			},
 		},
 		Vault: Vault{
 			Timeout: 3000, // 3s

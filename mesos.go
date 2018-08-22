@@ -12,9 +12,9 @@ import (
 func getMesosHTTPClient(c *conf.Mesos) *httpcli.Client {
 	var authConf httpcli.ConfigOpt
 
-	if c.Auth.Type == conf.AuthModeBasic {
+	if c.Auth.Type == conf.MesosAuthModeBasic {
 		authConf = httpcli.BasicAuth(c.Auth.Basic.Username, c.Auth.Basic.Password)
-	} else if c.Auth.Type != conf.AuthModeNone {
+	} else if c.Auth.Type != conf.MesosAuthModeNone {
 		log.Fatalf("Unknown authentication mode: %s\n", c.Auth.Type)
 	}
 

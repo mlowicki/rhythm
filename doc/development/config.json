@@ -1,8 +1,11 @@
 {
-    "gitlab": {
-        "baseURL": "https://gitlab.services.ams.osa"
-    },
     "api": {
+        "auth": {
+            "type": "gitlab",
+            "gitlab": {
+                "baseURL": "https://gitlab.services.ams.osa"
+            }
+        }
     },
     "storage": "zookeeper",
     "zookeeper": {

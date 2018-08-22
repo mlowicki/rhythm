@@ -20,8 +20,3 @@ Run *rhythm*:
 ```
 go run *.go --config development/config.json
 ```
-
-How to add new job:
-```
-curl -X POST -d '{"id": "foo", "group": "opera-services", "project": "autofill", "cpus": 4, "mem": 7168, "cmd": "echo $BAR", "user": "mlowicki", "env": {"BAR": "bar", "FOO": "foo"}, "schedule": {"cron": "*/1 * * * *"}, "container": {"docker": {"image": "alpine:3.8"}}}' -H "X-Token: GITLAB_TOKEN" API_ADDRESS/v1/jobs -v
-```

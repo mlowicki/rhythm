@@ -54,7 +54,6 @@ if err != nil {
 log.Printf("response: %#v\n", resp)
 
 */
-// TODO GitLab as authentication backend should be opt-in
 // TODO Enforce HTTPS while talking with Vault
 // TODO Handle "Framework has been removed" error
 // TODO Configure ACLs for ZooKeeper
@@ -69,7 +68,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error initializing storage: %s\n", err)
 	}
-	api.NewAPI(conf, storage)
+	api.NewAPI(&conf.API, storage)
 	vaultC, err := getVaultClient(&conf.Vault)
 	if err != nil {
 		log.Fatalf("Error initializing Vault client: %s\n", err)
