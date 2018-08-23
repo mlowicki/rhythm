@@ -7,7 +7,7 @@
 [Personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) from GitLab with `api` scope should be passed via `X-Token` HTTP header.
 
 ```
-curl -H "X-Token: TOKEN" -X GET API_ADDRESS/v1/jobs/GROUP/PROJECT/ID
+curl -H "X-Token: TOKEN" API_ADDRESS/v1/jobs/GROUP/PROJECT/ID
 ```
 
 ## Jobs management
