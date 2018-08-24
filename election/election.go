@@ -1,4 +1,4 @@
-package main
+package election
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 )
 
-type election struct {
+type Election struct {
 	basePath    string
 	electionDir string
 	conn        *zk.Conn
@@ -22,7 +22,7 @@ type election struct {
 	sync.Mutex
 }
 
-func (elec *election) WaitUntilLeader() (context.Context, error) {
+func (elec *Election) WaitUntilLeader() (context.Context, error) {
 	isLeader, ch, err := elec.isLeader()
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (elec *election) WaitUntilLeader() (context.Context, error) {
 	return ctx, nil
 }
 
-func (elec *election) register() error {
+func (elec *Election) register() error {
 	// TODO Consider using `CreateProtectedEphemeralSequential`
 	name, err := elec.conn.Create(elec.basePath+"/"+elec.electionDir+"/", []byte(""), zk.FlagEphemeral|zk.FlagSequence, zk.WorldACL(zk.PermAll))
 	if err != nil {
@@ -61,7 +61,7 @@ func (elec *election) register() error {
 	return nil
 }
 
-func (elec *election) isLeader() (bool, <-chan zk.Event, error) {
+func (elec *Election) isLeader() (bool, <-chan zk.Event, error) {
 	elec.Lock()
 	ticket := elec.ticket
 	elec.Unlock()
@@ -95,7 +95,7 @@ func (elec *election) isLeader() (bool, <-chan zk.Event, error) {
 	return false, nil, fmt.Errorf("election: Registration ticket doesn't exist")
 }
 
-func (elec *election) initZK() error {
+func (elec *Election) initZK() error {
 	electionPath := elec.basePath + "/" + elec.electionDir
 	exists, _, err := elec.conn.Exists(electionPath)
 	if err != nil {
@@ -110,12 +110,12 @@ func (elec *election) initZK() error {
 	return nil
 }
 
-func newElection(conf *conf.ZooKeeper) (*election, error) {
+func New(conf *conf.ZooKeeper) (*Election, error) {
 	conn, eventChan, err := zk.Connect(conf.Servers, conf.Timeout)
 	if err != nil {
 		return nil, fmt.Errorf("election: Failed connecting to ZooKeeper: %s\n", err)
 	}
-	elec := election{
+	elec := Election{
 		conn:        conn,
 		basePath:    conf.BasePath,
 		electionDir: conf.ElectionDir,

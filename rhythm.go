@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/url"
 	"strings"
 	"time"
 
@@ -24,6 +25,8 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
 	"github.com/mlowicki/rhythm/api"
 	"github.com/mlowicki/rhythm/conf"
+	"github.com/mlowicki/rhythm/election"
+	mes "github.com/mlowicki/rhythm/mesos"
 	"github.com/mlowicki/rhythm/model"
 	"github.com/mlowicki/rhythm/storage/zk"
 )
@@ -31,17 +34,58 @@ import (
 var (
 	registrationMinBackoff = 1 * time.Second
 	registrationMaxBackoff = 15 * time.Second
-	name                   = "rhythm"
 )
 
-func getFrameworkIDStore(storage Storage) store.Singleton {
-	return store.DecorateSingleton(
-		store.NewInMemorySingleton(),
-		store.DoSet().AndThen(func(_ store.Setter, v string, _ error) error {
-			log.Printf("Framework ID: %s\n", v)
-			err := storage.SetFrameworkID(v)
-			return err
-		}))
+func getConf() *conf.Conf {
+	confPath := flag.String("config", "config.json", "Path to configuration file")
+	flag.Parse()
+	var conf, err = conf.NewConf(*confPath)
+	if err != nil {
+		log.Fatalf("Error getting configuration: %s\n", err)
+	}
+	return conf
+}
+
+func getStorage(c *conf.ZooKeeper) *zk.ZKStorage {
+	s, err := zk.NewStorage(c)
+	if err != nil {
+		log.Fatalf("Error initializing storage: %s\n", err)
+	}
+	return s
+}
+
+func getElection(c *conf.ZooKeeper) *election.Election {
+	elec, err := election.New(c)
+	if err != nil {
+		log.Fatalf("Error creating election: %s\n", err)
+	}
+	return elec
+}
+
+func getVaultClient(c *conf.Vault) *vault.Client {
+	url, err := url.Parse(c.Address)
+	if err != nil {
+		log.Fatalf("Error parsing Vault address: %s\n", err)
+	}
+	if url.Scheme != "https" {
+		log.Printf("Vault address uses HTTP scheme which is insecure. It's recommented to use HTTPS instead.")
+	}
+	cli, err := vault.NewClient(&vault.Config{
+		Address: c.Address,
+		Timeout: c.Timeout,
+	})
+	if err != nil {
+		log.Fatalf("Error creating Vault client: %s\n", err)
+	}
+	cli.SetToken(c.Token)
+	return cli
+}
+
+func getMesosClient(c *conf.Mesos, frameworkIDStore store.Singleton) calls.Caller {
+	return callrules.New(
+		logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "Connecting to Mesos..."}),
+		callrules.WithFrameworkID(store.GetIgnoreErrors(frameworkIDStore)),
+	).Caller(httpsched.NewCaller(mes.NewHTTPClient(c), httpsched.AllowReconnection(true)))
 }
 
 /* TODO Periodic reconciliation
@@ -54,69 +98,45 @@ if err != nil {
 log.Printf("response: %#v\n", resp)
 
 */
-// TODO Handle "Framework has been removed" error
 // TODO Configure ACLs for ZooKeeper
 func main() {
-	confPath := flag.String("config", "config.json", "Path to configuration file")
-	flag.Parse()
-	var conf, err = conf.NewConf(*confPath)
-	if err != nil {
-		log.Fatalf("Error getting configuration: %s\n", err)
-	}
-	storage, err := zk.NewStorage(&conf.ZooKeeper)
-	if err != nil {
-		log.Fatalf("Error initializing storage: %s\n", err)
-	}
+	conf := getConf()
+	storage := getStorage(&conf.ZooKeeper)
 	api.NewAPI(&conf.API, storage)
-	vaultC, err := getVaultClient(&conf.Vault)
-	if err != nil {
-		log.Fatalf("Error initializing Vault client: %s\n", err)
-	}
-	frameworkInfo := getFrameworkInfo(&conf.Mesos)
-	fidStore := store.NewInMemorySingleton()
-	frameworkID, err := storage.GetFrameworkID()
-	if err != nil {
-		log.Fatalf("Error reading framework ID: %s\n", err)
-	}
-	if frameworkID != "" {
-		log.Printf("Framework ID: %s\n", frameworkID)
-		fidStore.Set(frameworkID)
-	}
-	frameworkInfo.ID = &mesos.FrameworkID{Value: *proto.String(frameworkID)}
-	fidStore = store.DecorateSingleton(
-		fidStore,
-		store.DoSet().AndThen(func(_ store.Setter, v string, _ error) error {
-			log.Printf("Framework ID: %s\n", v)
-			err := storage.SetFrameworkID(v)
-			return err
-		}))
-	cli := callrules.New(
-		callrules.WithFrameworkID(store.GetIgnoreErrors(fidStore)),
-	).Caller(httpsched.NewCaller(getMesosHTTPClient(&conf.Mesos), httpsched.AllowReconnection(true)))
-	elec, err := newElection(&conf.ZooKeeper)
-	if err != nil {
-		log.Fatalf("Error creating election: %s\n", err)
-	}
+	vaultC := getVaultClient(&conf.Vault)
+	elec := getElection(&conf.ZooKeeper)
 	for {
+		frameworkIDStore, err := mes.NewFrameworkIDStore(storage)
+		if err != nil {
+			log.Printf("Failed getting framework ID store: %s\n", err)
+			<-time.After(time.Second)
+			continue
+		}
 		ctx, err := elec.WaitUntilLeader()
 		if err != nil {
 			log.Printf("Error waiting for being a leader: %s\n", err)
 			<-time.After(time.Second)
 			continue
 		}
+		ctx, cancel := context.WithCancel(ctx)
+		mesosC := getMesosClient(&conf.Mesos, frameworkIDStore)
 		controller.Run(
 			ctx,
-			frameworkInfo,
-			callrules.New(
-				callrules.WithFrameworkID(store.GetIgnoreErrors(fidStore)),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "Connecting to Mesos..."}),
-			).Caller(cli),
+			mes.NewFrameworkInfo(&conf.Mesos, frameworkIDStore),
+			mesosC,
 			controller.WithRegistrationTokens(
 				backoff.Notifier(registrationMinBackoff, registrationMaxBackoff, ctx.Done()),
 			),
-			controller.WithEventHandler(buildEventHandler(cli, fidStore, vaultC, storage, conf.Verbose)),
+			controller.WithEventHandler(buildEventHandler(mesosC, frameworkIDStore, vaultC, storage, conf.Verbose)),
 			controller.WithSubscriptionTerminated(func(err error) {
 				log.Printf("Connection to Mesos terminated: %v\n", err)
+				if err.Error() == "Framework has been removed" {
+					log.Println("Resetting framework ID")
+					if err := frameworkIDStore.Set(""); err != nil {
+						log.Fatal(err)
+					}
+					cancel()
+				}
 			}),
 		)
 	}
@@ -253,19 +273,6 @@ accept:
 	}
 }
 
-func TrackRemovedFramework(frameworkIDStore store.Singleton) eventrules.Rule {
-	return func(ctx context.Context, e *scheduler.Event, err error, chain eventrules.Chain) (context.Context, *scheduler.Event, error) {
-		if err != nil {
-			return chain(ctx, e, err)
-		}
-		if e.GetType() == scheduler.Event_ERROR && e.GetError().Message == "Framework has been removed" {
-			// TODO Handle gracefully
-			panic(e)
-		}
-		return chain(ctx, e, nil)
-	}
-}
-
 func taskID2JobID(id string) string {
 	return id[:strings.LastIndexByte(id, ':')]
 }
@@ -274,6 +281,7 @@ func buildEventHandler(cli calls.Caller, fidStore store.Singleton, vaultC *vault
 	logger := controller.LogEvents(nil).Unless(false)
 	return eventrules.New(
 		logAllEvents().If(verbose),
+		controller.LiftErrors(),
 	).Handle(events.Handlers{
 		scheduler.Event_HEARTBEAT: eventrules.HandleF(func(ctx context.Context, e *scheduler.Event) error {
 			log.Println("Heartbeat")
@@ -319,9 +327,6 @@ func buildEventHandler(cli calls.Caller, fidStore store.Singleton, vaultC *vault
 		}),
 		scheduler.Event_SUBSCRIBED: eventrules.New(
 			controller.TrackSubscription(fidStore, time.Second*10),
-		),
-		scheduler.Event_ERROR: eventrules.New(
-			TrackRemovedFramework(fidStore),
 		),
 		scheduler.Event_OFFERS: eventrules.HandleF(func(ctx context.Context, e *scheduler.Event) error {
 			offers := e.GetOffers().GetOffers()
