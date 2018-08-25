@@ -1,0 +1,42 @@
+{
+    "api": {
+        "auth": {
+            "type": "gitlab",
+            "gitlab": {
+                "baseURL": "https://gitlab.services.ams.osa"
+            }
+        }
+    },
+    "storage": {
+        "type": "zookeeper",  
+        "zookeeper": {
+            "basePath": "/rhythm",
+            "timeout": 10000
+        }
+    },
+    "coordinator": {
+        "type": "zookeeper",  
+        "zookeeper": {
+            "basePath": "/rhythm",
+            "timeout": 10000
+        }
+    },
+    "secrets": {
+        "type": "vault",
+        "vault": {
+            "token": "token",
+            "address": "http://localhost:8200"
+        }
+    },
+    "verbose": false,
+    "mesos": {
+        "principal": "foo",
+        "auth": {
+            "type": "basic",
+            "basic": {
+                "username": "foo",
+                "password": "bar"
+            }
+        }
+    }
+}

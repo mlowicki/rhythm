@@ -312,20 +312,20 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
-func NewAPI(c *conf.API, s storage) {
+func New(c *conf.API, s storage) {
 	r := mux.NewRouter()
 	v1 := r.PathPrefix("/api/v1").Subrouter()
 	var a authorizer
 	t := c.Auth.Type
 	switch t {
-	case conf.APIAuthModeGitLab:
+	case conf.APIAuthTypeGitLab:
 		a = &auth.GitLabAuthorizer{BaseURL: c.Auth.GitLab.BaseURL}
-	case conf.APIAuthModeNone:
+	case conf.APIAuthTypeNone:
 		a = &auth.NoneAuthorizer{}
 	default:
 		log.Fatalf("Unknown authorization type: %s\n", t)
 	}
-	log.Printf("API Authorization mode: %s\n", c.Auth.Type)
+	log.Printf("API Authorization type: %s\n", c.Auth.Type)
 	v1.Handle("/jobs", &handler{a, s, getJobs}).Methods("GET")
 	v1.Handle("/jobs", &handler{a, s, createJob}).Methods("POST")
 	v1.Handle("/jobs/{group}", &handler{a, s, getGroupJobs}).Methods("GET")

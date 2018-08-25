@@ -17,7 +17,7 @@ type rootDirConfig struct {
 	FrameworkID string
 }
 
-func NewStorage(c *conf.ZooKeeper) (*ZKStorage, error) {
+func NewStorage(c *conf.StorageZooKeeper) (*ZKStorage, error) {
 	storage := &ZKStorage{
 		rootDirPath: c.BasePath,
 		jobsDirName: "jobs",
