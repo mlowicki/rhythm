@@ -102,10 +102,6 @@ func BuildEventHandler(cli calls.Caller, fidStore store.Singleton, vaultC *vault
 		logAllEvents().If(verbose),
 		controller.LiftErrors(),
 	).Handle(events.Handlers{
-		scheduler.Event_HEARTBEAT: eventrules.HandleF(func(ctx context.Context, e *scheduler.Event) error {
-			log.Println("Heartbeat")
-			return nil
-		}),
 		scheduler.Event_UPDATE: controller.AckStatusUpdates(cli).AndThen().HandleF(func(ctx context.Context, e *scheduler.Event) error {
 			status := e.GetUpdate().GetStatus()
 			id := taskID2JobID(status.TaskID.Value)
