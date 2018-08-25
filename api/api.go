@@ -314,7 +314,7 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 
 func NewAPI(c *conf.API, s storage) {
 	r := mux.NewRouter()
-	v1 := r.PathPrefix("/v1").Subrouter()
+	v1 := r.PathPrefix("/api/v1").Subrouter()
 	var a authorizer
 	t := c.Auth.Type
 	switch t {
