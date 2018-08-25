@@ -31,16 +31,6 @@ func buildConf() *conf.Conf {
 	return conf
 }
 
-/* TODO Periodic reconciliation
-
-reconcile := calls.Reconcile(calls.ReconcileTasks(nil))
-resp, err := cli.Call(context.TODO(), reconcile)
-if err != nil {
-	log.Fatal(err)
-}
-log.Printf("response: %#v\n", resp)
-
-*/
 // TODO Configure ACLs for ZooKeeper
 func main() {
 	conf := buildConf()
