@@ -30,6 +30,11 @@
     },
     "verbose": false,
     "mesos": {
+        "labels": {
+            "one": "1",
+            "two": "2",
+            "three": "3"
+        },
         "principal": "foo",
         "auth": {
             "type": "basic",

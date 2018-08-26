@@ -58,13 +58,18 @@ func NewFrameworkInfo(conf *conf.Mesos, idStore store.Singleton) *mesos.Framewor
 	// https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto
 	// TODO Option to set `roles` (or `role`)
 	// TODO Option to set `capabilities`
-	// TODO Option to set `labels`
+	var labels []mesos.Label
+	for k, v := range conf.Labels {
+		func(v string) {
+			labels = append(labels, mesos.Label{Key: k, Value: &v})
+		}(v)
+	}
 	frameworkInfo := &mesos.FrameworkInfo{
 		User:            conf.User,
 		Name:            frameworkName,
 		Checkpoint:      &conf.Checkpoint,
 		Capabilities:    []mesos.FrameworkInfo_Capability{},
-		Labels:          &mesos.Labels{},
+		Labels:          &mesos.Labels{labels},
 		FailoverTimeout: func() *float64 { ft := conf.FailoverTimeout.Seconds(); return &ft }(),
 		WebUiURL:        &conf.WebUiURL,
 		Hostname:        &conf.Hostname,

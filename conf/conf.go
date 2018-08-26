@@ -83,6 +83,7 @@ type Mesos struct {
 	User            string
 	WebUiURL        string
 	Principal       string
+	Labels          map[string]string
 }
 
 const (
