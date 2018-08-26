@@ -1,12 +1,9 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"time"
 
-	"github.com/mesos/mesos-go/api/v1/lib/backoff"
-	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mlowicki/rhythm/api"
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/coordinator"
@@ -20,11 +17,6 @@ import (
 func init() {
 	log.AddHook(filename.NewHook())
 }
-
-var (
-	registrationMinBackoff = 1 * time.Second
-	registrationMaxBackoff = 15 * time.Second
-)
 
 func buildConf() *conf.Conf {
 	confPath := flag.String("config", "config.json", "Path to configuration file")
@@ -42,40 +34,18 @@ func main() {
 	stor := storage.New(&conf.Storage)
 	coord := coordinator.New(&conf.Coordinator)
 	api.New(&conf.API, stor)
-	sec := secrets.New(&conf.Secrets)
+	secr := secrets.New(&conf.Secrets)
 	for {
-		frameworkIDStore, err := mesos.NewFrameworkIDStore(stor)
-		if err != nil {
-			log.Printf("Failed getting framework ID store: %s\n", err)
-			<-time.After(time.Second)
-			continue
-		}
 		ctx, err := coord.WaitUntilLeader()
 		if err != nil {
 			log.Printf("Error waiting for being a leader: %s\n", err)
 			<-time.After(time.Second)
 			continue
 		}
-		ctx, cancel := context.WithCancel(ctx)
-		mesosC := mesos.NewClient(&conf.Mesos, frameworkIDStore)
-		controller.Run(
-			ctx,
-			mesos.NewFrameworkInfo(&conf.Mesos, frameworkIDStore),
-			mesosC,
-			controller.WithRegistrationTokens(
-				backoff.Notifier(registrationMinBackoff, registrationMaxBackoff, ctx.Done()),
-			),
-			controller.WithEventHandler(mesos.BuildEventHandler(mesosC, frameworkIDStore, sec, stor, conf.Verbose)),
-			controller.WithSubscriptionTerminated(func(err error) {
-				log.Printf("Connection to Mesos terminated: %v\n", err)
-				if err.Error() == "Framework has been removed" {
-					log.Println("Resetting framework ID")
-					if err := frameworkIDStore.Set(""); err != nil {
-						log.Fatal(err)
-					}
-					cancel()
-				}
-			}),
-		)
+		err = mesos.Run(conf, ctx, stor, secr)
+		if err != nil {
+			log.Printf("Controller error: %s\n", err)
+			<-time.After(time.Second)
+		}
 	}
 }
