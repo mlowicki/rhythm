@@ -21,51 +21,51 @@ type API struct {
 }
 
 const (
-	APIAuthTypeGitLab = "gitlab"
-	APIAuthTypeNone   = "none"
+	APIAuthBackendGitLab = "gitlab"
+	APIAuthBackendNone   = "none"
 )
 
 type APIAuth struct {
-	Type   string
-	GitLab GitLab
+	Backend string
+	GitLab  APIAuthGitLab
 }
 
-type GitLab struct {
+type APIAuthGitLab struct {
 	BaseURL string
 }
 
 type Storage struct {
-	Type      string
-	ZooKeeper StorageZooKeeper
+	Backend   string
+	ZooKeeper StorageZK
 }
 
-const StorageTypeZooKeeper = "zookeeper"
+const StorageBackendZK = "zookeeper"
 
-type StorageZooKeeper struct {
+type StorageZK struct {
 	BasePath string
 	Servers  []string
 	Timeout  time.Duration
 }
 
-const CoordinatorTypeZooKeeper = "zookeeper"
+const CoordinatorBackendZK = "zookeeper"
 
 type Coordinator struct {
-	Type      string
-	ZooKeeper CoordinatorZooKeeper
+	Backend   string
+	ZooKeeper CoordinatorZK
 }
 
-type CoordinatorZooKeeper struct {
+type CoordinatorZK struct {
 	BasePath    string
 	ElectionDir string
 	Servers     []string
 	Timeout     time.Duration
 }
 
-const SecretsTypeVault = "vault"
+const SecretsBackendVault = "vault"
 
 type Secrets struct {
-	Type  string
-	Vault SecretsVault
+	Backend string
+	Vault   SecretsVault
 }
 
 type SecretsVault struct {
@@ -109,20 +109,20 @@ func New(path string) (*Conf, error) {
 		API: API{
 			Address: "localhost:8000",
 			Auth: APIAuth{
-				Type: APIAuthTypeNone,
+				Backend: APIAuthBackendNone,
 			},
 		},
 		Storage: Storage{
-			Type: "zookeeper",
-			ZooKeeper: StorageZooKeeper{
+			Backend: StorageBackendZK,
+			ZooKeeper: StorageZK{
 				Servers:  []string{"127.0.0.1"},
 				Timeout:  10000, // 10s
 				BasePath: "/rhythm",
 			},
 		},
 		Coordinator: Coordinator{
-			Type: "zookeeper",
-			ZooKeeper: CoordinatorZooKeeper{
+			Backend: CoordinatorBackendZK,
+			ZooKeeper: CoordinatorZK{
 				Servers:     []string{"127.0.0.1"},
 				Timeout:     10000, // 10s
 				BasePath:    "/rhythm",
@@ -130,7 +130,7 @@ func New(path string) (*Conf, error) {
 			},
 		},
 		Secrets: Secrets{
-			Type: "vault",
+			Backend: SecretsBackendVault,
 			Vault: SecretsVault{
 				Timeout: 3000, // 3s
 			},

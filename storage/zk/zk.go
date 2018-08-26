@@ -3,7 +3,6 @@ package zk
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/rand"
 	"time"
 
@@ -17,7 +16,7 @@ type rootDirConfig struct {
 	FrameworkID string
 }
 
-func NewStorage(c *conf.StorageZooKeeper) (*ZKStorage, error) {
+func NewStorage(c *conf.StorageZK) (*ZKStorage, error) {
 	storage := &ZKStorage{
 		rootDirPath: c.BasePath,
 		jobsDirName: "jobs",
@@ -202,8 +201,6 @@ func (s *ZKStorage) GetRunnableJobs() ([]*model.Job, error) {
 		}
 
 		if sched.Next(t).Before(time.Now()) {
-			log.Printf("Found job eligible to run: %s\n", job.ID)
-			//log.Printf("Found job eligible to run: %s (%s)\n", job.ID, job.project.ID)
 			runnable = append(runnable, job)
 		}
 	}

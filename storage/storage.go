@@ -1,11 +1,10 @@
 package storage
 
 import (
-	"log"
-
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/model"
 	"github.com/mlowicki/rhythm/storage/zk"
+	log "github.com/sirupsen/logrus"
 )
 
 type storage interface {
@@ -21,14 +20,14 @@ type storage interface {
 }
 
 func New(c *conf.Storage) storage {
-	if c.Type == conf.StorageTypeZooKeeper {
+	if c.Backend == conf.StorageBackendZK {
 		s, err := zk.NewStorage(&c.ZooKeeper)
 		if err != nil {
-			log.Fatalf("Error initializing ZooKeeper storage: %s\n", err)
+			log.Fatal(err)
 		}
 		return s
 	} else {
-		log.Fatalf("Unknown storage type: %s\n", c.Type)
+		log.Fatalf("Unknown backedn: %s", c.Backend)
 		return nil
 	}
 }

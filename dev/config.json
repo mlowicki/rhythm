@@ -1,28 +1,28 @@
 {
     "api": {
         "auth": {
-            "type": "gitlab",
+            "backend": "gitlab",
             "gitlab": {
                 "baseURL": "https://gitlab.services.ams.osa"
             }
         }
     },
     "storage": {
-        "type": "zookeeper",  
+        "backend": "zookeeper",
         "zookeeper": {
             "basePath": "/rhythm",
             "timeout": 10000
         }
     },
     "coordinator": {
-        "type": "zookeeper",  
+        "backend": "zookeeper",
         "zookeeper": {
             "basePath": "/rhythm",
             "timeout": 10000
         }
     },
     "secrets": {
-        "type": "vault",
+        "backend": "vault",
         "vault": {
             "token": "token",
             "address": "http://localhost:8200"

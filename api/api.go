@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/mlowicki/rhythm/api/auth"
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/model"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -316,16 +316,15 @@ func New(c *conf.API, s storage) {
 	r := mux.NewRouter()
 	v1 := r.PathPrefix("/api/v1").Subrouter()
 	var a authorizer
-	t := c.Auth.Type
-	switch t {
-	case conf.APIAuthTypeGitLab:
+	switch c.Auth.Backend {
+	case conf.APIAuthBackendGitLab:
 		a = &auth.GitLabAuthorizer{BaseURL: c.Auth.GitLab.BaseURL}
-	case conf.APIAuthTypeNone:
+	case conf.APIAuthBackendNone:
 		a = &auth.NoneAuthorizer{}
 	default:
-		log.Fatalf("Unknown authorization type: %s\n", t)
+		log.Fatalf("Unknown authorization backend: %s", c.Auth.Backend)
 	}
-	log.Printf("API Authorization type: %s\n", c.Auth.Type)
+	log.Printf("Authorization backend: %s", c.Auth.Backend)
 	v1.Handle("/jobs", &handler{a, s, getJobs}).Methods("GET")
 	v1.Handle("/jobs", &handler{a, s, createJob}).Methods("POST")
 	v1.Handle("/jobs/{group}", &handler{a, s, getGroupJobs}).Methods("GET")

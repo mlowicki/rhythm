@@ -2,10 +2,10 @@ package auth
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/xanzy/go-gitlab"
 )
 

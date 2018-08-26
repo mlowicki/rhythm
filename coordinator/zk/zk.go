@@ -3,13 +3,13 @@ package zk
 import (
 	"context"
 	"fmt"
-	"log"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/samuel/go-zookeeper/zk"
+	log "github.com/sirupsen/logrus"
 )
 
 type Coordinator struct {
@@ -29,7 +29,7 @@ func (coord *Coordinator) WaitUntilLeader() (context.Context, error) {
 	}
 	if !isLeader {
 		for {
-			log.Println("coordinator: Not elected as leader. Waiting...")
+			log.Println("Not elected as leader. Waiting...")
 			<-ch
 			isLeader, ch, err = coord.isLeader()
 			if err != nil {
@@ -39,7 +39,7 @@ func (coord *Coordinator) WaitUntilLeader() (context.Context, error) {
 			}
 		}
 	}
-	log.Println("coordinator: Elected as leader")
+	log.Println("Elected as leader")
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	coord.Lock()
@@ -68,12 +68,12 @@ func (coord *Coordinator) isLeader() (bool, <-chan zk.Event, error) {
 	if ticket == "" {
 		err := coord.register()
 		if err != nil {
-			return false, nil, fmt.Errorf("coordinator: Registration failed: %s\n", err)
+			return false, nil, fmt.Errorf("Registration failed: %s", err)
 		}
 	}
 	tickets, _, eventChan, err := coord.conn.ChildrenW(coord.basePath + "/" + coord.electionDir)
 	if err != nil {
-		return false, nil, fmt.Errorf("coordinator: Failed getting registration tickets: %s\n", err)
+		return false, nil, fmt.Errorf("Failed getting registration tickets: %s", err)
 	}
 	coord.Lock()
 	ticket = coord.ticket
@@ -85,35 +85,35 @@ func (coord *Coordinator) isLeader() (bool, <-chan zk.Event, error) {
 			isLeader = true
 		}
 	}
-	log.Printf("coordinator: All registration tickets: %v\n", tickets)
-	log.Printf("coordinator: My registration ticket: %s\n", ticket)
+	log.Printf("All registration tickets: %v", tickets)
+	log.Printf("My registration ticket: %s", ticket)
 	for _, cur := range tickets {
 		if ticket == cur {
 			return isLeader, eventChan, nil
 		}
 	}
-	return false, nil, fmt.Errorf("coordinator: Registration ticket doesn't exist")
+	return false, nil, fmt.Errorf("Registration ticket doesn't exist")
 }
 
 func (coord *Coordinator) initZK() error {
 	electionPath := coord.basePath + "/" + coord.electionDir
 	exists, _, err := coord.conn.Exists(electionPath)
 	if err != nil {
-		return fmt.Errorf("coordinator: Failed checking if election directory exists: %s\n", err)
+		return fmt.Errorf("Failed checking if election directory exists: %s", err)
 	}
 	if !exists {
 		_, err = coord.conn.Create(electionPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
 		if err != nil {
-			return fmt.Errorf("coordinator: Failed creating election directory: %s\n", err)
+			return fmt.Errorf("Failed creating election directory: %s", err)
 		}
 	}
 	return nil
 }
 
-func New(conf *conf.CoordinatorZooKeeper) (*Coordinator, error) {
+func New(conf *conf.CoordinatorZK) (*Coordinator, error) {
 	conn, eventChan, err := zk.Connect(conf.Servers, conf.Timeout)
 	if err != nil {
-		return nil, fmt.Errorf("coordinator: Failed connecting to ZooKeeper: %s\n", err)
+		return nil, fmt.Errorf("Failed connecting to ZooKeeper: %s", err)
 	}
 	coord := Coordinator{
 		conn:        conn,
@@ -130,9 +130,9 @@ func New(conf *conf.CoordinatorZooKeeper) (*Coordinator, error) {
 		for {
 			select {
 			case ev := <-coord.eventChan:
-				log.Printf("coordinator: ZooKeeper event: %s\n", ev)
+				log.Printf("ZooKeeper event: %s", ev)
 				if ev.State == zk.StateDisconnected {
-					log.Printf("coordinator: Disconnected from ZooKeeper: %s\n", ev)
+					log.Printf("Disconnected from ZooKeeper: %s", ev)
 					coord.Lock()
 					if coord.cancel != nil {
 						coord.cancel()
@@ -140,7 +140,7 @@ func New(conf *conf.CoordinatorZooKeeper) (*Coordinator, error) {
 					}
 					coord.Unlock()
 				} else if ev.State == zk.StateExpired {
-					log.Printf("coordinator: Session expired: %s\n", ev)
+					log.Printf("Session expired: %s", ev)
 					coord.Lock()
 					coord.ticket = ""
 					coord.Unlock()

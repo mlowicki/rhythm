@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
 	"time"
 
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
@@ -14,7 +13,13 @@ import (
 	"github.com/mlowicki/rhythm/mesos"
 	"github.com/mlowicki/rhythm/secrets"
 	"github.com/mlowicki/rhythm/storage"
+	"github.com/onrik/logrus/filename"
+	log "github.com/sirupsen/logrus"
 )
+
+func init() {
+	log.AddHook(filename.NewHook())
+}
 
 var (
 	registrationMinBackoff = 1 * time.Second
@@ -37,7 +42,7 @@ func main() {
 	stor := storage.New(&conf.Storage)
 	coord := coordinator.New(&conf.Coordinator)
 	api.New(&conf.API, stor)
-	vaultC := secrets.New(&conf.Secrets)
+	sec := secrets.New(&conf.Secrets)
 	for {
 		frameworkIDStore, err := mesos.NewFrameworkIDStore(stor)
 		if err != nil {
@@ -60,7 +65,7 @@ func main() {
 			controller.WithRegistrationTokens(
 				backoff.Notifier(registrationMinBackoff, registrationMaxBackoff, ctx.Done()),
 			),
-			controller.WithEventHandler(mesos.BuildEventHandler(mesosC, frameworkIDStore, vaultC, stor, conf.Verbose)),
+			controller.WithEventHandler(mesos.BuildEventHandler(mesosC, frameworkIDStore, sec, stor, conf.Verbose)),
 			controller.WithSubscriptionTerminated(func(err error) {
 				log.Printf("Connection to Mesos terminated: %v\n", err)
 				if err.Error() == "Framework has been removed" {

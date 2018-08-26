@@ -2,10 +2,10 @@ package coordinator
 
 import (
 	"context"
-	"log"
 
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/coordinator/zk"
+	log "github.com/sirupsen/logrus"
 )
 
 type coordinator interface {
@@ -13,14 +13,14 @@ type coordinator interface {
 }
 
 func New(c *conf.Coordinator) coordinator {
-	if c.Type == conf.CoordinatorTypeZooKeeper {
+	if c.Backend == conf.CoordinatorBackendZK {
 		coord, err := zk.New(&c.ZooKeeper)
 		if err != nil {
-			log.Fatalf("Error creating coordinator: %s\n", err)
+			log.Fatal(err)
 		}
 		return coord
 	} else {
-		log.Fatalf("Unknown coordinator type: %s\n", c.Type)
+		log.Fatalf("Unknown backend: %s", c.Backend)
 		return nil
 	}
 }
