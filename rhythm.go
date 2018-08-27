@@ -28,7 +28,6 @@ func buildConf() *conf.Conf {
 	return conf
 }
 
-// TODO Configure ACLs for ZooKeeper
 func main() {
 	conf := buildConf()
 	stor := storage.New(&conf.Storage)

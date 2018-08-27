@@ -45,6 +45,7 @@ type StorageZK struct {
 	BasePath string
 	Servers  []string
 	Timeout  time.Duration
+	Auth     ZKAuth
 }
 
 const CoordinatorBackendZK = "zookeeper"
@@ -59,6 +60,22 @@ type CoordinatorZK struct {
 	ElectionDir string
 	Servers     []string
 	Timeout     time.Duration
+	Auth        ZKAuth
+}
+
+const (
+	ZKAuthSchemeDigest = "digest"
+	ZKAuthSchemeWorld  = "world"
+)
+
+type ZKAuth struct {
+	Scheme string
+	Digest ZKAuthDigest
+}
+
+type ZKAuthDigest struct {
+	User     string
+	Password string
 }
 
 const SecretsBackendVault = "vault"
@@ -119,6 +136,9 @@ func New(path string) (*Conf, error) {
 				Servers:  []string{"127.0.0.1"},
 				Timeout:  10000, // 10s
 				BasePath: "/rhythm",
+				Auth: ZKAuth{
+					Scheme: ZKAuthSchemeWorld,
+				},
 			},
 		},
 		Coordinator: Coordinator{
@@ -128,6 +148,9 @@ func New(path string) (*Conf, error) {
 				Timeout:     10000, // 10s
 				BasePath:    "/rhythm",
 				ElectionDir: "election",
+				Auth: ZKAuth{
+					Scheme: ZKAuthSchemeWorld,
+				},
 			},
 		},
 		Secrets: Secrets{

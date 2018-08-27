@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/mlowicki/rhythm/conf"
+	"github.com/mlowicki/rhythm/zkutil"
 	"github.com/samuel/go-zookeeper/zk"
 	log "github.com/sirupsen/logrus"
 )
@@ -19,6 +20,7 @@ type Coordinator struct {
 	ticket      string
 	eventChan   <-chan zk.Event
 	cancel      context.CancelFunc
+	acl         func(perms int32) []zk.ACL
 	sync.Mutex
 }
 
@@ -50,7 +52,7 @@ func (coord *Coordinator) WaitUntilLeader() (context.Context, error) {
 
 func (coord *Coordinator) register() error {
 	// TODO Consider using `CreateProtectedEphemeralSequential`
-	name, err := coord.conn.Create(coord.basePath+"/"+coord.electionDir+"/", []byte(""), zk.FlagEphemeral|zk.FlagSequence, zk.WorldACL(zk.PermAll))
+	name, err := coord.conn.Create(coord.basePath+"/"+coord.electionDir+"/", []byte(""), zk.FlagEphemeral|zk.FlagSequence, coord.acl(zk.PermAll))
 	if err != nil {
 		return err
 	}
@@ -102,7 +104,7 @@ func (coord *Coordinator) initZK() error {
 		return fmt.Errorf("Failed checking if election directory exists: %s", err)
 	}
 	if !exists {
-		_, err = coord.conn.Create(electionPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
+		_, err = coord.conn.Create(electionPath, []byte{}, 0, coord.acl(zk.PermAll))
 		if err != nil {
 			return fmt.Errorf("Failed creating election directory: %s", err)
 		}
@@ -110,15 +112,20 @@ func (coord *Coordinator) initZK() error {
 	return nil
 }
 
-func New(conf *conf.CoordinatorZK) (*Coordinator, error) {
-	conn, eventChan, err := zk.Connect(conf.Servers, conf.Timeout)
+func New(c *conf.CoordinatorZK) (*Coordinator, error) {
+	conn, eventChan, err := zk.Connect(c.Servers, c.Timeout)
 	if err != nil {
 		return nil, fmt.Errorf("Failed connecting to ZooKeeper: %s", err)
 	}
+	acl, err := zkutil.AddAuth(conn, &c.Auth)
+	if err != nil {
+		return nil, err
+	}
 	coord := Coordinator{
 		conn:        conn,
-		basePath:    conf.BasePath,
-		electionDir: conf.ElectionDir,
+		acl:         acl,
+		basePath:    c.BasePath,
+		electionDir: c.ElectionDir,
 		eventChan:   eventChan,
 	}
 	err = coord.initZK()

@@ -11,14 +11,28 @@
         "backend": "zookeeper",
         "zookeeper": {
             "basePath": "/rhythm",
-            "timeout": 10000
+            "timeout": 10000,
+            "auth": {
+                "scheme": "digest",
+                "digest": {
+                    "user": "foo",
+                    "password": "bar"
+                }
+            }
         }
     },
     "coordinator": {
         "backend": "zookeeper",
         "zookeeper": {
             "basePath": "/rhythm",
-            "timeout": 10000
+            "timeout": 10000,
+            "auth": {
+                "scheme": "digest",
+                "digest": {
+                    "user": "foo",
+                    "password": "bar"
+                }
+            }
         }
     },
     "secrets": {

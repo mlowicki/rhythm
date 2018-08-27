@@ -8,6 +8,7 @@ import (
 
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/model"
+	"github.com/mlowicki/rhythm/zkutil"
 	"github.com/robfig/cron"
 	"github.com/samuel/go-zookeeper/zk"
 )
@@ -16,33 +17,39 @@ type rootDirConfig struct {
 	FrameworkID string
 }
 
-func NewStorage(c *conf.StorageZK) (*ZKStorage, error) {
-	storage := &ZKStorage{
+func NewStorage(c *conf.StorageZK) (*storage, error) {
+	s := &storage{
 		rootDirPath: c.BasePath,
 		jobsDirName: "jobs",
 		servers:     c.Servers,
 		timeout:     c.Timeout,
 	}
-	err := storage.connect()
+	err := s.connect()
 	if err != nil {
 		return nil, err
 	}
-	err = storage.init()
+	acl, err := zkutil.AddAuth(s.conn, &c.Auth)
 	if err != nil {
 		return nil, err
 	}
-	return storage, nil
+	s.acl = acl
+	err = s.init()
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
-type ZKStorage struct {
+type storage struct {
 	rootDirPath string
 	jobsDirName string
 	servers     []string
 	conn        *zk.Conn
+	acl         func(perms int32) []zk.ACL
 	timeout     time.Duration
 }
 
-func (s *ZKStorage) connect() error {
+func (s *storage) connect() error {
 	conn, _, err := zk.Connect(s.servers, s.timeout)
 	if err != nil {
 		return err
@@ -51,7 +58,7 @@ func (s *ZKStorage) connect() error {
 	return nil
 }
 
-func (s *ZKStorage) SetFrameworkID(id string) error {
+func (s *storage) SetFrameworkID(id string) error {
 	payload, stat, err := s.conn.Get(s.rootDirPath)
 	version := stat.Version
 	conf := rootDirConfig{}
@@ -68,7 +75,7 @@ func (s *ZKStorage) SetFrameworkID(id string) error {
 	return nil
 }
 
-func (s *ZKStorage) GetFrameworkID() (string, error) {
+func (s *storage) GetFrameworkID() (string, error) {
 	conf := rootDirConfig{}
 	payload, _, err := s.conn.Get(s.rootDirPath)
 	err = json.Unmarshal(payload, &conf)
@@ -81,7 +88,7 @@ func (s *ZKStorage) GetFrameworkID() (string, error) {
 	return conf.FrameworkID, nil
 }
 
-func (s *ZKStorage) init() error {
+func (s *storage) init() error {
 	exists, _, err := s.conn.Exists(s.rootDirPath)
 	if exists {
 		return nil
@@ -91,7 +98,7 @@ func (s *ZKStorage) init() error {
 	if err != nil {
 		return err
 	}
-	_, err = s.conn.Create(s.rootDirPath, encoded, 0, zk.WorldACL(zk.PermAll))
+	_, err = s.conn.Create(s.rootDirPath, encoded, 0, s.acl(zk.PermAll))
 	if err != nil {
 		return err
 	}
@@ -101,7 +108,7 @@ func (s *ZKStorage) init() error {
 		return err
 	}
 	if !exists {
-		_, err = s.conn.Create(jobsPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
+		_, err = s.conn.Create(jobsPath, []byte{}, 0, s.acl(zk.PermAll))
 		if err != nil {
 			return err
 		}
@@ -109,7 +116,7 @@ func (s *ZKStorage) init() error {
 	return nil
 }
 
-func (s *ZKStorage) GetJob(group string, project string, id string) (*model.Job, error) {
+func (s *storage) GetJob(group string, project string, id string) (*model.Job, error) {
 	jobs, err := s.GetJobs()
 	if err != nil {
 		return nil, err
@@ -122,7 +129,7 @@ func (s *ZKStorage) GetJob(group string, project string, id string) (*model.Job,
 	return nil, nil
 }
 
-func (s *ZKStorage) GetGroupJobs(group string) ([]*model.Job, error) {
+func (s *storage) GetGroupJobs(group string) ([]*model.Job, error) {
 	jobs, err := s.GetJobs()
 	if err != nil {
 		return []*model.Job{}, err
@@ -136,7 +143,7 @@ func (s *ZKStorage) GetGroupJobs(group string) ([]*model.Job, error) {
 	return filtered, nil
 }
 
-func (s *ZKStorage) GetProjectJobs(group string, project string) ([]*model.Job, error) {
+func (s *storage) GetProjectJobs(group string, project string) ([]*model.Job, error) {
 	jobs, err := s.GetJobs()
 	if err != nil {
 		return []*model.Job{}, err
@@ -150,7 +157,7 @@ func (s *ZKStorage) GetProjectJobs(group string, project string) ([]*model.Job, 
 	return filtered, nil
 }
 
-func (s *ZKStorage) GetJobs() ([]*model.Job, error) {
+func (s *storage) GetJobs() ([]*model.Job, error) {
 	jobs := []*model.Job{}
 	jobsPath := s.rootDirPath + "/" + s.jobsDirName
 	children, _, err := s.conn.Children(jobsPath)
@@ -172,7 +179,7 @@ func (s *ZKStorage) GetJobs() ([]*model.Job, error) {
 	return jobs, nil
 }
 
-func (s *ZKStorage) GetRunnableJobs() ([]*model.Job, error) {
+func (s *storage) GetRunnableJobs() ([]*model.Job, error) {
 	runnable := []*model.Job{}
 	jobs, err := s.GetJobs()
 	if err != nil {
@@ -212,7 +219,7 @@ func (s *ZKStorage) GetRunnableJobs() ([]*model.Job, error) {
 	return runnable, nil
 }
 
-func (s *ZKStorage) SaveJob(job *model.Job) error {
+func (s *storage) SaveJob(job *model.Job) error {
 	encoded, err := json.Marshal(job)
 	if err != nil {
 		return err
@@ -229,7 +236,7 @@ func (s *ZKStorage) SaveJob(job *model.Job) error {
 			return err
 		}
 	} else {
-		_, err = s.conn.Create(jobPath, encoded, 0, zk.WorldACL(zk.PermAll))
+		_, err = s.conn.Create(jobPath, encoded, 0, s.acl(zk.PermAll))
 		if err != nil {
 			return err
 		}
@@ -237,7 +244,7 @@ func (s *ZKStorage) SaveJob(job *model.Job) error {
 	return nil
 }
 
-func (s *ZKStorage) DeleteJob(group string, project string, id string) error {
+func (s *storage) DeleteJob(group string, project string, id string) error {
 	path := fmt.Sprintf("%s/%s:%s:%s", s.rootDirPath+"/"+s.jobsDirName, group, project, id)
 	exists, stat, err := s.conn.Exists(path)
 	if err != nil {
