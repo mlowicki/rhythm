@@ -13,14 +13,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const electionDir = "election"
+
 type Coordinator struct {
-	basePath    string
-	electionDir string
-	conn        *zk.Conn
-	ticket      string
-	eventChan   <-chan zk.Event
-	cancel      context.CancelFunc
-	acl         func(perms int32) []zk.ACL
+	dir       string
+	conn      *zk.Conn
+	acl       func(perms int32) []zk.ACL
+	ticket    string
+	eventChan <-chan zk.Event
+	cancel    context.CancelFunc
 	sync.Mutex
 }
 
@@ -52,7 +53,7 @@ func (coord *Coordinator) WaitUntilLeader() (context.Context, error) {
 
 func (coord *Coordinator) register() error {
 	// TODO Consider using `CreateProtectedEphemeralSequential`
-	name, err := coord.conn.Create(coord.basePath+"/"+coord.electionDir+"/", []byte(""), zk.FlagEphemeral|zk.FlagSequence, coord.acl(zk.PermAll))
+	name, err := coord.conn.Create(coord.dir+"/"+electionDir+"/", []byte{}, zk.FlagEphemeral|zk.FlagSequence, coord.acl(zk.PermAll))
 	if err != nil {
 		return err
 	}
@@ -73,7 +74,7 @@ func (coord *Coordinator) isLeader() (bool, <-chan zk.Event, error) {
 			return false, nil, fmt.Errorf("Registration failed: %s", err)
 		}
 	}
-	tickets, _, eventChan, err := coord.conn.ChildrenW(coord.basePath + "/" + coord.electionDir)
+	tickets, _, eventChan, err := coord.conn.ChildrenW(coord.dir + "/" + electionDir)
 	if err != nil {
 		return false, nil, fmt.Errorf("Failed getting registration tickets: %s", err)
 	}
@@ -98,13 +99,23 @@ func (coord *Coordinator) isLeader() (bool, <-chan zk.Event, error) {
 }
 
 func (coord *Coordinator) initZK() error {
-	electionPath := coord.basePath + "/" + coord.electionDir
-	exists, _, err := coord.conn.Exists(electionPath)
+	exists, _, err := coord.conn.Exists(coord.dir)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		_, err = coord.conn.Create(coord.dir, []byte{}, 0, coord.acl(zk.PermAll))
+		if err != nil {
+			return err
+		}
+	}
+	path := coord.dir + "/" + electionDir
+	exists, _, err = coord.conn.Exists(path)
 	if err != nil {
 		return fmt.Errorf("Failed checking if election directory exists: %s", err)
 	}
 	if !exists {
-		_, err = coord.conn.Create(electionPath, []byte{}, 0, coord.acl(zk.PermAll))
+		_, err = coord.conn.Create(path, []byte{}, 0, coord.acl(zk.PermAll))
 		if err != nil {
 			return fmt.Errorf("Failed creating election directory: %s", err)
 		}
@@ -122,11 +133,10 @@ func New(c *conf.CoordinatorZK) (*Coordinator, error) {
 		return nil, err
 	}
 	coord := Coordinator{
-		conn:        conn,
-		acl:         acl,
-		basePath:    c.BasePath,
-		electionDir: c.ElectionDir,
-		eventChan:   eventChan,
+		conn:      conn,
+		acl:       acl,
+		dir:       "/" + c.Dir,
+		eventChan: eventChan,
 	}
 	err = coord.initZK()
 	if err != nil {

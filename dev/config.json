@@ -10,7 +10,7 @@
     "storage": {
         "backend": "zookeeper",
         "zookeeper": {
-            "basePath": "/rhythm",
+            "dir": "rhythm",
             "timeout": 10000,
             "auth": {
                 "scheme": "digest",
@@ -24,7 +24,7 @@
     "coordinator": {
         "backend": "zookeeper",
         "zookeeper": {
-            "basePath": "/rhythm",
+            "dir": "rhythm",
             "timeout": 10000,
             "auth": {
                 "scheme": "digest",

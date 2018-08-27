@@ -13,16 +13,20 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 )
 
-type rootDirConfig struct {
-	FrameworkID string
+type state struct {
+	frameworkID string
 }
+
+const (
+	jobsDir  = "jobs"
+	stateDir = "state"
+)
 
 func NewStorage(c *conf.StorageZK) (*storage, error) {
 	s := &storage{
-		rootDirPath: c.BasePath,
-		jobsDirName: "jobs",
-		servers:     c.Servers,
-		timeout:     c.Timeout,
+		dir:     "/" + c.Dir,
+		servers: c.Servers,
+		timeout: c.Timeout,
 	}
 	err := s.connect()
 	if err != nil {
@@ -41,12 +45,11 @@ func NewStorage(c *conf.StorageZK) (*storage, error) {
 }
 
 type storage struct {
-	rootDirPath string
-	jobsDirName string
-	servers     []string
-	conn        *zk.Conn
-	acl         func(perms int32) []zk.ACL
-	timeout     time.Duration
+	dir     string
+	servers []string
+	conn    *zk.Conn
+	acl     func(perms int32) []zk.ACL
+	timeout time.Duration
 }
 
 func (s *storage) connect() error {
@@ -59,56 +62,68 @@ func (s *storage) connect() error {
 }
 
 func (s *storage) SetFrameworkID(id string) error {
-	payload, stat, err := s.conn.Get(s.rootDirPath)
+	path := s.dir + "/" + stateDir
+	payload, stat, err := s.conn.Get(path)
 	version := stat.Version
-	conf := rootDirConfig{}
-	err = json.Unmarshal(payload, &conf)
+	st := state{}
+	err = json.Unmarshal(payload, &st)
 	if err != nil {
 		return err
 	}
-	conf.FrameworkID = id
-	encoded, err := json.Marshal(&conf)
+	st.frameworkID = id
+	est, err := json.Marshal(&st)
 	if err != nil {
 		return err
 	}
-	_, err = s.conn.Set(s.rootDirPath, encoded, version)
+	_, err = s.conn.Set(path, est, version)
 	return nil
 }
 
 func (s *storage) GetFrameworkID() (string, error) {
-	conf := rootDirConfig{}
-	payload, _, err := s.conn.Get(s.rootDirPath)
-	err = json.Unmarshal(payload, &conf)
+	st := state{}
+	payload, _, err := s.conn.Get(s.dir + "/" + stateDir)
+	err = json.Unmarshal(payload, &st)
 	if err != nil {
 		return "", err
 	}
-	if conf.FrameworkID == "" {
-		return "", nil
-	}
-	return conf.FrameworkID, nil
+	return st.frameworkID, nil
 }
 
 func (s *storage) init() error {
-	exists, _, err := s.conn.Exists(s.rootDirPath)
-	if exists {
-		return nil
-	}
-	conf := rootDirConfig{}
-	encoded, err := json.Marshal(&conf)
-	if err != nil {
-		return err
-	}
-	_, err = s.conn.Create(s.rootDirPath, encoded, 0, s.acl(zk.PermAll))
-	if err != nil {
-		return err
-	}
-	jobsPath := s.rootDirPath + "/" + s.jobsDirName
-	exists, _, err = s.conn.Exists(jobsPath)
+	exists, _, err := s.conn.Exists(s.dir)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		_, err = s.conn.Create(jobsPath, []byte{}, 0, s.acl(zk.PermAll))
+		_, err = s.conn.Create(s.dir, []byte{}, 0, s.acl(zk.PermAll))
+		if err != nil {
+			return err
+		}
+	}
+	path := s.dir + "/" + stateDir
+	exists, _, err = s.conn.Exists(path)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		st := state{}
+		est, err := json.Marshal(&st)
+		if err != nil {
+			return err
+		}
+		_, err = s.conn.Create(path, est, 0, s.acl(zk.PermAll))
+		if err != nil {
+			return err
+		}
+
+	}
+	path = s.dir + "/" + jobsDir
+	exists, _, err = s.conn.Exists(path)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		_, err = s.conn.Create(path, []byte{}, 0, s.acl(zk.PermAll))
 		if err != nil {
 			return err
 		}
@@ -159,13 +174,13 @@ func (s *storage) GetProjectJobs(group string, project string) ([]*model.Job, er
 
 func (s *storage) GetJobs() ([]*model.Job, error) {
 	jobs := []*model.Job{}
-	jobsPath := s.rootDirPath + "/" + s.jobsDirName
-	children, _, err := s.conn.Children(jobsPath)
+	base := s.dir + "/" + jobsDir
+	children, _, err := s.conn.Children(base)
 	if err != nil {
 		return jobs, err
 	}
 	for _, child := range children {
-		payload, _, err := s.conn.Get(jobsPath + "/" + child)
+		payload, _, err := s.conn.Get(base + "/" + child)
 		if err != nil {
 			return jobs, err
 		}
@@ -211,11 +226,9 @@ func (s *storage) GetRunnableJobs() ([]*model.Job, error) {
 			runnable = append(runnable, job)
 		}
 	}
-
 	rand.Shuffle(len(runnable), func(i, j int) {
 		runnable[i], runnable[j] = runnable[j], runnable[i]
 	})
-
 	return runnable, nil
 }
 
@@ -224,19 +237,18 @@ func (s *storage) SaveJob(job *model.Job) error {
 	if err != nil {
 		return err
 	}
-	jobsPath := s.rootDirPath + "/" + s.jobsDirName
-	jobPath := fmt.Sprintf("%s/%s:%s:%s", jobsPath, job.Group, job.Project, job.ID)
-	exists, stat, err := s.conn.Exists(jobPath)
+	path := fmt.Sprintf("%s/%s:%s:%s", s.dir+"/"+jobsDir, job.Group, job.Project, job.ID)
+	exists, stat, err := s.conn.Exists(path)
 	if err != nil {
 		return err
 	}
 	if exists {
-		_, err = s.conn.Set(jobPath, encoded, stat.Version)
+		_, err = s.conn.Set(path, encoded, stat.Version)
 		if err != nil {
 			return err
 		}
 	} else {
-		_, err = s.conn.Create(jobPath, encoded, 0, s.acl(zk.PermAll))
+		_, err = s.conn.Create(path, encoded, 0, s.acl(zk.PermAll))
 		if err != nil {
 			return err
 		}
@@ -245,7 +257,7 @@ func (s *storage) SaveJob(job *model.Job) error {
 }
 
 func (s *storage) DeleteJob(group string, project string, id string) error {
-	path := fmt.Sprintf("%s/%s:%s:%s", s.rootDirPath+"/"+s.jobsDirName, group, project, id)
+	path := fmt.Sprintf("%s/%s:%s:%s", s.dir+"/"+jobsDir, group, project, id)
 	exists, stat, err := s.conn.Exists(path)
 	if err != nil {
 		return err
