@@ -45,6 +45,8 @@ func buildUpdateEventHandler(stor storage, mesosC calls.Caller) eventrules.Rule 
 	return controller.AckStatusUpdates(mesosC).AndThen().HandleF(func(ctx context.Context, e *scheduler.Event) error {
 		status := e.GetUpdate().GetStatus()
 		id := taskID2JobID(status.TaskID.Value)
+		state := status.GetState()
+		log.Printf("Task state update: %s (%s)", id, state)
 		chunks := strings.Split(id, ":")
 		job, err := stor.GetJob(chunks[0], chunks[1], chunks[2])
 		if err != nil {
@@ -55,22 +57,24 @@ func buildUpdateEventHandler(stor storage, mesosC calls.Caller) eventrules.Rule 
 			log.Printf("Update for unknown job: %s", id)
 			return nil
 		}
-		// TODO Handle all states (https://github.com/mesos/mesos-go/blob/master/api/v1/lib/mesos.proto#L2212).
-		switch state := status.GetState(); state {
+		switch state {
+		case mesos.TASK_STAGING:
+			job.State = model.STAGING
 		case mesos.TASK_STARTING:
 			job.State = model.STARTING
 		case mesos.TASK_RUNNING:
 			job.State = model.RUNNING
 		case mesos.TASK_FINISHED:
-			log.Printf("Task finished: %s", status.TaskID.Value)
+			log.Printf("Task finished successfully: %s", status.TaskID.Value)
 			job.State = model.IDLE
 		case mesos.TASK_FAILED:
-			// TODO Store last error(s) in job.
-			log.Printf("Task '%s' failed: %s (reason: %s, source: %s)", id, status.GetMessage(), status.GetReason(), status.GetSource())
-			job.State = model.FAILED
+			fallthrough
+		case mesos.TASK_KILLED:
+			fallthrough
+		case mesos.TASK_ERROR:
+			fallthrough
 		case mesos.TASK_LOST:
-			log.Printf("Task '%s' lost: %s (reason: %s, source: %s)", id, status.GetMessage(), status.GetReason(), status.GetSource())
-			job.State = model.FAILED
+			handleFailedTask(job, &status)
 		default:
 			log.Panicf("Unknown state: %s", state)
 		}
@@ -80,6 +84,20 @@ func buildUpdateEventHandler(stor storage, mesosC calls.Caller) eventrules.Rule 
 		}
 		return nil
 	})
+}
+
+func handleFailedTask(job *model.Job, status *mesos.TaskStatus) {
+	msg := status.GetMessage()
+	reason := status.GetReason().String()
+	src := status.GetSource().String()
+	log.Printf("Task failed: %s (%s; %s; %s; %s)", job, status.GetState(), msg, reason, src)
+	job.State = model.FAILED
+	job.LastFail = model.LastFail{
+		Message: msg,
+		Reason:  reason,
+		Source:  src,
+		When:    time.Now(),
+	}
 }
 
 func buildOffersEventHandler(stor storage, mesosC calls.Caller, sec secrets) events.HandlerFunc {

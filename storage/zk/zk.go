@@ -202,7 +202,7 @@ func (s *storage) GetRunnableJobs() ([]*model.Job, error) {
 	}
 
 	for _, job := range jobs {
-		if job.State == model.RUNNING {
+		if job.State != model.IDLE && job.State != model.FAILED {
 			continue
 		}
 		parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)

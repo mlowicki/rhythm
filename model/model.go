@@ -9,6 +9,7 @@ type State int
 
 const (
 	IDLE State = iota
+	STAGING
 	STARTING
 	RUNNING
 	FAILED
@@ -54,10 +55,18 @@ type Job struct {
 	Env         map[string]string
 	Container   JobContainer
 	State       State
+	LastFail    LastFail
 	CPUs        float64
 	Mem         float64
 	Cmd         string
 	User        string
+}
+
+type LastFail struct {
+	Message string
+	Reason  string
+	Source  string
+	When    time.Time
 }
 
 func (j *Job) String() string {
