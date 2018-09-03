@@ -32,8 +32,6 @@ func buildEventHandler(client calls.Caller, frameworkID store.Singleton, secr se
 		scheduler.Event_SUBSCRIBED: buildSubscribedEventHandler(frameworkID, c.Mesos.FailoverTimeout),
 		scheduler.Event_OFFERS:     buildOffersEventHandler(stor, client, secr),
 		scheduler.Event_UPDATE:     buildUpdateEventHandler(stor, client),
-		// TODO "It is recommended that the framework abort when it receives an error and retry subscription as necessary."
-		// http://mesos.apache.org/documentation/latest/scheduler-http-api/#error
 	}.Otherwise(logger.HandleEvent))
 }
 
@@ -104,16 +102,6 @@ func buildOffersEventHandler(stor storage, mesosC calls.Caller, sec secrets) eve
 	return func(ctx context.Context, e *scheduler.Event) error {
 		offers := e.GetOffers().GetOffers()
 		log.Printf("Received offers: %d", len(offers))
-		/*
-		 * TODO possible to write more efficient offers handling.
-		 * Now with offers (order matters):
-		 * - O1{mem: 10}
-		 * - 02{mem: 20}
-		 * and jobs:
-		 * - J1{mem: 20}
-		 * - J2{mem: 10}
-		 * none offer will be accepted.
-		 */
 		runnable, err := stor.GetRunnableJobs()
 		if err != nil {
 			log.Printf("Failed to get runnable jobs: %s", err)
