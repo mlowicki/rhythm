@@ -99,7 +99,7 @@ func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
 	task := mesos.TaskInfo{
 		TaskID: mesos.TaskID{Value: id},
 		Command: &mesos.CommandInfo{
-			Value:       proto.String(j.Cmd), // TODO Cmd should be optional
+			Value:       proto.String(j.Cmd),
 			Environment: &env,
 			// TODO Make 'Shell' configurable
 			User: func(u string) *string { return &u }(j.User),
