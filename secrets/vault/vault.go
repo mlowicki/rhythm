@@ -10,11 +10,12 @@ import (
 )
 
 type Client struct {
-	c *vault.Client
+	c    *vault.Client
+	root string
 }
 
 func (c *Client) Read(path string) (string, error) {
-	secret, err := c.c.Logical().Read(path)
+	secret, err := c.c.Logical().Read(c.root + path)
 	if err != nil {
 		return "", err
 	}
@@ -50,6 +51,6 @@ func NewClient(c *conf.SecretsVault) (*Client, error) {
 		return nil, err
 	}
 	cli.SetToken(c.Token)
-	wrapper := &Client{c: cli}
+	wrapper := &Client{c: cli, root: c.Root}
 	return wrapper, nil
 }

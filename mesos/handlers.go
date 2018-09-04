@@ -2,12 +2,9 @@ package mesos
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
-	"github.com/gofrs/uuid"
-	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
@@ -142,61 +139,14 @@ func handleOffer(ctx context.Context, cli calls.Caller, offer *mesos.Offer, jobs
 		flattened := remaining.ToUnreserved()
 		if resources.ContainsAll(flattened, rs) {
 			foundRs := resources.Find(rs, remaining...)
-			u4, err := uuid.NewV4()
+			err, task := newTaskInfo(job, sec)
 			if err != nil {
-				log.Printf("Failed to generate UUID for task: %s", err)
+				log.Printf("Failed to create task info: %s", err)
 				continue
 			}
-			taskID := fmt.Sprintf("%s:%s:%s:%s", job.Group, job.Project, job.ID, u4)
-			env := mesos.Environment{
-				Variables: []mesos.Environment_Variable{
-					{Name: "TASK_ID", Value: &taskID},
-					{
-						Name: "secret",
-						Type: mesos.Environment_Variable_SECRET.Enum(),
-						Secret: &mesos.Secret{
-							Type:  *mesos.Secret_VALUE.Enum(),
-							Value: &mesos.Secret_Value{Data: []byte("secret")},
-						},
-					},
-				},
-			}
-			for k, v := range job.Env {
-				env.Variables = append(env.Variables, mesos.Environment_Variable{Name: k, Value: func(v string) *string { return &v }(v)})
-			}
-
-			/*
-				secret, err := sec.Read("secret/bar")
-				if err != nil {
-					// TODO Handle gracefully.
-					log.Fatal(err)
-				}
-				env.Variables = append(env.Variables, mesos.Environment_Variable{Name: "BAR", Value: &secret})
-			*/
-
-			if job.Container.Kind != model.Docker { // TODO
-				panic("Only Docker containers are supported")
-			}
-			task := mesos.TaskInfo{
-				TaskID:    mesos.TaskID{Value: taskID},
-				AgentID:   offer.AgentID,
-				Resources: foundRs,
-				Command: &mesos.CommandInfo{
-					Value:       proto.String(job.Cmd), // TODO Cmd should be optional
-					Environment: &env,
-					// TODO Make 'Shell' configurable
-					User: func(u string) *string { return &u }(job.User),
-				},
-				Container: &mesos.ContainerInfo{
-					Type: mesos.ContainerInfo_DOCKER.Enum(),
-					Docker: &mesos.ContainerInfo_DockerInfo{
-						Image: job.Container.Docker.Image,
-					},
-				},
-			}
-
-			task.Name = "Task " + task.TaskID.Value
-			tasks = append(tasks, task)
+			task.AgentID = offer.AgentID
+			task.Resources = foundRs
+			tasks = append(tasks, *task)
 			remaining.Subtract(task.Resources...)
 			jobsToLaunch = append(jobsToLaunch, job)
 		}

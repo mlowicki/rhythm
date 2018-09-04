@@ -177,6 +177,7 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 			Cron string
 		}
 		Env       map[string]string
+		Secrets   map[string]string
 		Container struct {
 			Docker struct {
 				Image string
@@ -212,6 +213,7 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		},
 		CreatedAt: time.Now(),
 		Env:       payload.Env,
+		Secrets:   payload.Secrets,
 		Container: model.JobContainer{
 			Kind: model.Docker,
 			Docker: model.JobDocker{
@@ -241,6 +243,7 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 			Cron *string
 		}
 		Env       *map[string]string
+		Secrets   *map[string]string
 		Container *struct {
 			Docker *struct {
 				Image *string
@@ -281,6 +284,9 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	}
 	if payload.Env != nil {
 		job.Env = *payload.Env
+	}
+	if payload.Secrets != nil {
+		job.Secrets = *payload.Secrets
 	}
 	if payload.Container != nil {
 		container := job.Container

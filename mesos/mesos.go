@@ -1,6 +1,9 @@
 package mesos
 
 import (
+	"fmt"
+
+	"github.com/gofrs/uuid"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
@@ -67,4 +70,47 @@ func newFrameworkIDStore(s storage) (store.Singleton, error) {
 			err := s.SetFrameworkID(v)
 			return err
 		})), nil
+}
+
+func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
+	u4, err := uuid.NewV4()
+	if err != nil {
+		return err, nil
+	}
+	id := fmt.Sprintf("%s:%s:%s:%s", j.Group, j.Project, j.ID, u4)
+	env := mesos.Environment{
+		Variables: []mesos.Environment_Variable{
+			{Name: "TASK_ID", Value: &id},
+		},
+	}
+	for k, v := range j.Env {
+		env.Variables = append(env.Variables, mesos.Environment_Variable{Name: k, Value: func(v string) *string { return &v }(v)})
+	}
+	for k, v := range j.Secrets {
+		secret, err := sec.Read(v)
+		if err != nil {
+			return err, nil
+		}
+		env.Variables = append(env.Variables, mesos.Environment_Variable{Name: k, Value: &secret})
+	}
+	if j.Container.Kind == model.Docker {
+		log.Fatalf("Docker containers are only supported")
+	}
+	task := mesos.TaskInfo{
+		TaskID: mesos.TaskID{Value: id},
+		Command: &mesos.CommandInfo{
+			Value:       proto.String(j.Cmd), // TODO Cmd should be optional
+			Environment: &env,
+			// TODO Make 'Shell' configurable
+			User: func(u string) *string { return &u }(j.User),
+		},
+		Container: &mesos.ContainerInfo{
+			Type: mesos.ContainerInfo_DOCKER.Enum(),
+			Docker: &mesos.ContainerInfo_DockerInfo{
+				Image: j.Container.Docker.Image,
+			},
+		},
+	}
+	task.Name = "Task " + task.TaskID.Value
+	return nil, &task
 }

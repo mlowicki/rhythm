@@ -88,6 +88,7 @@ type SecretsVault struct {
 	Token   string
 	Address string
 	Timeout time.Duration
+	Root    string
 }
 
 type Mesos struct {
@@ -155,6 +156,7 @@ func New(path string) (*Conf, error) {
 			Backend: SecretsBackendVault,
 			Vault: SecretsVault{
 				Timeout: 3000, // 3s
+				Root:    "secret/rhythm/",
 			},
 		},
 		Verbose: false,

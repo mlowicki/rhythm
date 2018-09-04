@@ -44,7 +44,6 @@ const (
 
 // TODO Support for force pull time in Docker
 // TODO Support for custom args like Docker ENTRYPOINT
-// TODO Support for secrets
 type Job struct {
 	Group       string
 	Project     string
@@ -53,6 +52,7 @@ type Job struct {
 	CreatedAt   time.Time
 	LastStartAt time.Time
 	Env         map[string]string
+	Secrets     map[string]string
 	Container   JobContainer
 	State       State
 	LastFail    LastFail
