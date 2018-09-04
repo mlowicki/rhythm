@@ -183,10 +183,12 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 				Image string
 			}
 		}
-		CPUs float64
-		Mem  float64
-		Cmd  string
-		User string
+		CPUs      float64
+		Mem       float64
+		Cmd       string
+		User      string
+		Shell     *bool
+		Arguments []string
 	}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
@@ -220,10 +222,16 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 				Image: payload.Container.Docker.Image,
 			},
 		},
-		CPUs: payload.CPUs,
-		Mem:  payload.Mem,
-		Cmd:  payload.Cmd,
-		User: payload.User,
+		CPUs:      payload.CPUs,
+		Mem:       payload.Mem,
+		Cmd:       payload.Cmd,
+		User:      payload.User,
+		Arguments: payload.Arguments,
+	}
+	if payload.Shell == nil {
+		j.Shell = true
+	} else {
+		j.Shell = *payload.Shell
 	}
 	err = s.SaveJob(j)
 	if err != nil {
@@ -249,10 +257,12 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 				Image *string
 			}
 		}
-		CPUs *float64
-		Mem  *float64
-		Cmd  *string
-		User *string
+		CPUs      *float64
+		Mem       *float64
+		Cmd       *string
+		User      *string
+		Shell     *bool
+		Arguments *[]string
 	}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
@@ -309,6 +319,12 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	}
 	if payload.User != nil {
 		job.User = *payload.User
+	}
+	if payload.Shell != nil {
+		job.Shell = *payload.Shell
+	}
+	if payload.Arguments != nil {
+		job.Arguments = *payload.Arguments
 	}
 	err = s.SaveJob(job)
 	if err != nil {

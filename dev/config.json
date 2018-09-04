@@ -1,10 +1,7 @@
 {
     "api": {
         "auth": {
-            "backend": "gitlab",
-            "gitlab": {
-                "baseURL": "https://gitlab.services.ams.osa"
-            }
+            "backend": "none"
         }
     },
     "storage": {

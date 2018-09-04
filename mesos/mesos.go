@@ -101,8 +101,9 @@ func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
 		Command: &mesos.CommandInfo{
 			Value:       proto.String(j.Cmd),
 			Environment: &env,
-			// TODO Make 'Shell' configurable
-			User: func(u string) *string { return &u }(j.User),
+			User:        proto.String(j.User),
+			Shell:       proto.Bool(j.Shell),
+			Arguments:   j.Arguments,
 		},
 		Container: &mesos.ContainerInfo{
 			Type: mesos.ContainerInfo_DOCKER.Enum(),

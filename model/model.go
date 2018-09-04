@@ -60,6 +60,8 @@ type Job struct {
 	Mem         float64
 	Cmd         string
 	User        string
+	Shell       bool
+	Arguments   []string
 }
 
 type LastFail struct {
