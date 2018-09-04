@@ -179,7 +179,10 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		Env       map[string]string
 		Secrets   map[string]string
 		Container struct {
-			Docker struct {
+			Docker *struct {
+				Image string
+			}
+			Mesos *struct {
 				Image string
 			}
 		}
@@ -216,17 +219,25 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		CreatedAt: time.Now(),
 		Env:       payload.Env,
 		Secrets:   payload.Secrets,
-		Container: model.JobContainer{
-			Kind: model.Docker,
-			Docker: model.JobDocker{
-				Image: payload.Container.Docker.Image,
-			},
-		},
+		Container: model.JobContainer{},
 		CPUs:      payload.CPUs,
 		Mem:       payload.Mem,
 		Cmd:       payload.Cmd,
 		User:      payload.User,
 		Arguments: payload.Arguments,
+	}
+	if payload.Container.Docker != nil {
+		j.Container.Kind = model.Docker
+		j.Container.Docker = model.JobDocker{
+			Image: payload.Container.Docker.Image,
+		}
+	} else if payload.Container.Mesos != nil {
+		j.Container.Kind = model.Mesos
+		j.Container.Mesos = model.JobMesos{
+			Image: payload.Container.Mesos.Image,
+		}
+	} else {
+		return fmt.Errorf("Set container type (Mesos or Docker)")
 	}
 	if payload.Shell == nil {
 		j.Shell = true
@@ -254,6 +265,9 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		Secrets   *map[string]string
 		Container *struct {
 			Docker *struct {
+				Image *string
+			}
+			Mesos *struct {
 				Image *string
 			}
 		}
@@ -304,6 +318,11 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 			container.Kind = model.Docker
 			if payload.Container.Docker.Image != nil {
 				container.Docker.Image = *payload.Container.Docker.Image
+			}
+		} else if payload.Container.Mesos != nil {
+			container.Kind = model.Mesos
+			if payload.Container.Mesos.Image != nil {
+				container.Mesos.Image = *payload.Container.Mesos.Image
 			}
 		}
 		job.Container = container

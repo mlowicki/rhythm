@@ -93,8 +93,24 @@ func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
 		}
 		env.Variables = append(env.Variables, mesos.Environment_Variable{Name: k, Value: &secret})
 	}
-	if j.Container.Kind != model.Docker {
-		log.Fatalf("Docker containers are only supported")
+	var containerInfo mesos.ContainerInfo
+	switch j.Container.Kind {
+	case model.Docker:
+		containerInfo = mesos.ContainerInfo{
+			Type: mesos.ContainerInfo_DOCKER.Enum(),
+			Docker: &mesos.ContainerInfo_DockerInfo{
+				Image: j.Container.Docker.Image,
+			},
+		}
+	case model.Mesos:
+		containerInfo = mesos.ContainerInfo{
+			Type: mesos.ContainerInfo_MESOS.Enum(),
+			Docker: &mesos.ContainerInfo_DockerInfo{
+				Image: j.Container.Mesos.Image,
+			},
+		}
+	default:
+		log.Fatalf("Unknown container type: %d", j.Container.Kind)
 	}
 	task := mesos.TaskInfo{
 		TaskID: mesos.TaskID{Value: id},
@@ -105,13 +121,9 @@ func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
 			Shell:       proto.Bool(j.Shell),
 			Arguments:   j.Arguments,
 		},
-		Container: &mesos.ContainerInfo{
-			Type: mesos.ContainerInfo_DOCKER.Enum(),
-			Docker: &mesos.ContainerInfo_DockerInfo{
-				Image: j.Container.Docker.Image,
-			},
-		},
+		Container: &containerInfo,
 	}
+
 	task.Name = "Task " + task.TaskID.Value
 	return nil, &task
 }

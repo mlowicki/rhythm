@@ -19,9 +19,14 @@ type JobDocker struct {
 	Image string
 }
 
+type JobMesos struct {
+	Image string
+}
+
 type JobContainer struct {
 	Kind   ContainerKind
 	Docker JobDocker
+	Mesos  JobMesos
 }
 
 type ContainerKind int
