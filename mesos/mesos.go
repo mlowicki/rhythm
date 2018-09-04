@@ -93,7 +93,7 @@ func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
 		}
 		env.Variables = append(env.Variables, mesos.Environment_Variable{Name: k, Value: &secret})
 	}
-	if j.Container.Kind == model.Docker {
+	if j.Container.Kind != model.Docker {
 		log.Fatalf("Docker containers are only supported")
 	}
 	task := mesos.TaskInfo{
