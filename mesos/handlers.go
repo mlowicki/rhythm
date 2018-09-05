@@ -36,8 +36,8 @@ func buildSubscribedEventHandler(fidStore store.Singleton, failoverTimeout time.
 	return eventrules.New(controller.TrackSubscription(fidStore, failoverTimeout))
 }
 
-func buildUpdateEventHandler(stor storage, mesosC calls.Caller) eventrules.Rule {
-	return controller.AckStatusUpdates(mesosC).AndThen().HandleF(func(ctx context.Context, e *scheduler.Event) error {
+func buildUpdateEventHandler(stor storage, cli calls.Caller) eventrules.Rule {
+	return controller.AckStatusUpdates(cli).AndThen().HandleF(func(ctx context.Context, e *scheduler.Event) error {
 		status := e.GetUpdate().GetStatus()
 		id := taskID2JobID(status.TaskID.Value)
 		state := status.GetState()
@@ -95,17 +95,17 @@ func handleFailedTask(job *model.Job, status *mesos.TaskStatus) {
 	}
 }
 
-func buildOffersEventHandler(stor storage, mesosC calls.Caller, sec secrets) events.HandlerFunc {
+func buildOffersEventHandler(stor storage, cli calls.Caller, secr secrets) events.HandlerFunc {
 	return func(ctx context.Context, e *scheduler.Event) error {
 		offers := e.GetOffers().GetOffers()
 		log.Printf("Received offers: %d", len(offers))
-		runnable, err := stor.GetRunnableJobs()
+		js, err := stor.GetRunnableJobs()
 		if err != nil {
 			log.Printf("Failed to get runnable jobs: %s", err)
 			return nil
 		}
 		for i := range offers {
-			runnable = handleOffer(ctx, mesosC, &offers[i], runnable, sec, stor)
+			js = handleOffer(ctx, cli, &offers[i], js, secr, stor)
 		}
 		return nil
 	}
@@ -122,67 +122,46 @@ func taskID2JobID(id string) string {
 	return id[:strings.LastIndexByte(id, ':')]
 }
 
-func handleOffer(ctx context.Context, cli calls.Caller, offer *mesos.Offer, jobs []*model.Job, sec secrets, s storage) []*model.Job {
-	var jobsToLaunch []*model.Job
+// TODO Handle reservations
+func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, js []*model.Job, secr secrets, stor storage) []*model.Job {
 	tasks := []mesos.TaskInfo{}
-	// TODO Handle reservations
-	remaining := mesos.Resources(offer.Resources)
-	if len(jobs) == 0 {
-		goto accept
-	}
-	for _, job := range jobs {
-		rs := mesos.Resources{}
-		rs.Add(
-			resources.NewCPUs(job.CPUs).Resource,
-			resources.NewMemory(job.Mem).Resource,
+	resLeft := mesos.Resources(off.Resources)
+	var jsLeft, jsUsed []*model.Job
+	for _, j := range js {
+		res := mesos.Resources{}
+		res.Add(
+			resources.NewCPUs(j.CPUs).Resource,
+			resources.NewMemory(j.Mem).Resource,
 		)
-		flattened := remaining.ToUnreserved()
-		if resources.ContainsAll(flattened, rs) {
-			foundRs := resources.Find(rs, remaining...)
-			err, task := newTaskInfo(job, sec)
-			if err != nil {
-				log.Printf("Failed to create task info: %s", err)
-				continue
-			}
-			task.AgentID = offer.AgentID
-			task.Resources = foundRs
-			tasks = append(tasks, *task)
-			remaining.Subtract(task.Resources...)
-			jobsToLaunch = append(jobsToLaunch, job)
+		if !resources.ContainsAll(resLeft.ToUnreserved(), res) {
+			jsLeft = append(jsLeft, j)
+			continue
 		}
+		err, task := newTaskInfo(j, secr)
+		if err != nil {
+			log.Printf("Failed to create task info: %s", err)
+			continue
+		}
+		task.AgentID = off.AgentID
+		task.Resources = resources.Find(res, resLeft...)
+		resLeft.Subtract(task.Resources...)
+		tasks = append(tasks, *task)
+		jsUsed = append(jsUsed, j)
 	}
-accept:
-	accept := calls.Accept(
-		calls.OfferOperations{calls.OpLaunch(tasks...)}.WithOffers(offer.ID),
-	)
-	err := calls.CallNoData(ctx, cli, accept)
+	err := calls.CallNoData(ctx, cli,
+		calls.Accept(calls.OfferOperations{calls.OpLaunch(tasks...)}.WithOffers(off.ID)))
 	if err != nil {
-		log.Printf("Failed to launch tasks: %s", err)
+		log.Printf("Failed to accept offer: %s", err)
 		return nil
-	} else {
-		for _, job := range jobsToLaunch {
-			job.State = model.RUNNING
-			job.LastStartAt = time.Now()
-			err := s.SaveJob(job)
-			if err != nil {
-				log.Printf("Failed to save job while handling offer: %s", err)
-			}
-			log.Printf("Job launched: %s", job)
-		}
-		left := make([]*model.Job, len(jobs)-len(jobsToLaunch))
-		contains := func(js []*model.Job, j *model.Job) bool {
-			for _, c := range js {
-				if c.Group == j.Group && c.Project == j.Project && c.ID == j.ID {
-					return true
-				}
-			}
-			return false
-		}
-		for _, j := range jobs {
-			if !contains(jobsToLaunch, j) {
-				left = append(left, j)
-			}
-		}
-		return left
 	}
+	for _, j := range jsUsed {
+		j.State = model.STAGING
+		j.LastStartAt = time.Now()
+		err := stor.SaveJob(j)
+		if err != nil {
+			log.Printf("Failed to update job after accepting offer: %s", err)
+		}
+		log.Printf("Job launched: %s", j)
+	}
+	return jsLeft
 }
