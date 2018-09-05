@@ -122,7 +122,6 @@ func taskID2JobID(id string) string {
 	return id[:strings.LastIndexByte(id, ':')]
 }
 
-// TODO Handle reservations
 func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, js []*model.Job, secr secrets, stor storage) []*model.Job {
 	tasks := []mesos.TaskInfo{}
 	resLeft := mesos.Resources(off.Resources)
