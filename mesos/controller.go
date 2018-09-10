@@ -7,6 +7,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mlowicki/rhythm/conf"
+	"github.com/mlowicki/rhythm/mesos/reconciliation"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -20,16 +21,17 @@ func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
 	if err != nil {
 		return err
 	}
-	mesosC := newClient(&c.Mesos, frameworkID)
+	cli := newClient(&c.Mesos, frameworkID)
 	ctx, cancel := context.WithCancel(ctx)
+	rec := reconciliation.New(ctx, cli, stor)
 	controller.Run(
 		ctx,
 		newFrameworkInfo(&c.Mesos, frameworkID),
-		mesosC,
+		cli,
 		controller.WithRegistrationTokens(
 			backoff.Notifier(registrationMinBackoff, registrationMaxBackoff, ctx.Done()),
 		),
-		controller.WithEventHandler(buildEventHandler(mesosC, frameworkID, secr, stor, c)),
+		controller.WithEventHandler(buildEventHandler(cli, frameworkID, secr, stor, c, rec)),
 		controller.WithSubscriptionTerminated(func(err error) {
 			log.Printf("Connection to Mesos terminated: %v\n", err)
 			if err.Error() == "Framework has been removed" {

@@ -14,7 +14,7 @@ import (
 )
 
 type state struct {
-	frameworkID string
+	FrameworkID string
 }
 
 const (
@@ -70,13 +70,13 @@ func (s *storage) SetFrameworkID(id string) error {
 	if err != nil {
 		return err
 	}
-	st.frameworkID = id
+	st.FrameworkID = id
 	est, err := json.Marshal(&st)
 	if err != nil {
 		return err
 	}
 	_, err = s.conn.Set(path, est, version)
-	return nil
+	return err
 }
 
 func (s *storage) GetFrameworkID() (string, error) {
@@ -86,7 +86,7 @@ func (s *storage) GetFrameworkID() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return st.frameworkID, nil
+	return st.FrameworkID, nil
 }
 
 func (s *storage) init() error {

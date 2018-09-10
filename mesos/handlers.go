@@ -2,6 +2,7 @@ package mesos
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -14,11 +15,12 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
 	"github.com/mlowicki/rhythm/conf"
+	"github.com/mlowicki/rhythm/mesos/reconciliation"
 	"github.com/mlowicki/rhythm/model"
 	log "github.com/sirupsen/logrus"
 )
 
-func buildEventHandler(client calls.Caller, frameworkID store.Singleton, secr secrets, stor storage, c *conf.Conf) events.Handler {
+func buildEventHandler(client calls.Caller, frameworkID store.Singleton, secr secrets, stor storage, c *conf.Conf, rec *reconciliation.Reconciliation) events.Handler {
 	logger := controller.LogEvents(func(e *scheduler.Event) {
 		log.Printf("Event: %s", e)
 	}).Unless(c.Verbose)
@@ -26,20 +28,33 @@ func buildEventHandler(client calls.Caller, frameworkID store.Singleton, secr se
 		logAllEvents().If(c.Verbose),
 		controller.LiftErrors(),
 	).Handle(events.Handlers{
-		scheduler.Event_SUBSCRIBED: buildSubscribedEventHandler(frameworkID, c.Mesos.FailoverTimeout),
+		scheduler.Event_SUBSCRIBED: buildSubscribedEventHandler(frameworkID, c.Mesos.FailoverTimeout, rec),
 		scheduler.Event_OFFERS:     buildOffersEventHandler(stor, client, secr),
-		scheduler.Event_UPDATE:     buildUpdateEventHandler(stor, client),
+		scheduler.Event_UPDATE:     buildUpdateEventHandler(stor, client, rec),
 	}.Otherwise(logger.HandleEvent))
 }
 
-func buildSubscribedEventHandler(fidStore store.Singleton, failoverTimeout time.Duration) eventrules.Rule {
-	return eventrules.New(controller.TrackSubscription(fidStore, failoverTimeout))
+func buildSubscribedEventHandler(fidStore store.Singleton, failoverTimeout time.Duration, rec *reconciliation.Reconciliation) eventrules.Rule {
+	return eventrules.New(
+		controller.TrackSubscription(fidStore, failoverTimeout),
+		func(ctx context.Context, e *scheduler.Event, err error, ch eventrules.Chain) (context.Context, *scheduler.Event, error) {
+			if err == nil {
+				rec.Run()
+			}
+			return ch(ctx, e, err)
+		},
+	)
 }
 
-func buildUpdateEventHandler(stor storage, cli calls.Caller) eventrules.Rule {
+func buildUpdateEventHandler(stor storage, cli calls.Caller, rec *reconciliation.Reconciliation) eventrules.Rule {
 	return controller.AckStatusUpdates(cli).AndThen().HandleF(func(ctx context.Context, e *scheduler.Event) error {
 		status := e.GetUpdate().GetStatus()
-		id := taskID2JobID(status.TaskID.Value)
+		rec.HandleUpdate(e.GetUpdate())
+		id, err := taskID2JobID(status.TaskID.Value)
+		if err != nil {
+			log.Printf("Failed to get job ID from task ID: %s", err)
+			return nil
+		}
 		state := status.GetState()
 		log.Printf("Task state update: %s (%s)", id, state)
 		chunks := strings.Split(id, ":")
@@ -61,14 +76,30 @@ func buildUpdateEventHandler(stor storage, cli calls.Caller) eventrules.Rule {
 			job.State = model.RUNNING
 		case mesos.TASK_FINISHED:
 			log.Printf("Task finished successfully: %s", status.TaskID.Value)
+			job.TaskID = ""
+			job.AgentID = ""
 			job.State = model.IDLE
+		case mesos.TASK_LOST:
+			/*
+			 * 1. Reconciliation run gets running task A
+			 * 2. Task A finishes successfuly
+			 * 3. Reconciliation for task A sent
+			 * 4. TASK_LOST is received which would mark job A as failed
+			 *
+			 * It's still a small window when it's possible = if handler for TASK_LOST
+			 * read from storage before handler for e.g. TASK_FINISHED persisted update.
+			 */
+			if status.GetReason().Enum() == mesos.REASON_RECONCILIATION.Enum() {
+				if job.State == model.IDLE || job.State == model.FAILED {
+					return nil
+				}
+			}
+			fallthrough
 		case mesos.TASK_FAILED:
 			fallthrough
 		case mesos.TASK_KILLED:
 			fallthrough
 		case mesos.TASK_ERROR:
-			fallthrough
-		case mesos.TASK_LOST:
 			handleFailedTask(job, &status)
 		default:
 			log.Panicf("Unknown state: %s", state)
@@ -93,6 +124,8 @@ func handleFailedTask(job *model.Job, status *mesos.TaskStatus) {
 		Source:  src,
 		When:    time.Now(),
 	}
+	job.TaskID = ""
+	job.AgentID = ""
 }
 
 func buildOffersEventHandler(stor storage, cli calls.Caller, secr secrets) events.HandlerFunc {
@@ -118,25 +151,29 @@ func logAllEvents() eventrules.Rule {
 	}
 }
 
-func taskID2JobID(id string) string {
-	return id[:strings.LastIndexByte(id, ':')]
+func taskID2JobID(id string) (string, error) {
+	idx := strings.LastIndexByte(id, ':')
+	if idx == -1 {
+		return "", errors.New("Separator not found")
+	}
+	return id[:strings.LastIndexByte(id, ':')], nil
 }
 
-func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, js []*model.Job, secr secrets, stor storage) []*model.Job {
+func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, jobs []*model.Job, secr secrets, stor storage) []*model.Job {
 	tasks := []mesos.TaskInfo{}
 	resLeft := mesos.Resources(off.Resources)
-	var jsLeft, jsUsed []*model.Job
-	for _, j := range js {
+	var jobsLeft, jobsUsed []*model.Job
+	for _, job := range jobs {
 		res := mesos.Resources{}
 		res.Add(
-			resources.NewCPUs(j.CPUs).Resource,
-			resources.NewMemory(j.Mem).Resource,
+			resources.NewCPUs(job.CPUs).Resource,
+			resources.NewMemory(job.Mem).Resource,
 		)
 		if !resources.ContainsAll(resLeft.ToUnreserved(), res) {
-			jsLeft = append(jsLeft, j)
+			jobsLeft = append(jobsLeft, job)
 			continue
 		}
-		err, task := newTaskInfo(j, secr)
+		err, task := newTaskInfo(job, secr)
 		if err != nil {
 			log.Printf("Failed to create task info: %s", err)
 			continue
@@ -145,7 +182,7 @@ func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, js []*
 		task.Resources = resources.Find(res, resLeft...)
 		resLeft.Subtract(task.Resources...)
 		tasks = append(tasks, *task)
-		jsUsed = append(jsUsed, j)
+		jobsUsed = append(jobsUsed, job)
 	}
 	err := calls.CallNoData(ctx, cli,
 		calls.Accept(calls.OfferOperations{calls.OpLaunch(tasks...)}.WithOffers(off.ID)))
@@ -153,14 +190,16 @@ func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, js []*
 		log.Printf("Failed to accept offer: %s", err)
 		return nil
 	}
-	for _, j := range jsUsed {
-		j.State = model.STAGING
-		j.LastStartAt = time.Now()
-		err := stor.SaveJob(j)
+	for i, job := range jobsUsed {
+		job.State = model.STAGING
+		job.LastStartAt = time.Now()
+		job.TaskID = tasks[i].TaskID.GetValue()
+		job.AgentID = tasks[i].AgentID.GetValue()
+		err := stor.SaveJob(job)
 		if err != nil {
 			log.Printf("Failed to update job after accepting offer: %s", err)
 		}
-		log.Printf("Job launched: %s", j)
+		log.Printf("Job launched: %s", job)
 	}
-	return jsLeft
+	return jobsLeft
 }

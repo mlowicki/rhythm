@@ -56,6 +56,8 @@ type Job struct {
 	Schedule    JobSchedule
 	CreatedAt   time.Time
 	LastStartAt time.Time
+	TaskID      string
+	AgentID     string
 	Env         map[string]string
 	Secrets     map[string]string
 	Container   JobContainer
