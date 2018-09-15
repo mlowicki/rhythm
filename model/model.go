@@ -69,6 +69,7 @@ type Job struct {
 	User        string
 	Shell       bool
 	Arguments   []string
+	Labels      map[string]string
 }
 
 type LastFail struct {

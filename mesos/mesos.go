@@ -31,7 +31,7 @@ func newFrameworkInfo(conf *conf.Mesos, idStore store.Singleton) *mesos.Framewor
 	// https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto
 	// TODO Option to set `roles` (or `role`)
 	// TODO Option to set `capabilities`
-	var labels []mesos.Label
+	labels := make([]mesos.Label, len(conf.Labels))
 	for k, v := range conf.Labels {
 		func(v string) {
 			labels = append(labels, mesos.Label{Key: k, Value: &v})
@@ -112,6 +112,12 @@ func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
 	default:
 		log.Fatalf("Unknown container type: %d", j.Container.Kind)
 	}
+	labels := make([]mesos.Label, len(j.Labels))
+	for k, v := range j.Labels {
+		func(v string) {
+			labels = append(labels, mesos.Label{Key: k, Value: &v})
+		}(v)
+	}
 	task := mesos.TaskInfo{
 		TaskID: mesos.TaskID{Value: id},
 		Command: &mesos.CommandInfo{
@@ -122,8 +128,8 @@ func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
 			Arguments:   j.Arguments,
 		},
 		Container: &containerInfo,
+		Labels:    &mesos.Labels{labels},
 	}
-
 	task.Name = "Task " + task.TaskID.Value
 	return nil, &task
 }

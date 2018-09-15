@@ -192,6 +192,7 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		User      string
 		Shell     *bool
 		Arguments []string
+		Labels    map[string]string
 	}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
@@ -225,6 +226,7 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		Cmd:       payload.Cmd,
 		User:      payload.User,
 		Arguments: payload.Arguments,
+		Labels:    payload.Labels,
 	}
 	if payload.Container.Docker != nil {
 		j.Container.Kind = model.Docker
@@ -277,6 +279,7 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		User      *string
 		Shell     *bool
 		Arguments *[]string
+		Labels    *map[string]string
 	}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
@@ -344,6 +347,9 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	}
 	if payload.Arguments != nil {
 		job.Arguments = *payload.Arguments
+	}
+	if payload.Labels != nil {
+		job.Labels = *payload.Labels
 	}
 	err = s.SaveJob(job)
 	if err != nil {
