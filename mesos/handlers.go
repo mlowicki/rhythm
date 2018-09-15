@@ -28,6 +28,12 @@ func buildEventHandler(client calls.Caller, frameworkID store.Singleton, secr se
 		logAllEvents().If(c.Verbose),
 		controller.LiftErrors(),
 	).Handle(events.Handlers{
+		scheduler.Event_HEARTBEAT: events.HandlerFunc(func(ctx context.Context, e *scheduler.Event) error {
+			if c.Verbose {
+				log.Println("Heartbeat")
+			}
+			return nil
+		}),
 		scheduler.Event_SUBSCRIBED: buildSubscribedEventHandler(frameworkID, c.Mesos.FailoverTimeout, rec),
 		scheduler.Event_OFFERS:     buildOffersEventHandler(stor, client, secr),
 		scheduler.Event_UPDATE:     buildUpdateEventHandler(stor, client, rec),
