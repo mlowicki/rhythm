@@ -34,7 +34,7 @@ func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
 		controller.WithEventHandler(buildEventHandler(cli, frameworkID, secr, stor, c, rec)),
 		controller.WithSubscriptionTerminated(func(err error) {
 			log.Printf("Connection to Mesos terminated: %v\n", err)
-			if err.Error() == "Framework has been removed" {
+			if err != nil && err.Error() == "Framework has been removed" {
 				log.Println("Resetting framework ID")
 				if err := frameworkID.Set(""); err != nil {
 					log.Fatal(err)
