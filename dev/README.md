@@ -18,7 +18,7 @@ MESOS_DIR/mesos/build/bin/mesos-agent.sh --master=127.0.0.1:5050 --work_dir=/tmp
 
 Run *rhythm*:
 ```
-go run *.go --config development/config.json
+go run *.go --config dev/config.json
 ```
 
 ## API over HTTPS
