@@ -20,3 +20,14 @@ Run *rhythm*:
 ```
 go run *.go --config development/config.json
 ```
+
+## API over HTTPS
+
+Self-signed certificate and key are generated in /dev (server.key & server.csr).
+They've been generated based on https://devcenter.heroku.com/articles/ssl-certificate-self but with `-days 3650`.
+
+
+1. Set `api.certfile` and `api.keyfile` in config.json to absolute paths pointing to cert and key in /dev.
+2. Add `127.0.0.1 rhythm` to `/etc/hosts`
+3. Run *rhythm*
+4. `curl curl -v --cacert dev/server.crt https://rhythm:8000/api/v1/jobs/group/project/id`

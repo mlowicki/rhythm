@@ -383,9 +383,12 @@ func New(c *conf.API, s storage) {
 		Handler: r,
 		Addr:    c.Address,
 		// TODO Enforce timeouts
-		// TODO Support for HTTPS
 	}
 	go func() {
-		log.Fatal(srv.ListenAndServe())
+		if c.CertFile != "" || c.KeyFile != "" {
+			log.Fatal(srv.ListenAndServeTLS(c.CertFile, c.KeyFile))
+		} else {
+			log.Fatal(srv.ListenAndServe())
+		}
 	}()
 }

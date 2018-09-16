@@ -16,8 +16,10 @@ type Conf struct {
 }
 
 type API struct {
-	Address string
-	Auth    APIAuth
+	Address  string
+	CertFile string
+	KeyFile  string
+	Auth     APIAuth
 }
 
 const (
