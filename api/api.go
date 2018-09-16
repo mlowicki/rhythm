@@ -380,9 +380,11 @@ func New(c *conf.API, s storage) {
 	v1.Handle("/jobs/{group}/{project}/{id}", &handler{a, s, deleteJob}).Methods("DELETE")
 	v1.Handle("/jobs/{group}/{project}/{id}", &handler{a, s, updateJob}).Methods("PUT")
 	srv := &http.Server{
-		Handler: r,
-		Addr:    c.Address,
-		// TODO Enforce timeouts
+		Handler:      r,
+		Addr:         c.Address,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 	go func() {
 		if c.CertFile != "" || c.KeyFile != "" {
