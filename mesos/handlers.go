@@ -34,6 +34,10 @@ func buildEventHandler(client calls.Caller, frameworkID store.Singleton, secr se
 			}
 			return nil
 		}),
+		scheduler.Event_ERROR: events.HandlerFunc(func(ctx context.Context, e *scheduler.Event) error {
+			log.Printf("Error: %s", e.GetError().Message)
+			return nil
+		}),
 		scheduler.Event_SUBSCRIBED: buildSubscribedEventHandler(frameworkID, c.Mesos.FailoverTimeout, rec),
 		scheduler.Event_OFFERS:     buildOffersEventHandler(stor, client, secr),
 		scheduler.Event_UPDATE:     buildUpdateEventHandler(stor, client, rec),
