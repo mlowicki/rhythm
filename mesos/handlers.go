@@ -171,7 +171,7 @@ func taskID2JobID(id string) (string, error) {
 
 func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, jobs []*model.Job, secr secrets, stor storage) []*model.Job {
 	tasks := []mesos.TaskInfo{}
-	resLeft := mesos.Resources(off.Resources)
+	resLeft := mesos.Resources(off.Resources).ToUnreserved().Unallocate()
 	var jobsLeft, jobsUsed []*model.Job
 	for _, job := range jobs {
 		res := mesos.Resources{}
@@ -179,7 +179,7 @@ func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, jobs [
 			resources.NewCPUs(job.CPUs).Resource,
 			resources.NewMemory(job.Mem).Resource,
 		)
-		if !resources.ContainsAll(resLeft.ToUnreserved(), res) {
+		if !resources.ContainsAll(resLeft, res) {
 			jobsLeft = append(jobsLeft, job)
 			continue
 		}
@@ -190,6 +190,9 @@ func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, jobs [
 		}
 		task.AgentID = off.AgentID
 		task.Resources = resources.Find(res, resLeft...)
+		if task.Resources == nil {
+			log.Fatal("Resources not found")
+		}
 		resLeft.Subtract(task.Resources...)
 		tasks = append(tasks, *task)
 		jobsUsed = append(jobsUsed, job)

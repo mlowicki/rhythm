@@ -103,6 +103,7 @@ type Mesos struct {
 	WebUiURL        string
 	Principal       string
 	Labels          map[string]string
+	Roles           []string
 }
 
 const (
@@ -165,6 +166,7 @@ func New(path string) (*Conf, error) {
 		Mesos: Mesos{
 			BaseURL:         "http://127.0.0.1:5050",
 			FailoverTimeout: time.Hour * 24 * 7,
+			Roles:           []string{"*"},
 		},
 	}
 	err = json.Unmarshal(file, conf)

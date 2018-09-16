@@ -28,9 +28,6 @@ type storage interface {
 }
 
 func newFrameworkInfo(conf *conf.Mesos, idStore store.Singleton) *mesos.FrameworkInfo {
-	// https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto
-	// TODO Option to set `roles` (or `role`)
-	// TODO Option to set `capabilities`
 	labels := make([]mesos.Label, len(conf.Labels))
 	for k, v := range conf.Labels {
 		func(v string) {
@@ -38,15 +35,18 @@ func newFrameworkInfo(conf *conf.Mesos, idStore store.Singleton) *mesos.Framewor
 		}(v)
 	}
 	frameworkInfo := &mesos.FrameworkInfo{
-		User:            conf.User,
-		Name:            frameworkName,
-		Checkpoint:      &conf.Checkpoint,
-		Capabilities:    []mesos.FrameworkInfo_Capability{},
+		User:       conf.User,
+		Name:       frameworkName,
+		Checkpoint: &conf.Checkpoint,
+		Capabilities: []mesos.FrameworkInfo_Capability{
+			{Type: mesos.FrameworkInfo_Capability_MULTI_ROLE},
+		},
 		Labels:          &mesos.Labels{labels},
 		FailoverTimeout: func() *float64 { ft := conf.FailoverTimeout.Seconds(); return &ft }(),
 		WebUiURL:        &conf.WebUiURL,
 		Hostname:        &conf.Hostname,
 		Principal:       &conf.Principal,
+		Roles:           conf.Roles,
 	}
 	id, _ := idStore.Get()
 	frameworkInfo.ID = &mesos.FrameworkID{Value: *proto.String(id)}
