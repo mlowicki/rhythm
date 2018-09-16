@@ -15,8 +15,10 @@ import (
 )
 
 var (
-	errForbidden    = errors.New("Forbidden")
-	errUnauthorized = errors.New("Unauthorized")
+	errForbidden        = errors.New("Forbidden")
+	errUnauthorized     = errors.New("Unauthorized")
+	errJobAlreadyExists = errors.New("Job already exists")
+	errJobNotFound      = errors.New("Job not found")
 )
 
 type authorizer interface {
@@ -42,7 +44,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := h.h(h.a, h.s, w, r)
 	if err != nil {
 		json.NewEncoder(w).Encode(struct {
-			Error string `json:"error"`
+			Error string
 		}{err.Error()})
 	}
 }
@@ -167,33 +169,34 @@ func deleteJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
-func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
-	// TODO input validation
-	var payload struct {
-		Group    string
-		Project  string
-		ID       string
-		Schedule struct {
-			Cron string
-		}
-		Env       map[string]string
-		Secrets   map[string]string
-		Container struct {
-			Docker *struct {
-				Image string
-			}
-			Mesos *struct {
-				Image string
-			}
-		}
-		CPUs      float64
-		Mem       float64
-		Cmd       string
-		User      string
-		Shell     *bool
-		Arguments []string
-		Labels    map[string]string
+type newJobPayload struct {
+	Group    string
+	Project  string
+	ID       string
+	Schedule struct {
+		Cron string
 	}
+	Env       map[string]string
+	Secrets   map[string]string
+	Container struct {
+		Docker *struct {
+			Image string
+		}
+		Mesos *struct {
+			Image string
+		}
+	}
+	CPUs      float64
+	Mem       float64
+	Cmd       string
+	User      string
+	Shell     *bool
+	Arguments []string
+	Labels    map[string]string
+}
+
+func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
+	var payload newJobPayload
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
@@ -246,6 +249,15 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	} else {
 		j.Shell = *payload.Shell
 	}
+	job, err := s.GetJob(payload.Group, payload.Project, payload.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	if job != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return errJobAlreadyExists
+	}
 	err = s.SaveJob(j)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -254,33 +266,34 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
+type updateJobPayload struct {
+	Schedule *struct {
+		Cron *string
+	}
+	Env       *map[string]string
+	Secrets   *map[string]string
+	Container *struct {
+		Docker *struct {
+			Image *string
+		}
+		Mesos *struct {
+			Image *string
+		}
+	}
+	CPUs      *float64
+	Mem       *float64
+	Cmd       *string
+	User      *string
+	Shell     *bool
+	Arguments *[]string
+	Labels    *map[string]string
+}
+
 func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
+	var payload updateJobPayload
 	group := vars["group"]
 	project := vars["project"]
-	// TODO input validation
-	var payload struct {
-		Schedule *struct {
-			Cron *string
-		}
-		Env       *map[string]string
-		Secrets   *map[string]string
-		Container *struct {
-			Docker *struct {
-				Image *string
-			}
-			Mesos *struct {
-				Image *string
-			}
-		}
-		CPUs      *float64
-		Mem       *float64
-		Cmd       *string
-		User      *string
-		Shell     *bool
-		Arguments *[]string
-		Labels    *map[string]string
-	}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
@@ -300,6 +313,10 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
+	}
+	if job == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return errJobNotFound
 	}
 	if payload.Schedule != nil {
 		schedule := job.Schedule
