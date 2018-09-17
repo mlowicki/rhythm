@@ -99,7 +99,7 @@ func buildUpdateEventHandler(stor storage, cli calls.Caller, rec *reconciliation
 			 * It's still a small window when it's possible = if handler for TASK_LOST
 			 * read from storage before handler for e.g. TASK_FINISHED persisted update.
 			 */
-			if status.GetReason().Enum() == mesos.REASON_RECONCILIATION.Enum() {
+			if status.GetReason() == mesos.REASON_RECONCILIATION {
 				if job.State == model.IDLE || job.State == model.FAILED {
 					return nil
 				}
