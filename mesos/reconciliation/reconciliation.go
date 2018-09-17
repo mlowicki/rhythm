@@ -35,7 +35,7 @@ type storage interface {
 
 func (rec *Reconciliation) HandleUpdate(update *scheduler.Event_Update) {
 	status := update.GetStatus()
-	if status.GetReason().Enum() != mesos.REASON_RECONCILIATION.Enum() {
+	if status.GetReason() != mesos.REASON_RECONCILIATION {
 		return
 	}
 	select {
@@ -59,6 +59,7 @@ func (rec *Reconciliation) round() error {
 	boff.InitialInterval = initialReconcileTimeout
 	boff.MaxElapsedTime = 0
 	ticker := backoff.NewTicker(boff)
+	<-ticker.C // Ticker is guaranteed to tick at least once.
 	defer ticker.Stop()
 	for len(tasks) > 0 {
 		_, err := rec.cli.Call(rec.ctx, calls.Reconcile(calls.ReconcileTasks(tasks)))
