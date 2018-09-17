@@ -9,10 +9,7 @@ It's an early prototype - not ready to run on production.
 * Integration with [HashiCorp Vault](https://www.vaultproject.io/)
 * Access control list (ACL) backed by [GitLab](https://gitlab.com/)
 * [Cron syntax](http://www.nncron.ru/help/EN/working/cron-format.htm)
-
-## TODO
-
-* Integration with [Sentry](https://sentry.io/)
+* Integration with [Sentry](https://sentry.io/) (in progress)
 
 ## API
 

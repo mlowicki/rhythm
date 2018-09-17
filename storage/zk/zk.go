@@ -11,6 +11,7 @@ import (
 	"github.com/mlowicki/rhythm/zkutil"
 	"github.com/robfig/cron"
 	"github.com/samuel/go-zookeeper/zk"
+	log "github.com/sirupsen/logrus"
 )
 
 type state struct {
@@ -206,12 +207,12 @@ func (s *storage) GetRunnableJobs() ([]*model.Job, error) {
 			continue
 		}
 		parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-		if job.Schedule.Kind != model.Cron { // TODO
-			panic("Only Cron schedules are supported")
+		if job.Schedule.Kind != model.Cron {
+			log.Fatal("Only Cron schedule is supported")
 		}
 		sched, err := parser.Parse(job.Schedule.Cron)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
 		var t time.Time

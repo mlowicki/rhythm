@@ -52,7 +52,6 @@ func (coord *Coordinator) WaitUntilLeader() (context.Context, error) {
 }
 
 func (coord *Coordinator) register() error {
-	// TODO Consider using `CreateProtectedEphemeralSequential`
 	name, err := coord.conn.Create(coord.dir+"/"+electionDir+"/", []byte{}, zk.FlagEphemeral|zk.FlagSequence, coord.acl(zk.PermAll))
 	if err != nil {
 		return err
