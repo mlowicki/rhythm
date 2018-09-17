@@ -180,7 +180,8 @@ type newJobPayload struct {
 	Secrets   map[string]string
 	Container struct {
 		Docker *struct {
-			Image string
+			Image          string
+			ForcePullImage bool
 		}
 		Mesos *struct {
 			Image string
@@ -234,7 +235,8 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	if payload.Container.Docker != nil {
 		j.Container.Kind = model.Docker
 		j.Container.Docker = model.JobDocker{
-			Image: payload.Container.Docker.Image,
+			Image:          payload.Container.Docker.Image,
+			ForcePullImage: payload.Container.Docker.ForcePullImage,
 		}
 	} else if payload.Container.Mesos != nil {
 		j.Container.Kind = model.Mesos
@@ -274,7 +276,8 @@ type updateJobPayload struct {
 	Secrets   *map[string]string
 	Container *struct {
 		Docker *struct {
-			Image *string
+			Image          *string
+			ForcePullImage *bool
 		}
 		Mesos *struct {
 			Image *string
@@ -338,6 +341,9 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 			container.Kind = model.Docker
 			if payload.Container.Docker.Image != nil {
 				container.Docker.Image = *payload.Container.Docker.Image
+			}
+			if payload.Container.Docker.ForcePullImage != nil {
+				container.Docker.ForcePullImage = *payload.Container.Docker.ForcePullImage
 			}
 		} else if payload.Container.Mesos != nil {
 			container.Kind = model.Mesos

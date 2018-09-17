@@ -100,7 +100,8 @@ func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
 		containerInfo = mesos.ContainerInfo{
 			Type: mesos.ContainerInfo_DOCKER.Enum(),
 			Docker: &mesos.ContainerInfo_DockerInfo{
-				Image: j.Container.Docker.Image,
+				Image:          j.Container.Docker.Image,
+				ForcePullImage: &j.Container.Docker.ForcePullImage,
 			},
 		}
 	case model.Mesos:

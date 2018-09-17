@@ -16,7 +16,8 @@ const (
 )
 
 type JobDocker struct {
-	Image string
+	Image          string
+	ForcePullImage bool
 }
 
 type JobMesos struct {
@@ -47,7 +48,6 @@ const (
 	Cron ScheduleKind = iota
 )
 
-// TODO Support for force pull time in Docker
 // TODO Support for custom args like Docker ENTRYPOINT
 type Job struct {
 	Group       string
