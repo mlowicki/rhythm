@@ -48,7 +48,6 @@ const (
 	Cron ScheduleKind = iota
 )
 
-// TODO Support for custom args like Docker ENTRYPOINT
 type Job struct {
 	Group       string
 	Project     string
