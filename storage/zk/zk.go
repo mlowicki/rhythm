@@ -208,11 +208,11 @@ func (s *storage) GetRunnableJobs() ([]*model.Job, error) {
 		}
 		parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 		if job.Schedule.Kind != model.Cron {
-			log.Fatal("Only Cron schedule is supported")
+			log.Panic("Only Cron schedule is supported")
 		}
 		sched, err := parser.Parse(job.Schedule.Cron)
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 
 		var t time.Time
