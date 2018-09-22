@@ -11,11 +11,18 @@ import (
 	"github.com/mlowicki/rhythm/secrets"
 	"github.com/mlowicki/rhythm/storage"
 	"github.com/onrik/logrus/filename"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
+var leaderGauge = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "leader",
+	Help: "Indicates if instance is elected as leader.",
+})
+
 func init() {
 	log.AddHook(filename.NewHook())
+	prometheus.MustRegister(leaderGauge)
 }
 
 func buildConf() *conf.Conf {
@@ -41,7 +48,9 @@ func main() {
 			<-time.After(time.Second)
 			continue
 		}
+		leaderGauge.Set(1)
 		err = mesos.Run(conf, ctx, stor, secr)
+		leaderGauge.Set(0)
 		if err != nil {
 			log.Printf("Controller error: %s\n", err)
 			<-time.After(time.Second)

@@ -53,3 +53,7 @@ curl -v -X PUT API_ADDRESS/api/v1/jobs/GROUP/PROJECT/ID -d '{"schedule": {"cron"
 ```
 curl -v -X DELETE API_ADDRESS/api/v1/jobs/GROUP/PROJECT/ID
 ```
+
+## Metrics
+
+/api/v1/metrics

@@ -11,6 +11,7 @@ import (
 	"github.com/mlowicki/rhythm/api/auth"
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/model"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -402,6 +403,7 @@ func New(c *conf.API, s storage) {
 	v1.Handle("/jobs/{group}/{project}/{id}", &handler{a, s, getJob}).Methods("GET")
 	v1.Handle("/jobs/{group}/{project}/{id}", &handler{a, s, deleteJob}).Methods("DELETE")
 	v1.Handle("/jobs/{group}/{project}/{id}", &handler{a, s, updateJob}).Methods("PUT")
+	v1.Handle("/metrics", promhttp.Handler())
 	srv := &http.Server{
 		Handler:      r,
 		Addr:         c.Address,

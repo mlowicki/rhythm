@@ -17,8 +17,25 @@ import (
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/mesos/reconciliation"
 	"github.com/mlowicki/rhythm/model"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
+
+var (
+	offersCount = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "offers",
+		Help: "Number of received offers.",
+	})
+	taskStateUpdatesCount = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "task_state_updates",
+		Help: "Task state updates",
+	}, []string{"state"})
+)
+
+func init() {
+	prometheus.MustRegister(offersCount)
+	prometheus.MustRegister(taskStateUpdatesCount)
+}
 
 func buildEventHandler(client calls.Caller, frameworkID store.Singleton, secr secrets, stor storage, c *conf.Conf, rec *reconciliation.Reconciliation) events.Handler {
 	logger := controller.LogEvents(func(e *scheduler.Event) {
@@ -89,6 +106,7 @@ func buildUpdateEventHandler(stor storage, cli calls.Caller, rec *reconciliation
 			job.TaskID = ""
 			job.AgentID = ""
 			job.State = model.IDLE
+			taskStateUpdatesCount.WithLabelValues("finished").Inc()
 		case mesos.TASK_LOST:
 			/*
 			 * 1. Reconciliation run gets running task A
@@ -136,12 +154,13 @@ func handleFailedTask(job *model.Job, status *mesos.TaskStatus) {
 	}
 	job.TaskID = ""
 	job.AgentID = ""
+	taskStateUpdatesCount.WithLabelValues("failed").Inc()
 }
 
 func buildOffersEventHandler(stor storage, cli calls.Caller, secr secrets) events.HandlerFunc {
 	return func(ctx context.Context, e *scheduler.Event) error {
 		offers := e.GetOffers().GetOffers()
-		log.Printf("Received offers: %d", len(offers))
+		offersCount.Add(float64(len(offers)))
 		js, err := stor.GetRunnableJobs()
 		if err != nil {
 			log.Printf("Failed to get runnable jobs: %s", err)
@@ -212,7 +231,8 @@ func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, jobs [
 		if err != nil {
 			log.Printf("Failed to update job after accepting offer: %s", err)
 		}
-		log.Printf("Job launched: %s", job)
+		log.Printf("Job staged: %s", job)
+		taskStateUpdatesCount.WithLabelValues("staged").Inc()
 	}
 	return jobsLeft
 }
