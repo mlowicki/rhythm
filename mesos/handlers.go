@@ -28,7 +28,7 @@ var (
 	})
 	taskStateUpdatesCount = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "task_state_updates",
-		Help: "Task state updates",
+		Help: "Task state updates.",
 	}, []string{"state"})
 )
 
