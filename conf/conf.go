@@ -13,6 +13,7 @@ type Conf struct {
 	Secrets     Secrets
 	Verbose     bool
 	Mesos       Mesos
+	Logging     Logging
 }
 
 type API struct {
@@ -121,6 +122,21 @@ type MesosAuthBasic struct {
 	Password string
 }
 
+const (
+	LoggingBackendNone   = "none"
+	LoggingBackendSentry = "sentry"
+)
+
+type Logging struct {
+	Backend string
+	Sentry  LoggingSentry
+}
+
+type LoggingSentry struct {
+	DSN    string
+	RootCA string
+}
+
 func New(path string) (*Conf, error) {
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -167,6 +183,9 @@ func New(path string) (*Conf, error) {
 			BaseURL:         "http://127.0.0.1:5050",
 			FailoverTimeout: time.Hour * 24 * 7,
 			Roles:           []string{"*"},
+		},
+		Logging: Logging{
+			Backend: LoggingBackendNone,
 		},
 	}
 	err = json.Unmarshal(file, conf)

@@ -10,7 +10,6 @@ import (
 	"github.com/mlowicki/rhythm/mesos"
 	"github.com/mlowicki/rhythm/secrets"
 	"github.com/mlowicki/rhythm/storage"
-	"github.com/onrik/logrus/filename"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
@@ -21,22 +20,24 @@ var leaderGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 })
 
 func init() {
-	log.AddHook(filename.NewHook())
 	prometheus.MustRegister(leaderGauge)
 }
 
-func buildConf() *conf.Conf {
+func main() {
 	confPath := flag.String("config", "config.json", "Path to configuration file")
+	testLogging := flag.Bool("testlogging", false, "")
 	flag.Parse()
 	var conf, err = conf.New(*confPath)
 	if err != nil {
-		log.Fatalf("Error getting configuration: %s\n", err)
+		log.Fatalf("Error getting configuration: %s", err)
 	}
-	return conf
-}
-
-func main() {
-	conf := buildConf()
+	initLogging(&conf.Logging)
+	if *testLogging {
+		log.Error("test")
+		log.Info("Sending test event. Wait 10s...")
+		<-time.After(10 * time.Second)
+		return
+	}
 	stor := storage.New(&conf.Storage)
 	coord := coordinator.New(&conf.Coordinator)
 	api.New(&conf.API, stor)

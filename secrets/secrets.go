@@ -12,9 +12,9 @@ type secrets interface {
 
 func New(c *conf.Secrets) secrets {
 	if c.Backend != conf.SecretsBackendVault {
-		log.Fatalf("Unknown backend: %s", c.Backend)
+		log.Fatalf("Unknown secrets backend: %s", c.Backend)
 	}
-	log.Printf("Backend: %s", c.Backend)
+	log.Printf("Secrets backend: %s", c.Backend)
 	cli, err := vault.NewClient(&c.Vault)
 	if err != nil {
 		log.Fatal(err)
