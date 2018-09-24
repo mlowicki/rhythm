@@ -21,7 +21,10 @@ func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
 	if err != nil {
 		return err
 	}
-	cli := newClient(&c.Mesos, frameworkID)
+	cli, err := newClient(&c.Mesos, frameworkID)
+	if err != nil {
+		log.Fatal(err)
+	}
 	ctx, cancel := context.WithCancel(ctx)
 	rec := reconciliation.New(ctx, cli, stor)
 	controller.Run(

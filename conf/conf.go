@@ -97,6 +97,7 @@ type SecretsVault struct {
 type Mesos struct {
 	Auth            MesosAuth
 	BaseURL         string
+	RootCA          string
 	Checkpoint      bool
 	FailoverTimeout time.Duration
 	Hostname        string
@@ -183,6 +184,9 @@ func New(path string) (*Conf, error) {
 			BaseURL:         "http://127.0.0.1:5050",
 			FailoverTimeout: time.Hour * 24 * 7,
 			Roles:           []string{"*"},
+			Auth: MesosAuth{
+				Type: MesosAuthTypeBasic,
+			},
 		},
 		Logging: Logging{
 			Backend: LoggingBackendNone,
