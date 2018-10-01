@@ -3,6 +3,9 @@ package model
 import (
 	"fmt"
 	"time"
+
+	"github.com/robfig/cron"
+	log "github.com/sirupsen/logrus"
 )
 
 type State string
@@ -80,4 +83,29 @@ type LastFail struct {
 
 func (j *Job) String() string {
 	return fmt.Sprintf("%s:%s:%s", j.Group, j.Project, j.ID)
+}
+
+func (j *Job) NextRun() time.Time {
+	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	if j.Schedule.Type != Cron {
+		log.Panic("Only Cron schedule is supported")
+	}
+	sched, err := parser.Parse(j.Schedule.Cron)
+	if err != nil {
+		log.Panic(err)
+	}
+	var t time.Time
+	if j.LastStartAt.Before(j.CreatedAt) {
+		t = j.CreatedAt
+	} else {
+		t = j.LastStartAt
+	}
+	return sched.Next(t)
+}
+
+func (j *Job) IsRunnable() bool {
+	if j.State != IDLE && j.State != FAILED {
+		return false
+	}
+	return j.NextRun().Before(time.Now())
 }

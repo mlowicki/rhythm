@@ -14,7 +14,6 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
-	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/mesos/reconciliation"
 	"github.com/mlowicki/rhythm/model"
 	"github.com/prometheus/client_golang/prometheus"
@@ -37,35 +36,12 @@ func init() {
 	prometheus.MustRegister(taskStateUpdatesCount)
 }
 
-func buildEventHandler(client calls.Caller, frameworkID store.Singleton, secr secrets, stor storage, c *conf.Conf, rec *reconciliation.Reconciliation) events.Handler {
-	debug := c.Logging.Level == conf.LoggingLevelDebug
-	logger := controller.LogEvents(func(e *scheduler.Event) {
-		log.Printf("Event: %s", e)
-	}).Unless(debug)
-	return eventrules.New(
-		logAllEvents().If(debug),
-		controller.LiftErrors(),
-	).Handle(events.Handlers{
-		scheduler.Event_HEARTBEAT: events.HandlerFunc(func(ctx context.Context, e *scheduler.Event) error {
-			log.Debug("Heartbeat")
-			return nil
-		}),
-		scheduler.Event_ERROR: events.HandlerFunc(func(ctx context.Context, e *scheduler.Event) error {
-			log.Errorf("Error event received: %s", e.GetError().Message)
-			return nil
-		}),
-		scheduler.Event_SUBSCRIBED: buildSubscribedEventHandler(frameworkID, c.Mesos.FailoverTimeout, rec),
-		scheduler.Event_OFFERS:     buildOffersEventHandler(stor, client, secr),
-		scheduler.Event_UPDATE:     buildUpdateEventHandler(stor, client, rec),
-	}.Otherwise(logger.HandleEvent))
-}
-
-func buildSubscribedEventHandler(fidStore store.Singleton, failoverTimeout time.Duration, rec *reconciliation.Reconciliation) eventrules.Rule {
+func buildSubscribedEventHandler(fidStore store.Singleton, failoverTimeout time.Duration, onSuccess func()) eventrules.Rule {
 	return eventrules.New(
 		controller.TrackSubscription(fidStore, failoverTimeout),
 		func(ctx context.Context, e *scheduler.Event, err error, ch eventrules.Chain) (context.Context, *scheduler.Event, error) {
 			if err == nil {
-				rec.Run()
+				onSuccess()
 			}
 			return ch(ctx, e, err)
 		},
@@ -162,6 +138,7 @@ func buildOffersEventHandler(stor storage, cli calls.Caller, secr secrets) event
 	return func(ctx context.Context, e *scheduler.Event) error {
 		offers := e.GetOffers().GetOffers()
 		offersCount.Add(float64(len(offers)))
+		log.Debugf("Received offers: %d", len(offers))
 		js, err := stor.GetRunnableJobs()
 		if err != nil {
 			log.Errorf("Failed to get runnable jobs: %s", err)
@@ -217,8 +194,8 @@ func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, jobs [
 		tasks = append(tasks, *task)
 		jobsUsed = append(jobsUsed, job)
 	}
-	err := calls.CallNoData(ctx, cli,
-		calls.Accept(calls.OfferOperations{calls.OpLaunch(tasks...)}.WithOffers(off.ID)))
+	accept := calls.Accept(calls.OfferOperations{calls.OpLaunch(tasks...)}.WithOffers(off.ID))
+	err := calls.CallNoData(ctx, cli, accept.With(calls.RefuseSeconds(time.Hour)))
 	if err != nil {
 		log.Errorf("Failed to accept offer: %s", err)
 		return nil

@@ -107,6 +107,7 @@ type Mesos struct {
 	Principal       string
 	Labels          map[string]string
 	Roles           []string
+	LogAllEvents    bool
 }
 
 const (

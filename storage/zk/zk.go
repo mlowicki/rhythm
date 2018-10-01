@@ -9,9 +9,7 @@ import (
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/model"
 	"github.com/mlowicki/rhythm/zkutil"
-	"github.com/robfig/cron"
 	"github.com/samuel/go-zookeeper/zk"
-	log "github.com/sirupsen/logrus"
 )
 
 type state struct {
@@ -201,32 +199,8 @@ func (s *storage) GetRunnableJobs() ([]*model.Job, error) {
 	if err != nil {
 		return runnable, err
 	}
-
 	for _, job := range jobs {
-		if job.State != model.IDLE && job.State != model.FAILED {
-			continue
-		}
-		parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-		if job.Schedule.Type != model.Cron {
-			log.Panic("Only Cron schedule is supported")
-		}
-		sched, err := parser.Parse(job.Schedule.Cron)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"cron": job.Schedule.Cron,
-			}).Errorf("Cron schedule failed parsing: %s", err)
-			continue
-		}
-
-		var t time.Time
-
-		if job.LastStartAt.Before(job.CreatedAt) {
-			t = job.CreatedAt
-		} else {
-			t = job.LastStartAt
-		}
-
-		if sched.Next(t).Before(time.Now()) {
+		if job.IsRunnable() {
 			runnable = append(runnable, job)
 		}
 	}
