@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/mlowicki/rhythm/api/auth"
+	"github.com/mlowicki/rhythm/api/auth/gitlab"
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/model"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -389,7 +390,11 @@ func New(c *conf.API, s storage) {
 	var a authorizer
 	switch c.Auth.Backend {
 	case conf.APIAuthBackendGitLab:
-		a = &auth.GitLabAuthorizer{BaseURL: c.Auth.GitLab.BaseURL}
+		var err error
+		a, err = gitlab.New(&c.Auth.GitLab)
+		if err != nil {
+			log.Fatal(err)
+		}
 	case conf.APIAuthBackendNone:
 		a = &auth.NoneAuthorizer{}
 	default:

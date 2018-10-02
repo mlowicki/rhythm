@@ -35,6 +35,7 @@ type APIAuth struct {
 
 type APIAuthGitLab struct {
 	BaseURL string
+	RootCA  string
 }
 
 type Storage struct {
