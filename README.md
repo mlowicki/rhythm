@@ -1,7 +1,5 @@
 # Rhythm
 
-It's an early prototype - not ready to run on production.
-
 ## Features
 
 * Support for [Docker Containerizer](https://mesos.apache.org/documentation/latest/docker-containerizer/)
