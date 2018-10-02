@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"time"
 
 	"github.com/mlowicki/rhythm/api"
@@ -26,7 +27,12 @@ func init() {
 func main() {
 	confPath := flag.String("config", "config.json", "Path to configuration file")
 	testLogging := flag.Bool("testlogging", false, "")
+	version := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+	if *version {
+		fmt.Println("0.1")
+		return
+	}
 	var conf, err = conf.New(*confPath)
 	if err != nil {
 		log.Fatalf("Error getting configuration: %s", err)
