@@ -27,6 +27,12 @@ type authorizer interface {
 	GetProjectAccessLevel(r *http.Request, group string, project string) (auth.AccessLevel, error)
 }
 
+func encoder(w http.ResponseWriter) *json.Encoder {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "    ")
+	return enc
+}
+
 type storage interface {
 	GetJobs() ([]*model.Job, error)
 	GetGroupJobs(group string) ([]*model.Job, error)
@@ -45,7 +51,7 @@ type handler struct {
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := h.h(h.a, h.s, w, r)
 	if err != nil {
-		json.NewEncoder(w).Encode(struct {
+		encoder(w).Encode(struct {
 			Error string
 		}{err.Error()})
 	}
@@ -83,7 +89,7 @@ func getJobs(a authorizer, s storage, w http.ResponseWriter, r *http.Request) er
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	json.NewEncoder(w).Encode(readable)
+	encoder(w).Encode(readable)
 	return nil
 }
 
@@ -98,7 +104,7 @@ func getGroupJobs(a authorizer, s storage, w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	json.NewEncoder(w).Encode(readable)
+	encoder(w).Encode(readable)
 	return nil
 }
 
@@ -120,7 +126,7 @@ func getProjectJobs(a authorizer, s storage, w http.ResponseWriter, r *http.Requ
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	json.NewEncoder(w).Encode(jobs)
+	encoder(w).Encode(jobs)
 	return nil
 }
 
@@ -145,7 +151,7 @@ func getJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) err
 	if job == nil {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
-		json.NewEncoder(w).Encode(job)
+		encoder(w).Encode(job)
 	}
 	return nil
 }
