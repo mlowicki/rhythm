@@ -33,7 +33,7 @@ func initLogging(c *conf.Logging) {
 }
 
 func initSentryLogging(c *conf.LoggingSentry) error {
-	cli, err := raven.New(c.DSN)
+	cli, err := raven.NewWithTags(c.DSN, c.Tags)
 	if err != nil {
 		return err
 	}

@@ -137,6 +137,7 @@ type Logging struct {
 type LoggingSentry struct {
 	DSN    string
 	RootCA string
+	Tags   map[string]string
 }
 
 func New(path string) (*Conf, error) {
