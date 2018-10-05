@@ -51,7 +51,7 @@ func main() {
 	for {
 		ctx, err := coord.WaitUntilLeader()
 		if err != nil {
-			log.Errorf("Error waiting for being a leader: %s\n", err)
+			log.Errorf("Error waiting for being a leader: %s", err)
 			<-time.After(time.Second)
 			continue
 		}
@@ -59,7 +59,7 @@ func main() {
 		err = mesos.Run(conf, ctx, stor, secr)
 		leaderGauge.Set(0)
 		if err != nil {
-			log.Errorf("Controller error: %s\n", err)
+			log.Errorf("Controller error: %s", err)
 			<-time.After(time.Second)
 		}
 	}

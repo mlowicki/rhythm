@@ -212,7 +212,9 @@ func (s *storage) GetRunnableJobs() ([]*model.Job, error) {
 		}
 		sched, err := parser.Parse(job.Schedule.Cron)
 		if err != nil {
-			log.Errorf("Cron schedule failed parsing: %s", err)
+			log.WithFields(log.Fields{
+				"cron": job.Schedule.Cron,
+			}).Errorf("Cron schedule failed parsing: %s", err)
 			continue
 		}
 

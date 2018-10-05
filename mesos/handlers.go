@@ -79,7 +79,9 @@ func buildUpdateEventHandler(stor storage, cli calls.Caller, rec *reconciliation
 		rec.HandleUpdate(e.GetUpdate())
 		id, err := taskID2JobID(status.TaskID.Value)
 		if err != nil {
-			log.Errorf("Failed to get job ID from task ID: %s", err)
+			log.WithFields(log.Fields{
+				"taskID": status.TaskID.Value,
+			}).Errorf("Failed to get job ID from task ID: %s", err)
 			return nil
 		}
 		state := status.GetState()
