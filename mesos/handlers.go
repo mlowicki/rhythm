@@ -52,7 +52,7 @@ func buildEventHandler(client calls.Caller, frameworkID store.Singleton, secr se
 			return nil
 		}),
 		scheduler.Event_ERROR: events.HandlerFunc(func(ctx context.Context, e *scheduler.Event) error {
-			log.Printf("Error: %s", e.GetError().Message)
+			log.Errorf("Error event received: %s", e.GetError().Message)
 			return nil
 		}),
 		scheduler.Event_SUBSCRIBED: buildSubscribedEventHandler(frameworkID, c.Mesos.FailoverTimeout, rec),
@@ -79,7 +79,7 @@ func buildUpdateEventHandler(stor storage, cli calls.Caller, rec *reconciliation
 		rec.HandleUpdate(e.GetUpdate())
 		id, err := taskID2JobID(status.TaskID.Value)
 		if err != nil {
-			log.Printf("Failed to get job ID from task ID: %s", err)
+			log.Errorf("Failed to get job ID from task ID: %s", err)
 			return nil
 		}
 		state := status.GetState()
@@ -134,7 +134,7 @@ func buildUpdateEventHandler(stor storage, cli calls.Caller, rec *reconciliation
 		}
 		err = stor.SaveJob(job)
 		if err != nil {
-			log.Printf("Failed to save job while handling update: %s", err)
+			log.Errorf("Failed to save job while handling update: %s", err)
 		}
 		return nil
 	})
@@ -144,7 +144,7 @@ func handleFailedTask(job *model.Job, status *mesos.TaskStatus) {
 	msg := status.GetMessage()
 	reason := status.GetReason().String()
 	src := status.GetSource().String()
-	log.Printf("Task failed: %s (%s; %s; %s; %s)", job, status.GetState(), msg, reason, src)
+	log.Errorf("Task failed: %s (%s; %s; %s; %s)", job, status.GetState(), msg, reason, src)
 	job.State = model.FAILED
 	job.LastFail = model.LastFail{
 		Message: msg,
@@ -163,7 +163,7 @@ func buildOffersEventHandler(stor storage, cli calls.Caller, secr secrets) event
 		offersCount.Add(float64(len(offers)))
 		js, err := stor.GetRunnableJobs()
 		if err != nil {
-			log.Printf("Failed to get runnable jobs: %s", err)
+			log.Errorf("Failed to get runnable jobs: %s", err)
 			return nil
 		}
 		for i := range offers {
@@ -219,7 +219,7 @@ func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, jobs [
 	err := calls.CallNoData(ctx, cli,
 		calls.Accept(calls.OfferOperations{calls.OpLaunch(tasks...)}.WithOffers(off.ID)))
 	if err != nil {
-		log.Printf("Failed to accept offer: %s", err)
+		log.Errorf("Failed to accept offer: %s", err)
 		return nil
 	}
 	for i, job := range jobsUsed {
@@ -229,7 +229,7 @@ func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, jobs [
 		job.AgentID = tasks[i].AgentID.GetValue()
 		err := stor.SaveJob(job)
 		if err != nil {
-			log.Printf("Failed to update job after accepting offer: %s", err)
+			log.Errorf("Failed to update job after accepting offer: %s", err)
 		}
 		log.Printf("Job staged: %s", job)
 		taskStateUpdatesCount.WithLabelValues("staged").Inc()
