@@ -109,7 +109,7 @@ func (rec *Reconciliation) Run() {
 					log.Println("Round started")
 					err := rec.round()
 					if err != nil {
-						log.Printf("Round failed: %s", err)
+						log.Errorf("Round failed: %s", err)
 						timer = time.After(roundRetry)
 					} else {
 						log.Println("Round finished")
