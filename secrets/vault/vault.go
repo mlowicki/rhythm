@@ -43,7 +43,7 @@ func NewClient(c *conf.SecretsVault) (*Client, error) {
 		return nil, err
 	}
 	if url.Scheme != "https" {
-		log.Printf("Address uses HTTP scheme which is insecure. It's recommented to use HTTPS instead.")
+		log.Warnf("Address uses HTTP scheme which is insecure. It's recommented to use HTTPS instead.")
 	}
 	vc := vault.DefaultConfig()
 	vc.Address = c.Address
