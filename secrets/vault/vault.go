@@ -56,10 +56,7 @@ func NewClient(c *conf.SecretsVault) (*Client, error) {
 		tlsConf := vc.HttpClient.Transport.(*http.Transport).TLSClientConfig
 		tlsConf.RootCAs = pool
 	}
-	cli, err := vault.NewClient(&vault.Config{
-		Address: c.Address,
-		Timeout: c.Timeout,
-	})
+	cli, err := vault.NewClient(vc)
 	if err != nil {
 		return nil, err
 	}

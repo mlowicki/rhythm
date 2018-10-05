@@ -178,7 +178,7 @@ func New(path string) (*Conf, error) {
 		Secrets: Secrets{
 			Backend: SecretsBackendVault,
 			Vault: SecretsVault{
-				Timeout: 3000, // 3s
+				Timeout: 0, // no timeout
 				Root:    "secret/rhythm/",
 			},
 		},

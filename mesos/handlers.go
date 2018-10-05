@@ -204,7 +204,7 @@ func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, jobs [
 		}
 		err, task := newTaskInfo(job, secr)
 		if err != nil {
-			log.Printf("Failed to create task info: %s", err)
+			log.Errorf("Failed to create task info: %s", err)
 			continue
 		}
 		task.AgentID = off.AgentID
