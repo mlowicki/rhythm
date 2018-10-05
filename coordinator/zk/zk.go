@@ -87,8 +87,8 @@ func (coord *Coordinator) isLeader() (bool, <-chan zk.Event, error) {
 			isLeader = true
 		}
 	}
-	log.Printf("All registration tickets: %v", tickets)
-	log.Printf("My registration ticket: %s", ticket)
+	log.Debugf("All registration tickets: %v", tickets)
+	log.Debugf("My registration ticket: %s", ticket)
 	for _, cur := range tickets {
 		if ticket == cur {
 			return isLeader, eventChan, nil

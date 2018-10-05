@@ -51,6 +51,7 @@ type handler struct {
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := h.h(h.a, h.s, w, r)
 	if err != nil {
+		log.Errorf("API handler error: %s", err)
 		encoder(w).Encode(struct {
 			Error string
 		}{err.Error()})
