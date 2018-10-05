@@ -3,10 +3,7 @@ package mesos
 import (
 	"context"
 	"crypto/tls"
-	"crypto/x509"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"time"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
@@ -17,6 +14,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mlowicki/rhythm/conf"
+	tlsutils "github.com/mlowicki/rhythm/tls"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -29,15 +27,11 @@ func newClient(c *conf.Mesos, frameworkID store.Singleton) (calls.Caller, error)
 	}
 	tc := &tls.Config{}
 	if c.RootCA != "" {
-		rootCAs := x509.NewCertPool()
-		certs, err := ioutil.ReadFile(c.RootCA)
+		pool, err := tlsutils.BuildCertPool(c.RootCA)
 		if err != nil {
 			return nil, err
 		}
-		if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
-			return nil, errors.New("No certs appended")
-		}
-		tc.RootCAs = rootCAs
+		tc.RootCAs = pool
 	}
 	cli := httpcli.New(
 		httpcli.Endpoint(c.BaseURL+"/api/v1/scheduler"),

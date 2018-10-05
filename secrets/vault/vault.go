@@ -2,10 +2,12 @@ package vault
 
 import (
 	"errors"
+	"net/http"
 	"net/url"
 
 	vault "github.com/hashicorp/vault/api"
 	"github.com/mlowicki/rhythm/conf"
+	tlsutils "github.com/mlowicki/rhythm/tls"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -42,6 +44,17 @@ func NewClient(c *conf.SecretsVault) (*Client, error) {
 	}
 	if url.Scheme != "https" {
 		log.Printf("Address uses HTTP scheme which is insecure. It's recommented to use HTTPS instead.")
+	}
+	vc := vault.DefaultConfig()
+	vc.Address = c.Address
+	vc.Timeout = c.Timeout
+	if c.RootCA != "" {
+		pool, err := tlsutils.BuildCertPool(c.RootCA)
+		if err != nil {
+			return nil, err
+		}
+		tlsConf := vc.HttpClient.Transport.(*http.Transport).TLSClientConfig
+		tlsConf.RootCAs = pool
 	}
 	cli, err := vault.NewClient(&vault.Config{
 		Address: c.Address,

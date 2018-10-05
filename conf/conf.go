@@ -93,6 +93,7 @@ type SecretsVault struct {
 	Address string
 	Timeout time.Duration
 	Root    string
+	RootCA  string
 }
 
 type Mesos struct {
