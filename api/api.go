@@ -30,6 +30,7 @@ type authorizer interface {
 func encoder(w http.ResponseWriter) *json.Encoder {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "    ")
+	w.Header().Set("Content-Type", "application/json")
 	return enc
 }
 
@@ -175,6 +176,7 @@ func deleteJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
+	w.WriteHeader(http.StatusNoContent)
 	return nil
 }
 
@@ -274,6 +276,7 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
+	w.WriteHeader(http.StatusNoContent)
 	return nil
 }
 
@@ -388,6 +391,7 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
+	w.WriteHeader(http.StatusNoContent)
 	return nil
 }
 

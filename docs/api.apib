@@ -39,15 +39,13 @@ Available under /api/v1/.
 
 ###  List all jobs [GET]
 
-+ Response 200 (text/plain)
++ Response 200 (application/json)
 
         []
 
 ### Create new job [POST]
 
-+ foo (string) - whatever
-
-+ Request (text/plain)
++ Request
 
         {
             "id": "id",
@@ -56,7 +54,7 @@ Available under /api/v1/.
             "cpus": 4,
             "mem": 7168,
             "cmd": "echo $FOO",
-            "user": "user",
+            "user": "someone",
             "env": {
                 "FOO": "foo"
             },
@@ -70,52 +68,101 @@ Available under /api/v1/.
             }
         }
 
-+ Response 201 (text/plain)
++ Response 204
 
-        {}
-
-## Group jobs [/api/v1/jobs/{group}]
+## Group's jobs [/api/v1/jobs/{group}]
 
 + Parameters
-    + group: foo (required, string) - ID of the group
+    + group: aaa (required, string) - ID of the group
 
-###  List all jobs from group [GET]
+###  List all group's jobs [GET]
 
-+ Response 200 (text/plain)
++ Response 200 (application/json)
 
         []
 
-## Project jobs [/api/v1/jobs/{group}/{project}]
+## Project's jobs [/api/v1/jobs/{group}/{project}]
 
 + Parameters
-    + group: foo (required, string) - ID of the group
-    + project: bar (required, string) - ID of the project
+    + group: aaa (required, string) - ID of the group
+    + project: bbb (required, string) - ID of the project
 
-###  List all jobs from project [GET]
+###  List all project's jobs [GET]
 
-+ Response 200 (text/plain)
++ Response 200 (application/json)
 
         []
 
-## Job [/api/v1/jobs/{group}/{project}/{id}]
-
-TODO
+## Job [/api/v1/jobs/{group}/{project}/{job}]
 
 ###  List job [GET]
 
-+ Response 200 (text/plain)
++ Parameters
+    + group: a (required, string) - ID of the group
+    + project: b (required, string) - ID of the project
+    + job: c (required, string) - ID of the job
 
-        {}
++ Response 200 (application/json)
+
+        {
+            "Group": "group",
+            "Project": "project",
+            "ID": "id",
+            "Schedule": {
+                "Kind": 0,
+                "Cron": "*/1 * * * *"
+            },
+            "CreatedAt": "2018-10-08T21:57:50.718196854+02:00",
+            "LastStartAt": "0001-01-01T00:00:00Z",
+            "TaskID": "",
+            "AgentID": "",
+            "Env": {
+                "FOO": "foo"
+            },
+            "Secrets": null,
+            "Container": {
+                "Kind": 0,
+                "Docker": {
+                    "Image": "alpine:3.8",
+                    "ForcePullImage": false
+                },
+                "Mesos": {
+                    "Image": ""
+                }
+            },
+            "State": 0,
+            "LastFail": {
+                "Message": "",
+                "Reason": "",
+                "Source": "",
+                "When": "0001-01-01T00:00:00Z"
+            },
+            "CPUs": 4,
+            "Mem": 7168,
+            "Cmd": "echo $FOO",
+            "User": "someone",
+            "Shell": true,
+            "Arguments": null,
+            "Labels": null
+        }
 
 ###  Delete job [DELETE]
 
-+ Response 200 (text/plain)
++ Parameters
+    + group: a (required, string) - ID of the group
+    + project: b (required, string) - ID of the project
+    + job: c (required, string) - ID of the job
 
-        {}
++ Response 204
 
 ###  Modify job [PUT]
+#
++ Parameters
+    + group: a (required, string) - ID of the group
+    + project: b (required, string) - ID of the project
+    + job: c (required, string) - ID of the job
 
-+ Request (text/plain)
++ Request
 
         {
             "schedule": {
@@ -123,9 +170,7 @@ TODO
             }
         }
 
-+ Response 200 (text/plain)
-
-        {}
++ Response 204
 
 ## Metrics [/api/v1/metrics]
 
