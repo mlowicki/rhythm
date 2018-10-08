@@ -49,7 +49,26 @@ Available under /api/v1/.
 
 + Request (text/plain)
 
-        {}
+        {
+            "id": "id",
+            "group": "group",
+            "project": "project",
+            "cpus": 4,
+            "mem": 7168,
+            "cmd": "echo $FOO",
+            "user": "user",
+            "env": {
+                "FOO": "foo"
+            },
+            "schedule": {
+                "cron": "*/1 * * * *"
+            },
+            "container": {
+                "docker": {
+                    "image": "alpine:3.8"
+                }
+            }
+        }
 
 + Response 201 (text/plain)
 
@@ -95,6 +114,14 @@ TODO
         {}
 
 ###  Modify job [PUT]
+
++ Request (text/plain)
+
+        {
+            "schedule": {
+                "cron": "*/2 * * * *"
+            }
+        }
 
 + Response 200 (text/plain)
 
