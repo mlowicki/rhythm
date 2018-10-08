@@ -1,4 +1,119 @@
-# GET /message
+FORMAT: 1A
+
+# Rhythm API
+
+API documentation for Apache Mesos framework - [Rhythm](https://github.com/mlowicki/rhythm).
+
+## Group Authorization
+
+Rhythm has the concept of authorization backend. Authorization backend tells the level of access for particular project. There're 3 access levels:
+* no access
+* read-only (jobs can be listed)
+* read-write (jobs can be listed, modified and created)
+
+There are two built-in authorization backends:
+* None (default one, gives read-write access to everyone)
+* GitLab
+
+### GitLab
+
+Permissions in GitLab are described in [official documentation](https://docs.gitlab.com/ee/user/permissions.html).
+
+* Developer, Maintainer or Owner permission levels gives read-write access.
+* Report permission level gives read-only access
+* Everything else gives no access
+
+How it works?
+
+Client must pass `X-Token` HTTP header while talking to any endpoint requiring authorization.
+Header contains [personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html).
+Under the hood backend connects to GitLab server and checks permissions associated with supplied token.
+
+If client want to access job under aaa/bbb/ccc then backend checks permissions of token for project bbb and group aaa on GitLab.
+
+# Group API v1
+
+Available under /api/v1/.
+
+## Jobs [/api/v1/jobs]
+
+###  List all jobs [GET]
+
 + Response 200 (text/plain)
 
-        Hello World!
+        []
+
+### Create new job [POST]
+
++ foo (string) - whatever
+
++ Request (text/plain)
+
+        {}
+
++ Response 201 (text/plain)
+
+        {}
+
+## Group jobs [/api/v1/jobs/{group}]
+
++ Parameters
+    + group: foo (required, string) - ID of the group
+
+###  List all jobs from group [GET]
+
++ Response 200 (text/plain)
+
+        []
+
+## Project jobs [/api/v1/jobs/{group}/{project}]
+
++ Parameters
+    + group: foo (required, string) - ID of the group
+    + project: bar (required, string) - ID of the project
+
+###  List all jobs from project [GET]
+
++ Response 200 (text/plain)
+
+        []
+
+## Job [/api/v1/jobs/{group}/{project}/{id}]
+
+TODO
+
+###  List job [GET]
+
++ Response 200 (text/plain)
+
+        {}
+
+###  Delete job [DELETE]
+
++ Response 200 (text/plain)
+
+        {}
+
+###  Modify job [PUT]
+
++ Response 200 (text/plain)
+
+        {}
+
+## Metrics [/api/v1/metrics]
+
+Backed by [Prometheus instrumenting library](https://github.com/prometheus/client_golang#instrumenting-applications).
+
+### Metrics [GET]
+
++ Response 200 (text/plain)
+
+        ...
+        # HELP go_goroutines Number of goroutines that currently exist.
+        # TYPE go_goroutines gauge
+        go_goroutines 14
+        ...
+        # HELP leader Indicates if instance is elected as leader.
+        # TYPE leader gauge
+        leader 1 
+        ...
