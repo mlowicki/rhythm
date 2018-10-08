@@ -11,4 +11,4 @@
 
 ## API
 
-[Documentation](doc/api.md)
+[Documentation](https://mlowicki.github.io/rhythm/api)
