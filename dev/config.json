@@ -39,7 +39,6 @@
             "address": "http://localhost:8200"
         }
     },
-    "verbose": false,
     "mesos": {
         "labels": {
             "one": "1",

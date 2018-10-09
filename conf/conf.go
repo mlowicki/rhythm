@@ -11,7 +11,6 @@ type Conf struct {
 	Storage     Storage
 	Coordinator Coordinator
 	Secrets     Secrets
-	Verbose     bool
 	Mesos       Mesos
 	Logging     Logging
 }
@@ -128,9 +127,14 @@ type MesosAuthBasic struct {
 const (
 	LoggingBackendNone   = "none"
 	LoggingBackendSentry = "sentry"
+	LoggingLevelDebug    = "debug"
+	LoggingLevelInfo     = "info"
+	LoggingLevelWarn     = "warn"
+	LoggingLevelError    = "error"
 )
 
 type Logging struct {
+	Level   string
 	Backend string
 	Sentry  LoggingSentry
 }
@@ -182,7 +186,6 @@ func New(path string) (*Conf, error) {
 				Root:    "secret/rhythm/",
 			},
 		},
-		Verbose: false,
 		Mesos: Mesos{
 			BaseURL:         "http://127.0.0.1:5050",
 			FailoverTimeout: time.Hour * 24 * 7,
@@ -193,6 +196,7 @@ func New(path string) (*Conf, error) {
 		},
 		Logging: Logging{
 			Backend: LoggingBackendNone,
+			Level:   LoggingLevelInfo,
 		},
 	}
 	err = json.Unmarshal(file, conf)

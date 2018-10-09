@@ -38,17 +38,16 @@ func init() {
 }
 
 func buildEventHandler(client calls.Caller, frameworkID store.Singleton, secr secrets, stor storage, c *conf.Conf, rec *reconciliation.Reconciliation) events.Handler {
+	debug := c.Logging.Level == conf.LoggingLevelDebug
 	logger := controller.LogEvents(func(e *scheduler.Event) {
 		log.Printf("Event: %s", e)
-	}).Unless(c.Verbose)
+	}).Unless(debug)
 	return eventrules.New(
-		logAllEvents().If(c.Verbose),
+		logAllEvents().If(debug),
 		controller.LiftErrors(),
 	).Handle(events.Handlers{
 		scheduler.Event_HEARTBEAT: events.HandlerFunc(func(ctx context.Context, e *scheduler.Event) error {
-			if c.Verbose {
-				log.Println("Heartbeat")
-			}
+			log.Debug("Heartbeat")
 			return nil
 		}),
 		scheduler.Event_ERROR: events.HandlerFunc(func(ctx context.Context, e *scheduler.Event) error {
@@ -177,7 +176,7 @@ func buildOffersEventHandler(stor storage, cli calls.Caller, secr secrets) event
 
 func logAllEvents() eventrules.Rule {
 	return func(ctx context.Context, e *scheduler.Event, err error, ch eventrules.Chain) (context.Context, *scheduler.Event, error) {
-		log.Printf("%+v", *e)
+		log.Debugf("%+v", *e)
 		return ch(ctx, e, err)
 	}
 }

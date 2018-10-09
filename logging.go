@@ -17,6 +17,18 @@ func init() {
 }
 
 func initLogging(c *conf.Logging) {
+	switch c.Level {
+	case conf.LoggingLevelDebug:
+		log.SetLevel(log.DebugLevel)
+	case conf.LoggingLevelInfo:
+		log.SetLevel(log.InfoLevel)
+	case conf.LoggingLevelWarn:
+		log.SetLevel(log.WarnLevel)
+	case conf.LoggingLevelError:
+		log.SetLevel(log.ErrorLevel)
+	default:
+		log.Fatalf("Unknown logging level: %s", c.Level)
+	}
 	switch c.Backend {
 	case conf.LoggingBackendSentry:
 		err := initSentryLogging(&c.Sentry)
