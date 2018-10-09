@@ -5,14 +5,14 @@ import (
 	"time"
 )
 
-type State int
+type State string
 
 const (
-	IDLE State = iota
-	STAGING
-	STARTING
-	RUNNING
-	FAILED
+	IDLE     State = "Idle"
+	STAGING        = "Staging"
+	STARTING       = "Starting"
+	RUNNING        = "Running"
+	FAILED         = "Failed"
 )
 
 type JobDocker struct {
@@ -25,27 +25,27 @@ type JobMesos struct {
 }
 
 type JobContainer struct {
-	Kind   ContainerKind
-	Docker JobDocker
-	Mesos  JobMesos
+	Type   ContainerType
+	Docker *JobDocker `json:",omitempty"`
+	Mesos  *JobMesos  `json:",omitempty"`
 }
 
-type ContainerKind int
+type ContainerType string
 
 const (
-	Docker ContainerKind = iota
-	Mesos
+	Docker ContainerType = "Docker"
+	Mesos                = "Mesos"
 )
 
 type JobSchedule struct {
-	Kind ScheduleKind
-	Cron string
+	Type ScheduleType
+	Cron string `json:",omitempty"`
 }
 
-type ScheduleKind int
+type ScheduleType string
 
 const (
-	Cron ScheduleKind = iota
+	Cron ScheduleType = "Cron"
 )
 
 type Job struct {

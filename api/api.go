@@ -215,6 +215,18 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusBadRequest)
 		return fmt.Errorf("JSON decoding failed: %s", err)
 	}
+	if payload.Env == nil {
+		payload.Env = make(map[string]string)
+	}
+	if payload.Secrets == nil {
+		payload.Secrets = make(map[string]string)
+	}
+	if payload.Arguments == nil {
+		payload.Arguments = make([]string, 0)
+	}
+	if payload.Labels == nil {
+		payload.Labels = make(map[string]string)
+	}
 	lvl, err := a.GetProjectAccessLevel(r, payload.Group, payload.Project)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -229,7 +241,7 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		Project: payload.Project,
 		ID:      payload.ID,
 		Schedule: model.JobSchedule{
-			Kind: model.Cron,
+			Type: model.Cron,
 			Cron: payload.Schedule.Cron,
 		},
 		CreatedAt: time.Now(),
@@ -244,14 +256,14 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		Labels:    payload.Labels,
 	}
 	if payload.Container.Docker != nil {
-		j.Container.Kind = model.Docker
-		j.Container.Docker = model.JobDocker{
+		j.Container.Type = model.Docker
+		j.Container.Docker = &model.JobDocker{
 			Image:          payload.Container.Docker.Image,
 			ForcePullImage: payload.Container.Docker.ForcePullImage,
 		}
 	} else if payload.Container.Mesos != nil {
-		j.Container.Kind = model.Mesos
-		j.Container.Mesos = model.JobMesos{
+		j.Container.Type = model.Mesos
+		j.Container.Mesos = &model.JobMesos{
 			Image: payload.Container.Mesos.Image,
 		}
 	} else {
@@ -271,6 +283,7 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusBadRequest)
 		return errJobAlreadyExists
 	}
+	j.State = model.IDLE
 	err = s.SaveJob(j)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -336,7 +349,7 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	if payload.Schedule != nil {
 		schedule := job.Schedule
 		if payload.Schedule.Cron != nil {
-			schedule.Kind = model.Cron
+			schedule.Type = model.Cron
 			schedule.Cron = *payload.Schedule.Cron
 		}
 		job.Schedule = schedule
@@ -350,7 +363,7 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	if payload.Container != nil {
 		container := job.Container
 		if payload.Container.Docker != nil {
-			container.Kind = model.Docker
+			container.Type = model.Docker
 			if payload.Container.Docker.Image != nil {
 				container.Docker.Image = *payload.Container.Docker.Image
 			}
@@ -358,7 +371,7 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 				container.Docker.ForcePullImage = *payload.Container.Docker.ForcePullImage
 			}
 		} else if payload.Container.Mesos != nil {
-			container.Kind = model.Mesos
+			container.Type = model.Mesos
 			if payload.Container.Mesos.Image != nil {
 				container.Mesos.Image = *payload.Container.Mesos.Image
 			}

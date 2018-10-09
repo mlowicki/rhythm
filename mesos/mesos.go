@@ -95,7 +95,7 @@ func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
 		env.Variables = append(env.Variables, mesos.Environment_Variable{Name: k, Value: &secret})
 	}
 	var containerInfo mesos.ContainerInfo
-	switch j.Container.Kind {
+	switch j.Container.Type {
 	case model.Docker:
 		containerInfo = mesos.ContainerInfo{
 			Type: mesos.ContainerInfo_DOCKER.Enum(),
@@ -112,7 +112,7 @@ func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
 			},
 		}
 	default:
-		log.Fatalf("Unknown container type: %d", j.Container.Kind)
+		log.Fatalf("Unknown container type: %d", j.Container.Type)
 	}
 	labels := make([]mesos.Label, len(j.Labels))
 	for k, v := range j.Labels {

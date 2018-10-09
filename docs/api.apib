@@ -29,7 +29,7 @@ Client must pass `X-Token` HTTP header while talking to any endpoint requiring a
 Header contains [personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html).
 Under the hood backend connects to GitLab server and checks permissions associated with supplied token.
 
-If client want to access job under aaa/bbb/ccc then backend checks permissions of token for project bbb and group aaa on GitLab.
+If client want to access job under a/b/c then backend checks permissions of token for project b and group a on GitLab.
 
 # Group API v1
 
@@ -41,57 +41,357 @@ Available under /api/v1/.
 
 + Response 200 (application/json)
 
-        []
+        [
+            {
+                "Group": "group",
+                "Project": "project",
+                "ID": "id",
+                "Schedule": {
+                    "Type": "Cron",
+                    "Cron": "*/1 * * * *"
+                },
+                "CreatedAt": "2018-10-09T21:47:35.576513772+02:00",
+                "LastStartAt": "0001-01-01T00:00:00Z",
+                "TaskID": "",
+                "AgentID": "",
+                "Env": {},
+                "Secrets": {},
+                "Container": {
+                    "Type": "Docker",
+                    "Docker": {
+                        "Image": "alpine:3.8",
+                        "ForcePullImage": false
+                    }
+                },
+                "State": "Idle",
+                "LastFail": {
+                    "Message": "",
+                    "Reason": "",
+                    "Source": "",
+                    "When": "0001-01-01T00:00:00Z"
+                },
+                "CPUs": 4,
+                "Mem": 7168,
+                "Cmd": "echo $FOO",
+                "User": "someone",
+                "Shell": true,
+                "Arguments": [],
+                "Labels": {}
+            },
+            {
+                "Group": "group2",
+                "Project": "project",
+                "ID": "id",
+                "Schedule": {
+                    "Type": "Cron",
+                    "Cron": "*/2 * * * *"
+                },
+                "CreatedAt": "2018-10-09T21:52:48.196252269+02:00",
+                "LastStartAt": "0001-01-01T00:00:00Z",
+                "TaskID": "",
+                "AgentID": "",
+                "Env": {},
+                "Secrets": {},
+                "Container": {
+                    "Type": "Docker",
+                    "Docker": {
+                        "Image": "alpine:3.8",
+                        "ForcePullImage": false
+                    }
+                },
+                "State": "Idle",
+                "LastFail": {
+                    "Message": "",
+                    "Reason": "",
+                    "Source": "",
+                    "When": "0001-01-01T00:00:00Z"
+                },
+                "CPUs": 1,
+                "Mem": 7168,
+                "Cmd": "echo $FOO",
+                "User": "someone",
+                "Shell": true,
+                "Arguments": [],
+                "Labels": {}
+            }
+        ]
 
 ### Create new job [POST]
 
 + Request
 
-        {
-            "id": "id",
-            "group": "group",
-            "project": "project",
-            "cpus": 4,
-            "mem": 7168,
-            "cmd": "echo $FOO",
-            "user": "someone",
-            "env": {
-                "FOO": "foo"
-            },
-            "schedule": {
-                "cron": "*/1 * * * *"
-            },
-            "container": {
-                "docker": {
-                    "image": "alpine:3.8"
+    + Body
+
+            {
+                "id": "id",
+                "group": "group",
+                "project": "project",
+                "cpus": 4,
+                "mem": 7168,
+                "cmd": "echo $FOO",
+                "user": "someone",
+                "env": {
+                    "FOO": "foo"
+                },
+                "schedule": {
+                    "cron": "*/1 * * * *"
+                },
+                "container": {
+                    "docker": {
+                        "image": "alpine:3.8"
+                    }
                 }
             }
-        }
+
+    + Schema
+
+            {
+                "type": "object",
+                "properties": {
+                    "group": {
+                        "type": "string"
+                    },
+                    "project": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "schedule": {
+                        "type": "object",
+                        "properties": {
+                            "cron": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "env": {
+                        "type": "object"
+                    },
+                    "secrets": {
+                        "type": "object"
+                    },
+                    "container": {
+                        "type": "object",
+                        "properties": {
+                            "docker": {
+                                "type": "object",
+                                "properties": {
+                                    "image": {
+                                        "type": "string"
+                                    },
+                                    "forcepullimage": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "mesos": {
+                                "type": "object",
+                                "properties": {
+                                    "image": {
+                                        "type": "string"
+                                    }
+                                }
+                            }   
+                        }
+                    },
+                    "cpus": {
+                        "type": "number"
+                    },
+                    "mem": {
+                        "type": "number"
+                    },
+                    "cmd": {
+                        "type": "string"
+                    },
+                    "user": {
+                        "type": "string"
+                    },
+                    "shell": {
+                        "type": "boolean"
+                    },
+                    "arguments": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "labels": {
+                        "type": "object"
+                    }
+                }
+            }
 
 + Response 204
 
 ## Group's jobs [/api/v1/jobs/{group}]
 
 + Parameters
-    + group: aaa (required, string) - ID of the group
+    + group: a (required, string) - ID of the group
 
 ###  List all group's jobs [GET]
 
 + Response 200 (application/json)
 
-        []
+        [
+            {
+                "Group": "group",
+                "Project": "project",
+                "ID": "id",
+                "Schedule": {
+                    "Type": "Cron",
+                    "Cron": "*/1 * * * *"
+                },
+                "CreatedAt": "2018-10-09T21:47:35.576513772+02:00",
+                "LastStartAt": "0001-01-01T00:00:00Z",
+                "TaskID": "",
+                "AgentID": "",
+                "Env": {},
+                "Secrets": {},
+                "Container": {
+                    "Type": "Docker",
+                    "Docker": {
+                        "Image": "alpine:3.8",
+                        "ForcePullImage": false
+                    }
+                },
+                "State": "Idle",
+                "LastFail": {
+                    "Message": "",
+                    "Reason": "",
+                    "Source": "",
+                    "When": "0001-01-01T00:00:00Z"
+                },
+                "CPUs": 4,
+                "Mem": 7168,
+                "Cmd": "echo $FOO",
+                "User": "someone",
+                "Shell": true,
+                "Arguments": [],
+                "Labels": {}
+            },
+            {
+                "Group": "group",
+                "Project": "project2",
+                "ID": "id",
+                "Schedule": {
+                    "Type": "Cron",
+                    "Cron": "*/2 * * * *"
+                },
+                "CreatedAt": "2018-10-09T21:52:48.196252269+02:00",
+                "LastStartAt": "0001-01-01T00:00:00Z",
+                "TaskID": "",
+                "AgentID": "",
+                "Env": {},
+                "Secrets": {},
+                "Container": {
+                    "Type": "Docker",
+                    "Docker": {
+                        "Image": "alpine:3.8",
+                        "ForcePullImage": false
+                    }
+                },
+                "State": "Idle",
+                "LastFail": {
+                    "Message": "",
+                    "Reason": "",
+                    "Source": "",
+                    "When": "0001-01-01T00:00:00Z"
+                },
+                "CPUs": 1,
+                "Mem": 7168,
+                "Cmd": "echo $FOO",
+                "User": "someone",
+                "Shell": true,
+                "Arguments": [],
+                "Labels": {}
+            }
+        ]
 
 ## Project's jobs [/api/v1/jobs/{group}/{project}]
 
 + Parameters
-    + group: aaa (required, string) - ID of the group
-    + project: bbb (required, string) - ID of the project
+    + group: a (required, string) - ID of the group
+    + project: b (required, string) - ID of the project
 
 ###  List all project's jobs [GET]
 
 + Response 200 (application/json)
 
-        []
+        [
+            {
+                "Group": "group",
+                "Project": "project",
+                "ID": "id",
+                "Schedule": {
+                    "Type": "Cron",
+                    "Cron": "*/1 * * * *"
+                },
+                "CreatedAt": "2018-10-09T21:47:35.576513772+02:00",
+                "LastStartAt": "0001-01-01T00:00:00Z",
+                "TaskID": "",
+                "AgentID": "",
+                "Env": {},
+                "Secrets": {},
+                "Container": {
+                    "Type": "Docker",
+                    "Docker": {
+                        "Image": "alpine:3.8",
+                        "ForcePullImage": false
+                    }
+                },
+                "State": "Idle",
+                "LastFail": {
+                    "Message": "",
+                    "Reason": "",
+                    "Source": "",
+                    "When": "0001-01-01T00:00:00Z"
+                },
+                "CPUs": 4,
+                "Mem": 7168,
+                "Cmd": "echo $FOO",
+                "User": "user",
+                "Shell": true,
+                "Arguments": [],
+                "Labels": {}
+            },
+            {
+                "Group": "group",
+                "Project": "project",
+                "ID": "id2",
+                "Schedule": {
+                    "Type": "Cron",
+                    "Cron": "*/2 * * * *"
+                },
+                "CreatedAt": "2018-10-09T21:52:48.196252269+02:00",
+                "LastStartAt": "0001-01-01T00:00:00Z",
+                "TaskID": "",
+                "AgentID": "",
+                "Env": {},
+                "Secrets": {},
+                "Container": {
+                    "Type": "Docker",
+                    "Docker": {
+                        "Image": "alpine:3.8",
+                        "ForcePullImage": false
+                    }
+                },
+                "State": "Idle",
+                "LastFail": {
+                    "Message": "",
+                    "Reason": "",
+                    "Source": "",
+                    "When": "0001-01-01T00:00:00Z"
+                },
+                "CPUs": 1,
+                "Mem": 7168,
+                "Cmd": "echo $FOO",
+                "User": "user",
+                "Shell": true,
+                "Arguments": [],
+                "Labels": {}
+            }
+        ]
 
 ## Job [/api/v1/jobs/{group}/{project}/{job}]
 
@@ -109,7 +409,7 @@ Available under /api/v1/.
             "Project": "project",
             "ID": "id",
             "Schedule": {
-                "Kind": 0,
+                "Type": "Cron",
                 "Cron": "*/1 * * * *"
             },
             "CreatedAt": "2018-10-08T21:57:50.718196854+02:00",
@@ -119,18 +419,15 @@ Available under /api/v1/.
             "Env": {
                 "FOO": "foo"
             },
-            "Secrets": null,
+            "Secrets": {},
             "Container": {
-                "Kind": 0,
+                "Type": "Docker",
                 "Docker": {
                     "Image": "alpine:3.8",
                     "ForcePullImage": false
-                },
-                "Mesos": {
-                    "Image": ""
                 }
             },
-            "State": 0,
+            "State": "Idle",
             "LastFail": {
                 "Message": "",
                 "Reason": "",
@@ -142,8 +439,8 @@ Available under /api/v1/.
             "Cmd": "echo $FOO",
             "User": "someone",
             "Shell": true,
-            "Arguments": null,
-            "Labels": null
+            "Arguments": [],
+            "Labels": {}
         }
 
 ###  Delete job [DELETE]
@@ -164,11 +461,83 @@ Available under /api/v1/.
 
 + Request
 
-        {
-            "schedule": {
-                "cron": "*/2 * * * *"
+    + Body
+
+            {
+                "schedule": {
+                    "cron": "*/2 * * * *"
+                }
             }
-        }
+
+    + Schema
+
+            {
+                "type": "object",
+                "properties": {
+                    "schedule": {
+                        "type": "object",
+                        "properties": {
+                            "cron": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "env": {
+                        "type": "object"
+                    },
+                    "secrets": {
+                        "type": "object"
+                    },
+                    "container": {
+                        "type": "object",
+                        "properties": {
+                            "docker": {
+                                "type": "object",
+                                "properties": {
+                                    "image": {
+                                        "type": "string"
+                                    },
+                                    "forcepullimage": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "mesos": {
+                                "type": "object",
+                                "properties": {
+                                    "image": {
+                                        "type": "string"
+                                    }
+                                }
+                            }   
+                        }
+                    },
+                    "cpus": {
+                        "type": "number"
+                    },
+                    "mem": {
+                        "type": "number"
+                    },
+                    "cmd": {
+                        "type": "string"
+                    },
+                    "user": {
+                        "type": "string"
+                    },
+                    "shell": {
+                        "type": "boolean"
+                    },
+                    "arguments": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "labels": {
+                        "type": "object"
+                    }
+                }
+            }
 
 + Response 204
 

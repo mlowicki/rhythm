@@ -37,9 +37,82 @@
 <p>Client must pass <code>X-Token</code> HTTP header while talking to any endpoint requiring authorization.
 Header contains <a href="https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html">personal access token</a>.
 Under the hood backend connects to GitLab server and checks permissions associated with supplied token.</p>
-<p>If client want to access job under aaa/bbb/ccc then backend checks permissions of token for project bbb and group aaa on GitLab.</p>
+<p>If client want to access job under a/b/c then backend checks permissions of token for project b and group a on GitLab.</p>
 </section><section id="api-v1" class="resource-group"><h2 class="group-heading">API v1 <a href="#api-v1" class="permalink">&para;</a></h2><p>Available under /api/v1/.</p>
-<div id="api-v1-jobs" class="resource"><h3 class="resource-heading">Jobs <a href="#api-v1-jobs" class="permalink">&nbsp;&para;</a></h3><div id="api-v1-jobs-get" class="action get"><h4 class="action-heading"><div class="name">List all jobs</div><a href="#api-v1-jobs-get" class="method get">GET</a><code class="uri">/api/v1/jobs</code></h4><h4>Example URI</h4><div class="definition"><span class="method get">GET</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs</span></div><div class="title"><strong>Response&nbsp;&nbsp;<code>200</code></strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Headers</h5><pre><code><span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json</span></code></pre><div style="height: 1px;"></div><h5>Body</h5><pre><code>[]</code></pre><div style="height: 1px;"></div></div></div></div><div id="api-v1-jobs-post" class="action post"><h4 class="action-heading"><div class="name">Create new job</div><a href="#api-v1-jobs-post" class="method post">POST</a><code class="uri">/api/v1/jobs</code></h4><h4>Example URI</h4><div class="definition"><span class="method post">POST</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs</span></div><div class="title"><strong>Request</strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Body</h5><pre><code>{
+<div id="api-v1-jobs" class="resource"><h3 class="resource-heading">Jobs <a href="#api-v1-jobs" class="permalink">&nbsp;&para;</a></h3><div id="api-v1-jobs-get" class="action get"><h4 class="action-heading"><div class="name">List all jobs</div><a href="#api-v1-jobs-get" class="method get">GET</a><code class="uri">/api/v1/jobs</code></h4><h4>Example URI</h4><div class="definition"><span class="method get">GET</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs</span></div><div class="title"><strong>Response&nbsp;&nbsp;<code>200</code></strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Headers</h5><pre><code><span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json</span></code></pre><div style="height: 1px;"></div><h5>Body</h5><pre><code>[
+  {
+    "<span class="hljs-attribute">Group</span>": <span class="hljs-value"><span class="hljs-string">"group"</span></span>,
+    "<span class="hljs-attribute">Project</span>": <span class="hljs-value"><span class="hljs-string">"project"</span></span>,
+    "<span class="hljs-attribute">ID</span>": <span class="hljs-value"><span class="hljs-string">"id"</span></span>,
+    "<span class="hljs-attribute">Schedule</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
+      "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/1 * * * *"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-09T21:47:35.576513772+02:00"</span></span>,
+    "<span class="hljs-attribute">LastStartAt</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
+    "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Docker"</span></span>,
+      "<span class="hljs-attribute">Docker</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">Image</span>": <span class="hljs-value"><span class="hljs-string">"alpine:3.8"</span></span>,
+        "<span class="hljs-attribute">ForcePullImage</span>": <span class="hljs-value"><span class="hljs-literal">false</span>
+      </span>}
+    </span>}</span>,
+    "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
+    "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">4</span></span>,
+    "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
+    "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
+    "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"someone"</span></span>,
+    "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
+    "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
+    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+  </span>},
+  {
+    "<span class="hljs-attribute">Group</span>": <span class="hljs-value"><span class="hljs-string">"group2"</span></span>,
+    "<span class="hljs-attribute">Project</span>": <span class="hljs-value"><span class="hljs-string">"project"</span></span>,
+    "<span class="hljs-attribute">ID</span>": <span class="hljs-value"><span class="hljs-string">"id"</span></span>,
+    "<span class="hljs-attribute">Schedule</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
+      "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/2 * * * *"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-09T21:52:48.196252269+02:00"</span></span>,
+    "<span class="hljs-attribute">LastStartAt</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
+    "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Docker"</span></span>,
+      "<span class="hljs-attribute">Docker</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">Image</span>": <span class="hljs-value"><span class="hljs-string">"alpine:3.8"</span></span>,
+        "<span class="hljs-attribute">ForcePullImage</span>": <span class="hljs-value"><span class="hljs-literal">false</span>
+      </span>}
+    </span>}</span>,
+    "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
+    "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">1</span></span>,
+    "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
+    "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
+    "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"someone"</span></span>,
+    "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
+    "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
+    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+  </span>}
+]</code></pre><div style="height: 1px;"></div></div></div></div><div id="api-v1-jobs-post" class="action post"><h4 class="action-heading"><div class="name">Create new job</div><a href="#api-v1-jobs-post" class="method post">POST</a><code class="uri">/api/v1/jobs</code></h4><h4>Example URI</h4><div class="definition"><span class="method post">POST</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs</span></div><div class="title"><strong>Request</strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Body</h5><pre><code>{
   "<span class="hljs-attribute">id</span>": <span class="hljs-value"><span class="hljs-string">"id"</span></span>,
   "<span class="hljs-attribute">group</span>": <span class="hljs-value"><span class="hljs-string">"group"</span></span>,
   "<span class="hljs-attribute">project</span>": <span class="hljs-value"><span class="hljs-string">"project"</span></span>,
@@ -58,10 +131,231 @@ Under the hood backend connects to GitLab server and checks permissions associat
       "<span class="hljs-attribute">image</span>": <span class="hljs-value"><span class="hljs-string">"alpine:3.8"</span>
     </span>}
   </span>}
-</span>}</code></pre><div style="height: 1px;"></div></div></div><div class="title"><strong>Response&nbsp;&nbsp;<code>204</code></strong></div></div></div><div id="api-v1-group-s-jobs" class="resource"><h3 class="resource-heading">Group's jobs <a href="#api-v1-group-s-jobs" class="permalink">&nbsp;&para;</a></h3><div id="api-v1-group-s-jobs-get" class="action get"><h4 class="action-heading"><div class="name">List all group's jobs</div><a href="#api-v1-group-s-jobs-get" class="method get">GET</a><code class="uri">/api/v1/jobs/{group}</code></h4><h4>Example URI</h4><div class="definition"><span class="method get">GET</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs/<span class="hljs-attribute" title="group">aaa</span></span></div><div class="title"><strong>URI Parameters</strong><div class="collapse-button show"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><dl class="inner"><dt>group</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>aaa</span></span><p>ID of the group</p>
-</dd></dl></div><div class="title"><strong>Response&nbsp;&nbsp;<code>200</code></strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Headers</h5><pre><code><span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json</span></code></pre><div style="height: 1px;"></div><h5>Body</h5><pre><code>[]</code></pre><div style="height: 1px;"></div></div></div></div></div><div id="api-v1-project-s-jobs" class="resource"><h3 class="resource-heading">Project's jobs <a href="#api-v1-project-s-jobs" class="permalink">&nbsp;&para;</a></h3><div id="api-v1-project-s-jobs-get" class="action get"><h4 class="action-heading"><div class="name">List all project's jobs</div><a href="#api-v1-project-s-jobs-get" class="method get">GET</a><code class="uri">/api/v1/jobs/{group}/{project}</code></h4><h4>Example URI</h4><div class="definition"><span class="method get">GET</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs/<span class="hljs-attribute" title="group">aaa</span>/<span class="hljs-attribute" title="project">bbb</span></span></div><div class="title"><strong>URI Parameters</strong><div class="collapse-button show"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><dl class="inner"><dt>group</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>aaa</span></span><p>ID of the group</p>
-</dd><dt>project</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>bbb</span></span><p>ID of the project</p>
-</dd></dl></div><div class="title"><strong>Response&nbsp;&nbsp;<code>200</code></strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Headers</h5><pre><code><span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json</span></code></pre><div style="height: 1px;"></div><h5>Body</h5><pre><code>[]</code></pre><div style="height: 1px;"></div></div></div></div></div><div id="api-v1-job" class="resource"><h3 class="resource-heading">Job <a href="#api-v1-job" class="permalink">&nbsp;&para;</a></h3><div id="api-v1-job-get" class="action get"><h4 class="action-heading"><div class="name">List job</div><a href="#api-v1-job-get" class="method get">GET</a><code class="uri">/api/v1/jobs/{group}/{project}/{job}</code></h4><h4>Example URI</h4><div class="definition"><span class="method get">GET</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs/<span class="hljs-attribute" title="group">a</span>/<span class="hljs-attribute" title="project">b</span>/<span class="hljs-attribute" title="job">c</span></span></div><div class="title"><strong>URI Parameters</strong><div class="collapse-button show"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><dl class="inner"><dt>group</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>a</span></span><p>ID of the group</p>
+</span>}</code></pre><div style="height: 1px;"></div><h5>Schema</h5><pre><code>{
+  "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
+  "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
+    "<span class="hljs-attribute">group</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">project</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">id</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">schedule</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
+      "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">cron</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+        </span>}
+      </span>}
+    </span>}</span>,
+    "<span class="hljs-attribute">env</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">secrets</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">container</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
+      "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">docker</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
+          "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
+            "<span class="hljs-attribute">image</span>": <span class="hljs-value">{
+              "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+            </span>}</span>,
+            "<span class="hljs-attribute">forcepullimage</span>": <span class="hljs-value">{
+              "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"boolean"</span>
+            </span>}
+          </span>}
+        </span>}</span>,
+        "<span class="hljs-attribute">mesos</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
+          "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
+            "<span class="hljs-attribute">image</span>": <span class="hljs-value">{
+              "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+            </span>}
+          </span>}
+        </span>}
+      </span>}
+    </span>}</span>,
+    "<span class="hljs-attribute">cpus</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"number"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">mem</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"number"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">cmd</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">user</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">shell</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"boolean"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">arguments</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"array"</span></span>,
+      "<span class="hljs-attribute">items</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+      </span>}
+    </span>}</span>,
+    "<span class="hljs-attribute">labels</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span>
+    </span>}
+  </span>}
+</span>}</code></pre><div style="height: 1px;"></div></div></div><div class="title"><strong>Response&nbsp;&nbsp;<code>204</code></strong></div></div></div><div id="api-v1-group-s-jobs" class="resource"><h3 class="resource-heading">Group's jobs <a href="#api-v1-group-s-jobs" class="permalink">&nbsp;&para;</a></h3><div id="api-v1-group-s-jobs-get" class="action get"><h4 class="action-heading"><div class="name">List all group's jobs</div><a href="#api-v1-group-s-jobs-get" class="method get">GET</a><code class="uri">/api/v1/jobs/{group}</code></h4><h4>Example URI</h4><div class="definition"><span class="method get">GET</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs/<span class="hljs-attribute" title="group">a</span></span></div><div class="title"><strong>URI Parameters</strong><div class="collapse-button show"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><dl class="inner"><dt>group</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>a</span></span><p>ID of the group</p>
+</dd></dl></div><div class="title"><strong>Response&nbsp;&nbsp;<code>200</code></strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Headers</h5><pre><code><span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json</span></code></pre><div style="height: 1px;"></div><h5>Body</h5><pre><code>[
+  {
+    "<span class="hljs-attribute">Group</span>": <span class="hljs-value"><span class="hljs-string">"group"</span></span>,
+    "<span class="hljs-attribute">Project</span>": <span class="hljs-value"><span class="hljs-string">"project"</span></span>,
+    "<span class="hljs-attribute">ID</span>": <span class="hljs-value"><span class="hljs-string">"id"</span></span>,
+    "<span class="hljs-attribute">Schedule</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
+      "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/1 * * * *"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-09T21:47:35.576513772+02:00"</span></span>,
+    "<span class="hljs-attribute">LastStartAt</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
+    "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Docker"</span></span>,
+      "<span class="hljs-attribute">Docker</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">Image</span>": <span class="hljs-value"><span class="hljs-string">"alpine:3.8"</span></span>,
+        "<span class="hljs-attribute">ForcePullImage</span>": <span class="hljs-value"><span class="hljs-literal">false</span>
+      </span>}
+    </span>}</span>,
+    "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
+    "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">4</span></span>,
+    "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
+    "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
+    "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"someone"</span></span>,
+    "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
+    "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
+    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+  </span>},
+  {
+    "<span class="hljs-attribute">Group</span>": <span class="hljs-value"><span class="hljs-string">"group"</span></span>,
+    "<span class="hljs-attribute">Project</span>": <span class="hljs-value"><span class="hljs-string">"project2"</span></span>,
+    "<span class="hljs-attribute">ID</span>": <span class="hljs-value"><span class="hljs-string">"id"</span></span>,
+    "<span class="hljs-attribute">Schedule</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
+      "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/2 * * * *"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-09T21:52:48.196252269+02:00"</span></span>,
+    "<span class="hljs-attribute">LastStartAt</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
+    "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Docker"</span></span>,
+      "<span class="hljs-attribute">Docker</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">Image</span>": <span class="hljs-value"><span class="hljs-string">"alpine:3.8"</span></span>,
+        "<span class="hljs-attribute">ForcePullImage</span>": <span class="hljs-value"><span class="hljs-literal">false</span>
+      </span>}
+    </span>}</span>,
+    "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
+    "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">1</span></span>,
+    "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
+    "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
+    "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"someone"</span></span>,
+    "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
+    "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
+    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+  </span>}
+]</code></pre><div style="height: 1px;"></div></div></div></div></div><div id="api-v1-project-s-jobs" class="resource"><h3 class="resource-heading">Project's jobs <a href="#api-v1-project-s-jobs" class="permalink">&nbsp;&para;</a></h3><div id="api-v1-project-s-jobs-get" class="action get"><h4 class="action-heading"><div class="name">List all project's jobs</div><a href="#api-v1-project-s-jobs-get" class="method get">GET</a><code class="uri">/api/v1/jobs/{group}/{project}</code></h4><h4>Example URI</h4><div class="definition"><span class="method get">GET</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs/<span class="hljs-attribute" title="group">a</span>/<span class="hljs-attribute" title="project">b</span></span></div><div class="title"><strong>URI Parameters</strong><div class="collapse-button show"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><dl class="inner"><dt>group</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>a</span></span><p>ID of the group</p>
+</dd><dt>project</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>b</span></span><p>ID of the project</p>
+</dd></dl></div><div class="title"><strong>Response&nbsp;&nbsp;<code>200</code></strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Headers</h5><pre><code><span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json</span></code></pre><div style="height: 1px;"></div><h5>Body</h5><pre><code>[
+  {
+    "<span class="hljs-attribute">Group</span>": <span class="hljs-value"><span class="hljs-string">"group"</span></span>,
+    "<span class="hljs-attribute">Project</span>": <span class="hljs-value"><span class="hljs-string">"project"</span></span>,
+    "<span class="hljs-attribute">ID</span>": <span class="hljs-value"><span class="hljs-string">"id"</span></span>,
+    "<span class="hljs-attribute">Schedule</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
+      "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/1 * * * *"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-09T21:47:35.576513772+02:00"</span></span>,
+    "<span class="hljs-attribute">LastStartAt</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
+    "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Docker"</span></span>,
+      "<span class="hljs-attribute">Docker</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">Image</span>": <span class="hljs-value"><span class="hljs-string">"alpine:3.8"</span></span>,
+        "<span class="hljs-attribute">ForcePullImage</span>": <span class="hljs-value"><span class="hljs-literal">false</span>
+      </span>}
+    </span>}</span>,
+    "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
+    "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">4</span></span>,
+    "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
+    "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
+    "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"user"</span></span>,
+    "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
+    "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
+    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+  </span>},
+  {
+    "<span class="hljs-attribute">Group</span>": <span class="hljs-value"><span class="hljs-string">"group"</span></span>,
+    "<span class="hljs-attribute">Project</span>": <span class="hljs-value"><span class="hljs-string">"project"</span></span>,
+    "<span class="hljs-attribute">ID</span>": <span class="hljs-value"><span class="hljs-string">"id2"</span></span>,
+    "<span class="hljs-attribute">Schedule</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
+      "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/2 * * * *"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-09T21:52:48.196252269+02:00"</span></span>,
+    "<span class="hljs-attribute">LastStartAt</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
+    "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Docker"</span></span>,
+      "<span class="hljs-attribute">Docker</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">Image</span>": <span class="hljs-value"><span class="hljs-string">"alpine:3.8"</span></span>,
+        "<span class="hljs-attribute">ForcePullImage</span>": <span class="hljs-value"><span class="hljs-literal">false</span>
+      </span>}
+    </span>}</span>,
+    "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
+    "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+      "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">1</span></span>,
+    "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
+    "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
+    "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"user"</span></span>,
+    "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
+    "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
+    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+  </span>}
+]</code></pre><div style="height: 1px;"></div></div></div></div></div><div id="api-v1-job" class="resource"><h3 class="resource-heading">Job <a href="#api-v1-job" class="permalink">&nbsp;&para;</a></h3><div id="api-v1-job-get" class="action get"><h4 class="action-heading"><div class="name">List job</div><a href="#api-v1-job-get" class="method get">GET</a><code class="uri">/api/v1/jobs/{group}/{project}/{job}</code></h4><h4>Example URI</h4><div class="definition"><span class="method get">GET</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs/<span class="hljs-attribute" title="group">a</span>/<span class="hljs-attribute" title="project">b</span>/<span class="hljs-attribute" title="job">c</span></span></div><div class="title"><strong>URI Parameters</strong><div class="collapse-button show"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><dl class="inner"><dt>group</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>a</span></span><p>ID of the group</p>
 </dd><dt>project</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>b</span></span><p>ID of the project</p>
 </dd><dt>job</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>c</span></span><p>ID of the job</p>
 </dd></dl></div><div class="title"><strong>Response&nbsp;&nbsp;<code>200</code></strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Headers</h5><pre><code><span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json</span></code></pre><div style="height: 1px;"></div><h5>Body</h5><pre><code>{
@@ -69,7 +363,7 @@ Under the hood backend connects to GitLab server and checks permissions associat
   "<span class="hljs-attribute">Project</span>": <span class="hljs-value"><span class="hljs-string">"project"</span></span>,
   "<span class="hljs-attribute">ID</span>": <span class="hljs-value"><span class="hljs-string">"id"</span></span>,
   "<span class="hljs-attribute">Schedule</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">Kind</span>": <span class="hljs-value"><span class="hljs-number">0</span></span>,
+    "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
     "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/1 * * * *"</span>
   </span>}</span>,
   "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-08T21:57:50.718196854+02:00"</span></span>,
@@ -79,18 +373,15 @@ Under the hood backend connects to GitLab server and checks permissions associat
   "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{
     "<span class="hljs-attribute">FOO</span>": <span class="hljs-value"><span class="hljs-string">"foo"</span>
   </span>}</span>,
-  "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value"><span class="hljs-literal">null</span></span>,
+  "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
   "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">Kind</span>": <span class="hljs-value"><span class="hljs-number">0</span></span>,
+    "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Docker"</span></span>,
     "<span class="hljs-attribute">Docker</span>": <span class="hljs-value">{
       "<span class="hljs-attribute">Image</span>": <span class="hljs-value"><span class="hljs-string">"alpine:3.8"</span></span>,
       "<span class="hljs-attribute">ForcePullImage</span>": <span class="hljs-value"><span class="hljs-literal">false</span>
-    </span>}</span>,
-    "<span class="hljs-attribute">Mesos</span>": <span class="hljs-value">{
-      "<span class="hljs-attribute">Image</span>": <span class="hljs-value"><span class="hljs-string">""</span>
     </span>}
   </span>}</span>,
-  "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-number">0</span></span>,
+  "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
   "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
     "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
     "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
@@ -102,8 +393,8 @@ Under the hood backend connects to GitLab server and checks permissions associat
   "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
   "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"someone"</span></span>,
   "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
-  "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value"><span class="hljs-literal">null</span></span>,
-  "<span class="hljs-attribute">Labels</span>": <span class="hljs-value"><span class="hljs-literal">null</span>
+  "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
+  "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
 </span>}</code></pre><div style="height: 1px;"></div></div></div></div><div id="api-v1-job-delete" class="action delete"><h4 class="action-heading"><div class="name">Delete job</div><a href="#api-v1-job-delete" class="method delete">DELETE</a><code class="uri">/api/v1/jobs/{group}/{project}/{job}</code></h4><h4>Example URI</h4><div class="definition"><span class="method delete">DELETE</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs/<span class="hljs-attribute" title="group">a</span>/<span class="hljs-attribute" title="project">b</span>/<span class="hljs-attribute" title="job">c</span></span></div><div class="title"><strong>URI Parameters</strong><div class="collapse-button show"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><dl class="inner"><dt>group</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>a</span></span><p>ID of the group</p>
 </dd><dt>project</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>b</span></span><p>ID of the project</p>
 </dd><dt>job</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>c</span></span><p>ID of the job</p>
@@ -114,6 +405,72 @@ Under the hood backend connects to GitLab server and checks permissions associat
   "<span class="hljs-attribute">schedule</span>": <span class="hljs-value">{
     "<span class="hljs-attribute">cron</span>": <span class="hljs-value"><span class="hljs-string">"*/2 * * * *"</span>
   </span>}
+</span>}</code></pre><div style="height: 1px;"></div><h5>Schema</h5><pre><code>{
+  "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
+  "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
+    "<span class="hljs-attribute">schedule</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
+      "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">cron</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+        </span>}
+      </span>}
+    </span>}</span>,
+    "<span class="hljs-attribute">env</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">secrets</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">container</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
+      "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">docker</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
+          "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
+            "<span class="hljs-attribute">image</span>": <span class="hljs-value">{
+              "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+            </span>}</span>,
+            "<span class="hljs-attribute">forcepullimage</span>": <span class="hljs-value">{
+              "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"boolean"</span>
+            </span>}
+          </span>}
+        </span>}</span>,
+        "<span class="hljs-attribute">mesos</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
+          "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
+            "<span class="hljs-attribute">image</span>": <span class="hljs-value">{
+              "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+            </span>}
+          </span>}
+        </span>}
+      </span>}
+    </span>}</span>,
+    "<span class="hljs-attribute">cpus</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"number"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">mem</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"number"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">cmd</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">user</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">shell</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"boolean"</span>
+    </span>}</span>,
+    "<span class="hljs-attribute">arguments</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"array"</span></span>,
+      "<span class="hljs-attribute">items</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+      </span>}
+    </span>}</span>,
+    "<span class="hljs-attribute">labels</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span>
+    </span>}
+  </span>}
 </span>}</code></pre><div style="height: 1px;"></div></div></div><div class="title"><strong>Response&nbsp;&nbsp;<code>204</code></strong></div></div></div><div id="api-v1-metrics" class="resource"><h3 class="resource-heading">Metrics <a href="#api-v1-metrics" class="permalink">&nbsp;&para;</a></h3><p>Backed by <a href="https://github.com/prometheus/client_golang#instrumenting-applications">Prometheus instrumenting library</a>.</p>
 <div id="api-v1-metrics-get" class="action get"><h4 class="action-heading"><div class="name">Metrics</div><a href="#api-v1-metrics-get" class="method get">GET</a><code class="uri">/api/v1/metrics</code></h4><h4>Example URI</h4><div class="definition"><span class="method get">GET</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/metrics</span></div><div class="title"><strong>Response&nbsp;&nbsp;<code>200</code></strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Headers</h5><pre><code><span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">text/plain</span></code></pre><div style="height: 1px;"></div><h5>Body</h5><pre><code>...
 # HELP go_goroutines Number of goroutines that currently exist.
@@ -123,7 +480,7 @@ go_goroutines 14
 # HELP leader Indicates if instance is elected as leader.
 # TYPE leader gauge
 leader 1 
-...</code></pre><div style="height: 1px;"></div></div></div></div></div></section></div></div></div><p style="text-align: center;" class="text-muted">Generated by&nbsp;<a href="https://github.com/danielgtaylor/aglio" class="aglio">aglio</a>&nbsp;on 08 Oct 2018</p><script>/* eslint-env browser */
+...</code></pre><div style="height: 1px;"></div></div></div></div></div></section></div></div></div><p style="text-align: center;" class="text-muted">Generated by&nbsp;<a href="https://github.com/danielgtaylor/aglio" class="aglio">aglio</a>&nbsp;on 09 Oct 2018</p><script>/* eslint-env browser */
 /* eslint quotes: [2, "single"] */
 'use strict';
 
