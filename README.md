@@ -47,7 +47,7 @@ TODO
 ### Logging
 
 Options:
-* level (optional)  - "debug", "info", "warn" or "error" ("info" used as default value)
+* level (optional)  - "debug", "info", "warn" or "error" ("info" used by default)
 * backend (optional) - "sentry" or "none"
 * sentry (optional and used when "backend" is set to "sentry")
     ** dsn (required) - Sentry DSN (Data Source Name) passed as string
