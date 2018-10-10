@@ -54,7 +54,7 @@ Options:
     * rootca (optional) - absolute path to custom root certificate used while talking to Sentry server
     * tags (optional) - dictionary of custom tags sent with each event
 
-Example:
+Examples:
 ```
     {
         "logging": {
@@ -68,6 +68,14 @@ Example:
                     "two": "2"
                 }
             }
+        }
+    }
+```
+
+```
+    {
+        "logging": {
+            "level": "debug"
         }
     }
 ```
