@@ -46,10 +46,14 @@ TODO
 
 ### Logging
 
+Logs are always sent to stderr (`level` defines verbosity) and optional backend to e.g. send certain messages to 3rd party service like Sentry. 
+
 Options:
 * level (optional)  - "debug", "info", "warn" or "error" ("info" used by default)
 * backend (optional) - "sentry" or "none" ("none" used by default")
 * sentry (optional and used only when "backend" is set to "sentry")
+
+    Logs with level set to warning or error will be sent to Sentry. If logging level is higher than warning then only errors will be sent (in other words `level` defines minium tier which will be used by Sentry backend).
     * dsn (required) - Sentry DSN (Data Source Name) passed as string
     * rootca (optional) - absolute path to custom root certificate used while talking to Sentry server
     * tags (optional) - dictionary of custom tags sent with each event
