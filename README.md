@@ -38,14 +38,12 @@ TODO
 ### Secrets
 
 Secrets backend allow to inject secrets into task via environment variables. Job defines secrets under `secrets` property:
-```json
-{
-    "group": "webservices",
-    "project": "oauth",
-    "id": "backup",
-    "secrets": {
-        "DB_PASSWORD": "db/password"
-    }
+```javascript
+"group": "webservices",
+"project": "oauth",
+"id": "backup",
+"secrets": {
+    "DB_PASSWORD": "db/password"
 }
 ```
 
@@ -61,16 +59,14 @@ Options:
     * rootca (optional) - absolute path to custom root certificate used while talking to Vault server
     
 Example:
-```json
- {
-    "secrets": {
-        "backend": "vault",
-        "vault": {
-            "token": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaaa",
-            "address": "https://example.com"
-        }
+```javascript
+"secrets": {
+    "backend": "vault",
+    "vault": {
+        "token": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaaa",
+        "address": "https://example.com"
     }
- }
+}
 ```
 
 ### Mesos
@@ -92,28 +88,24 @@ Options:
     * tags (optional) - dictionary of custom tags sent with each event
 
 Examples:
-```json
-{
-    "logging": {
-        "level": "debug",
-        "backend": "sentry",
-        "sentry": {
-            "dsn": "https://key@example.com/123",
-            "rootca": "/var/rootca.crt",
-            "tags": {
-                "one": "1",
-                "two": "2"
-            }
+```javascript
+"logging": {
+    "level": "debug",
+    "backend": "sentry",
+    "sentry": {
+        "dsn": "https://key@example.com/123",
+        "rootca": "/var/rootca.crt",
+        "tags": {
+            "one": "1",
+            "two": "2"
         }
     }
 }
 ```
 
-```json
-{
-    "logging": {
-        "level": "debug"
-    }
+```javascript
+"logging": {
+    "level": "debug"
 }
 ```
 
