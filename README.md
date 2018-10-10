@@ -75,3 +75,5 @@ Examples:
         "level": "debug"
     }
 ```
+
+There is `-testlogging` option which is used to test events logging. It logs sample error and then program exits. Useful to test backend like Sentry to verify that events are received.
