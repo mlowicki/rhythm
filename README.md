@@ -12,3 +12,62 @@
 ## API
 
 [Documentation](https://mlowicki.github.io/rhythm/api)
+
+## Configuration
+
+Rhythm is configured using file in JSON format. By default config.json from current  directory is used but it can overwritten using `-config` parameter.
+There are couple of sections in configuration file:
+* api
+* storage
+* coordinator
+* secrets
+* mesos
+* logging
+
+### API
+
+TODO
+
+### Storage
+
+TODO
+
+### Coordinator
+
+TODO
+
+### Secrets
+
+TODO
+
+### Mesos
+
+TODO
+
+### Logging
+
+Options:
+* level (optional)  - "debug", "info", "warn" or "error" ("info" used as default value)
+* backend (optional) - "sentry" or "none"
+* sentry (optional and used when "backend" is set to "sentry")
+    ** dsn (required) - Sentry DSN (Data Source Name) passed as string
+    ** rootca (optional) - absolute path to custom root certificate used while talking to Sentry server
+    ** tags (optional) - dictionary of custom tags send with each event
+
+Example:
+```
+    {
+        "logging": {
+            "level": "debug",
+            "backend": "sentry",
+            "sentry": {
+                "dsn": "https://key@example.com/123",
+                "rootca": "/var/rootca.crt",
+                "tags": {
+                    "one": "1",
+                    "two": "2"
+                }
+            }
+        }
+    }
+```
