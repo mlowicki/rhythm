@@ -87,7 +87,7 @@ func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
 		env.Variables = append(env.Variables, mesos.Environment_Variable{Name: k, Value: func(v string) *string { return &v }(v)})
 	}
 	for k, v := range j.Secrets {
-		path := fmt.Sprintf("%s/%s/%s/%s", j.Group, j.Project, j.ID, v)
+		path := fmt.Sprintf("%s/%s/%s", j.Group, j.Project, v)
 		secret, err := sec.Read(path)
 		if err != nil {
 			return fmt.Errorf("Reading secret failed: %s", err), nil

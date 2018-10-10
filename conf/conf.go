@@ -80,7 +80,10 @@ type ZKAuthDigest struct {
 	Password string
 }
 
-const SecretsBackendVault = "vault"
+const (
+	SecretsBackendVault = "vault"
+	SecretsBackendNone  = "none"
+)
 
 type Secrets struct {
 	Backend string
@@ -181,7 +184,7 @@ func New(path string) (*Conf, error) {
 			},
 		},
 		Secrets: Secrets{
-			Backend: SecretsBackendVault,
+			Backend: SecretsBackendNone,
 			Vault: SecretsVault{
 				Timeout: 0, // no timeout
 				Root:    "secret/rhythm/",
