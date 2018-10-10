@@ -47,7 +47,7 @@ Secrets backend allow to inject secrets into task via environment variables. Job
 }
 ```
 
-Mesos task will have `DB_PASSWORD` environment variable set to value returned by secrets backend when "webservices/oauth/db/password" will be passed. In case of e.g. Vault it'll be interpreted as path to secret.
+Mesos task will have "DB_PASSWORD" environment variable set to value returned by secrets backend when "webservices/oauth/db/password" will be passed. In case of e.g. Vault it'll be interpreted as path to secret from which value under `value` key will retrieved.
 
 Options:
 * backend (optional) - "vault" or "none" ("none" used by default)
