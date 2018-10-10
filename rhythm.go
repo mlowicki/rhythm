@@ -26,7 +26,7 @@ func init() {
 
 func main() {
 	confPath := flag.String("config", "config.json", "Path to configuration file")
-	testLogging := flag.Bool("testlogging", false, "")
+	testLogging := flag.Bool("testlogging", false, "log sample error and exit")
 	version := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
 	if *version {
