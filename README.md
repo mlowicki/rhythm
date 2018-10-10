@@ -49,10 +49,10 @@ TODO
 Options:
 * level (optional)  - "debug", "info", "warn" or "error" ("info" used by default)
 * backend (optional) - "sentry" or "none"
-* sentry (optional and used when "backend" is set to "sentry")
-    ** dsn (required) - Sentry DSN (Data Source Name) passed as string
-    ** rootca (optional) - absolute path to custom root certificate used while talking to Sentry server
-    ** tags (optional) - dictionary of custom tags send with each event
+* sentry (optional and used only when "backend" is set to "sentry")
+    * dsn (required) - Sentry DSN (Data Source Name) passed as string
+    * rootca (optional) - absolute path to custom root certificate used while talking to Sentry server
+    * tags (optional) - dictionary of custom tags sent with each event
 
 Example:
 ```
