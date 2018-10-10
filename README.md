@@ -2,8 +2,7 @@
 
 ## Features
 
-* Support for [Docker Containerizer](https://mesos.apache.org/documentation/latest/docker-containerizer/)
-* Support for [Mesos Containerizer](https://mesos.apache.org/documentation/latest/mesos-containerizer/)
+* Support for [Docker](https://mesos.apache.org/documentation/latest/docker-containerizer/) and [Mesos](https://mesos.apache.org/documentation/latest/mesos-containerizer/) Containerizers 
 * Integration with [HashiCorp Vault](https://www.vaultproject.io/) for secrets management
 * Access control list (ACL) backed by [GitLab](https://gitlab.com/)
 * [Cron syntax](http://www.nncron.ru/help/EN/working/cron-format.htm)
@@ -40,19 +39,21 @@ TODO
 
 Secrets backend allow to inject secrets into task via environment variables. Job defines secrets under `secrets` property:
 ```json
-"group": "webservices",
-"project": "oauth",
-"id": "backup",
-"secrets": {
-    "DB_PASSWORD": "db/password"
+{
+    "group": "webservices",
+    "project": "oauth",
+    "id": "backup",
+    "secrets": {
+        "DB_PASSWORD": "db/password"
+    }
 }
 ```
 
-Mesos task will have "DB_PASSWORD" environment variable set to value returned by secrets backend when "webservices/oauth/db/password" will be passed. In case of e.g. Vault it'll be interpreted as path to secret.
+Mesos task will have `DB_PASSWORD` environment variable set to value returned by secrets backend when "webservices/oauth/db/password" will be passed. In case of e.g. Vault it'll be interpreted as path to secret.
 
 Options:
 * backend (optional) - "vault" or "none" ("none" used by default)
-* vault (optional and used only when "backend" is set to "vault")
+* vault (optional and used only when `backend` is set to "vault")
     * address (required) - Vault server address
     * token (required) - Vault token with read access to secrets under `root`
     * root (optional) - Secret's path prefix ("secret/rhythm/" used by defualt)
@@ -61,6 +62,7 @@ Options:
     
 Example:
 ```json
+ {
     "secrets": {
         "backend": "vault",
         "vault": {
@@ -68,6 +70,7 @@ Example:
             "address": "https://example.com"
         }
     }
+ }
 ```
 
 ### Mesos
@@ -81,7 +84,7 @@ Logs are always sent to stderr (`level` defines verbosity) and optional backend 
 Options:
 * level (optional)  - "debug", "info", "warn" or "error" ("info" used by default)
 * backend (optional) - "sentry" or "none" ("none" used by default)
-* sentry (optional and used only when "backend" is set to "sentry")
+* sentry (optional and used only when `backend` is set to "sentry")
 
     Logs with level set to warning or error will be sent to Sentry. If logging level is higher than warning then only errors will be sent (in other words `level` defines minium tier which will be used by Sentry backend).
     * dsn (required) - Sentry DSN (Data Source Name) passed as string
@@ -90,6 +93,7 @@ Options:
 
 Examples:
 ```json
+{
     "logging": {
         "level": "debug",
         "backend": "sentry",
@@ -102,12 +106,15 @@ Examples:
             }
         }
     }
+}
 ```
 
 ```json
+{
     "logging": {
         "level": "debug"
     }
+}
 ```
 
 There is `-testlogging` option which is used to test events logging. It logs sample error and then program exits. Useful to test backend like Sentry to verify that events are received.
