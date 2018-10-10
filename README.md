@@ -38,7 +38,37 @@ TODO
 
 ### Secrets
 
-TODO
+Secrets backend allow to inject secrets into task via environment variables. Job defines secrets under `secrets` property:
+```json
+"group": "webservices",
+"project": "oauth",
+"id": "backup",
+"secrets": {
+    "DB_PASSWORD": "db/password"
+}
+```
+
+Mesos task will have "DB_PASSWORD" environment variable set to value returned by secrets backend when "webservices/oauth/db/password" will be passed. In case of e.g. Vault it'll be interpreted as path to secret.
+
+Options:
+* backend (optional) - "vault" or "none" ("none" used by default)
+* vault (optional and used only when "backend" is set to "vault")
+    * address (required) - Vault server address
+    * token (required) - Vault token with read access to secrets under `root`
+    * root (optional) - Secret's path prefix ("secret/rhythm/" used by defualt)
+    * timeout (optional) - Client timeout in seconds (0 used by default which means no timeout)
+    * rootca (optional) - absolute path to custom root certificate used while talking to Vault server
+    
+Example:
+```json
+    "secrets": {
+        "backend": "vault",
+        "vault": {
+            "token": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaaa",
+            "address": "https://example.com"
+        }
+    }
+```
 
 ### Mesos
 
@@ -50,7 +80,7 @@ Logs are always sent to stderr (`level` defines verbosity) and optional backend 
 
 Options:
 * level (optional)  - "debug", "info", "warn" or "error" ("info" used by default)
-* backend (optional) - "sentry" or "none" ("none" used by default")
+* backend (optional) - "sentry" or "none" ("none" used by default)
 * sentry (optional and used only when "backend" is set to "sentry")
 
     Logs with level set to warning or error will be sent to Sentry. If logging level is higher than warning then only errors will be sent (in other words `level` defines minium tier which will be used by Sentry backend).
@@ -59,7 +89,7 @@ Options:
     * tags (optional) - dictionary of custom tags sent with each event
 
 Examples:
-```
+```json
     "logging": {
         "level": "debug",
         "backend": "sentry",
@@ -74,7 +104,7 @@ Examples:
     }
 ```
 
-```
+```json
     "logging": {
         "level": "debug"
     }
