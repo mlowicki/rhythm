@@ -56,26 +56,22 @@ Options:
 
 Examples:
 ```
-    {
-        "logging": {
-            "level": "debug",
-            "backend": "sentry",
-            "sentry": {
-                "dsn": "https://key@example.com/123",
-                "rootca": "/var/rootca.crt",
-                "tags": {
-                    "one": "1",
-                    "two": "2"
-                }
+    "logging": {
+        "level": "debug",
+        "backend": "sentry",
+        "sentry": {
+            "dsn": "https://key@example.com/123",
+            "rootca": "/var/rootca.crt",
+            "tags": {
+                "one": "1",
+                "two": "2"
             }
         }
     }
 ```
 
 ```
-    {
-        "logging": {
-            "level": "debug"
-        }
+    "logging": {
+        "level": "debug"
     }
 ```
