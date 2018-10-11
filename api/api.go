@@ -435,7 +435,7 @@ func New(c *conf.API, s storage) {
 	v1.Handle("/metrics", promhttp.Handler())
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         c.Address,
+		Addr:         c.Addr,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,

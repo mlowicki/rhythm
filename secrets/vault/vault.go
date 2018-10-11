@@ -38,7 +38,7 @@ func (c *Client) Read(path string) (string, error) {
 }
 
 func NewClient(c *conf.SecretsVault) (*Client, error) {
-	url, err := url.Parse(c.Address)
+	url, err := url.Parse(c.Addr)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func NewClient(c *conf.SecretsVault) (*Client, error) {
 		log.Warnf("Address uses HTTP scheme which is insecure. It's recommented to use HTTPS instead.")
 	}
 	vc := vault.DefaultConfig()
-	vc.Address = c.Address
+	vc.Address = c.Addr
 	vc.Timeout = c.Timeout
 	if c.RootCA != "" {
 		pool, err := tlsutils.BuildCertPool(c.RootCA)

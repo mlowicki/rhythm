@@ -25,7 +25,29 @@ There are couple of sections in configuration file:
 
 ### API
 
-TODO
+Options:
+* addr (optional) - Address (without scheme) API server will bind to. If `certfile` or `keyfile` is set then HTTPS will be used, otherwise HTTP (`"localhost:8000"` by default)
+* certfile (optional) - absolute path to certificate
+* keyfile (optional) - absolute path to private key
+* auth (optional)
+	* backend (optional) - `"none"` or `"gitlab"` (`"none"` by default)
+	* gitlab (optional and used only if `backend` is set to `"gitlab"`)
+		* addr (required) - GitLab address with scheme like `https://`
+		* rootca (optional) - absolute path to custom root certificate used while talking to GitLab
+
+Example:
+```javascript
+"api": {
+    "addr": "localhost:8888",
+    "auth": {
+        "backend": "gitlab",
+        "gitlab": {
+            "addr": "https://example.com",
+            "rootca": "/var/rootca.crt",
+        }
+    }
+}
+```
 
 ### Storage
 
@@ -47,16 +69,16 @@ Secrets backend allow to inject secrets into task via environment variables. Job
 }
 ```
 
-Mesos task will have `DB_PASSWORD` environment variable set to value returned by secrets backend when `"webservices/oauth/db/password"` will be passed. In case of e.g. Vault it'll be interpreted as path to secret from which data under `value` key will retrieved.
+Mesos task will have `DB_PASSWORD` environment variable set to value returned by secrets backend if `"webservices/oauth/db/password"` will be passed. In case of e.g. Vault it'll be interpreted as path to secret from which data under `value` key will retrieved.
 
 Options:
 * backend (optional) - `"vault"` or `"none"` (`"none"` by default)
-* vault (optional and used only when `backend` is set to `"vault"`)
-    * address (required) - Vault server address
+* vault (optional and used only if `backend` is set to `"vault"`)
+    * addr (required) - Vault address with scheme like `https://`
     * token (required) - Vault token with read access to secrets under `root`
     * root (optional) - Secret's path prefix (`"secret/rhythm/"` by defualt)
     * timeout (optional) - Client timeout in milliseconds (`0` by default which means no timeout)
-    * rootca (optional) - absolute path to custom root certificate used while talking to Vault server
+    * rootca (optional) - absolute path to custom root certificate used while talking to Vault
     
 Example:
 ```javascript
@@ -64,7 +86,7 @@ Example:
     "backend": "vault",
     "vault": {
         "token": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaaa",
-        "address": "https://example.com"
+        "addr": "https://example.com"
     }
 }
 ```
@@ -72,10 +94,10 @@ Example:
 ### Mesos
 
 Options:
-* addrs (required) - list of Mesos endpoints
+* addrs (required) - list of Mesos endpoints with schemes like `https://`
 * auth
     * type (optional) - `"none"` or `"basic"` (`"none"` by default)
-    * basic (optional and used only when `type` is set to `"basic"`)
+    * basic (optional and used only if `type` is set to `"basic"`)
         * username (optional)
         * password (optional)
 * rootca (optional) - absolute path to custom root certificate used while talking to Mesos
@@ -83,7 +105,7 @@ Options:
 * failovertimeout (optional) - number of milliseconds Mesos will wait for the framework to failover before killing all its tasks (7 days used by default)
 * hostname (optional) - host for which framework is registered in the Mesos Web UI
 * user (optinal) - determine the Unix user that tasks should be launched as
-* webuiurl (optional) - framework's Web UI address
+* webuiurl (optional) - framework's Web UI address with scheme like `https://`
 * principal (optional) - identifier used while interacting with Mesos
 * labels (optional) - dictionary of key-value pairs assigned to framework
 * roles (optional) - list of roles framework will subscribe to (`["*"]` by default)
@@ -118,11 +140,11 @@ Logs are always sent to stderr (`level` defines verbosity) and optional backend 
 Options:
 * level (optional)  - `"debug"`, `"info"`, `"warn"` or `"error"` (`"info"` by default)
 * backend (optional) - `"sentry"` or `"none"` (`"none"` by default)
-* sentry (optional and used only when `backend` is set to `"sentry"`)
+* sentry (optional and used only if `backend` is set to `"sentry"`)
 
     Logs with level set to warning or error will be sent to Sentry. If logging level is higher than warning then only errors will be sent (in other words `level` defines minium tier which will be by Sentry backend).
     * dsn (required) - Sentry DSN (Data Source Name) passed as string
-    * rootca (optional) - absolute path to custom root certificate used while talking to Sentry server
+    * rootca (optional) - absolute path to custom root certificate used while talking to Sentry
     * tags (optional) - dictionary of custom tags sent with each event
 
 Examples:

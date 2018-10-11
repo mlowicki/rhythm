@@ -2,7 +2,6 @@ package conf
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"time"
 )
@@ -17,7 +16,7 @@ type Conf struct {
 }
 
 type API struct {
-	Address  string
+	Addr     string
 	CertFile string
 	KeyFile  string
 	Auth     APIAuth
@@ -34,8 +33,8 @@ type APIAuth struct {
 }
 
 type APIAuthGitLab struct {
-	BaseURL string
-	RootCA  string
+	Addr   string
+	RootCA string
 }
 
 type Storage struct {
@@ -93,7 +92,7 @@ type Secrets struct {
 
 type SecretsVault struct {
 	Token   string
-	Address string
+	Addr    string
 	Timeout time.Duration
 	Root    string
 	RootCA  string
@@ -157,7 +156,7 @@ func New(path string) (*Conf, error) {
 	}
 	var conf = &Conf{
 		API: API{
-			Address: "localhost:8000",
+			Addr: "localhost:8000",
 			Auth: APIAuth{
 				Backend: APIAuthBackendNone,
 			},
@@ -206,9 +205,6 @@ func New(path string) (*Conf, error) {
 	err = json.Unmarshal(file, conf)
 	if err != nil {
 		return nil, err
-	}
-	if len(conf.Mesos.Addrs) == 0 {
-		return nil, errors.New("List of Mesos addresses is empty")
 	}
 	conf.Mesos.FailoverTimeout *= time.Millisecond
 	conf.Secrets.Vault.Timeout *= time.Millisecond

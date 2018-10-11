@@ -3,6 +3,7 @@ package mesos
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"time"
 
@@ -41,6 +42,9 @@ func newClient(c *conf.Mesos, frameworkID store.Singleton) (calls.Caller, error)
 			return nil, err
 		}
 		tc.RootCAs = pool
+	}
+	if len(c.Addrs) == 0 {
+		return nil, errors.New("List of Mesos addresses is empty")
 	}
 	cli := httpcli.New(
 		httpcli.Do(httpcli.With(

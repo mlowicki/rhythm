@@ -2,6 +2,7 @@ package gitlab
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -14,7 +15,7 @@ import (
 )
 
 type GitLabAuthorizer struct {
-	baseURL    string
+	addr       string
 	httpClient *http.Client
 }
 
@@ -31,31 +32,34 @@ func New(c *conf.APIAuthGitLab) (*GitLabAuthorizer, error) {
 			},
 		}
 	}
+	if c.Addr == "" {
+		return nil, errors.New("GitLab address not set")
+	}
 	auth := GitLabAuthorizer{
-		baseURL:    c.BaseURL,
+		addr:       c.Addr,
 		httpClient: httpClient,
 	}
 	return &auth, nil
 }
 
-func newClient(baseURL string, token string, httpClient *http.Client) (*gitlab.Client, error) {
+func newClient(addr string, token string, httpClient *http.Client) (*gitlab.Client, error) {
 	client := gitlab.NewClient(httpClient, token)
-	url, err := url.Parse(baseURL)
+	url, err := url.Parse(addr)
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing GitLab base URL: %s\n", err)
+		return nil, fmt.Errorf("Error parsing GitLab address: %s\n", err)
 	}
 	if url.Scheme != "https" {
-		log.Warnf("GitLab base URL uses HTTP scheme which is insecure. It's recommented to use HTTPS instead.")
+		log.Warnf("GitLab address uses HTTP scheme which is insecure. It's recommented to use HTTPS instead.")
 	}
-	err = client.SetBaseURL(baseURL)
+	err = client.SetBaseURL(addr)
 	if err != nil {
-		return nil, fmt.Errorf("Error setting GitLab base URL: %s\n", err)
+		return nil, fmt.Errorf("Error setting GitLab address: %s\n", err)
 	}
 	return client, nil
 }
 
 func (g *GitLabAuthorizer) GetProjectAccessLevel(r *http.Request, group string, project string) (auth.AccessLevel, error) {
-	client, err := newClient(g.baseURL, r.Header.Get("X-Token"), g.httpClient)
+	client, err := newClient(g.addr, r.Header.Get("X-Token"), g.httpClient)
 	if err != nil {
 		return auth.NoAccess, err
 	}
