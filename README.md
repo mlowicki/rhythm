@@ -86,7 +86,7 @@ Options:
 * webuiurl (optional) - framework's Web UI address
 * principal (optional) - identifier used while interacting with Mesos
 * labels (optional) - dictionary of key-value pairs assigned to framework
-* roles (optional) - list of roles framework will subscribe to (`["\*"]` by default)
+* roles (optional) - list of roles framework will subscribe to (`["*"]` by default)
 * logallevents (optional) - print details of all events sent from Mesos (`false` by default)
 
 Example:
