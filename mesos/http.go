@@ -18,6 +18,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func endpointSelector(addrs []string) httpsched.CandidateSelector {
+	var pos int
+	return func() string {
+		addr := addrs[pos]
+		pos = (pos + 1) % len(addrs)
+		return addr + "/api/v1/scheduler"
+	}
+}
+
 func newClient(c *conf.Mesos, frameworkID store.Singleton) (calls.Caller, error) {
 	var authConf httpcli.ConfigOpt
 	if c.Auth.Type == conf.MesosAuthTypeBasic {
@@ -34,16 +43,17 @@ func newClient(c *conf.Mesos, frameworkID store.Singleton) (calls.Caller, error)
 		tc.RootCAs = pool
 	}
 	cli := httpcli.New(
-		httpcli.Endpoint(c.BaseURL+"/api/v1/scheduler"),
 		httpcli.Do(httpcli.With(
 			authConf,
 			httpcli.Timeout(time.Second*10),
 			httpcli.TLSConfig(tc),
 		)))
+	endpoints := httpsched.EndpointCandidates(endpointSelector(c.Addrs))
+	reconnect := httpsched.AllowReconnection(true)
 	return callrules.New(
 		logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "Connecting..."}),
 		callrules.WithFrameworkID(store.GetIgnoreErrors(frameworkID)),
-	).Caller(httpsched.NewCaller(cli, httpsched.AllowReconnection(true))), nil
+	).Caller(httpsched.NewCaller(cli, reconnect, endpoints)), nil
 }
 
 func logCalls(messages map[scheduler.Call_Type]string) callrules.Rule {

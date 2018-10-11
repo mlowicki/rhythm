@@ -2,6 +2,7 @@ package conf
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"time"
 )
@@ -100,7 +101,7 @@ type SecretsVault struct {
 
 type Mesos struct {
 	Auth            MesosAuth
-	BaseURL         string
+	Addrs           []string
 	RootCA          string
 	Checkpoint      bool
 	FailoverTimeout time.Duration
@@ -191,11 +192,10 @@ func New(path string) (*Conf, error) {
 			},
 		},
 		Mesos: Mesos{
-			BaseURL:         "http://127.0.0.1:5050",
-			FailoverTimeout: time.Hour * 24 * 7,
+			FailoverTimeout: 1000 * 3600 * 24 * 7, // 7 days
 			Roles:           []string{"*"},
 			Auth: MesosAuth{
-				Type: MesosAuthTypeBasic,
+				Type: MesosAuthTypeNone,
 			},
 		},
 		Logging: Logging{
@@ -204,11 +204,15 @@ func New(path string) (*Conf, error) {
 		},
 	}
 	err = json.Unmarshal(file, conf)
-	conf.Secrets.Vault.Timeout *= time.Millisecond
-	conf.Storage.ZooKeeper.Timeout *= time.Millisecond
-	conf.Coordinator.ZooKeeper.Timeout *= time.Millisecond
 	if err != nil {
 		return nil, err
 	}
+	if len(conf.Mesos.Addrs) == 0 {
+		return nil, errors.New("List of Mesos addresses is empty")
+	}
+	conf.Mesos.FailoverTimeout *= time.Millisecond
+	conf.Secrets.Vault.Timeout *= time.Millisecond
+	conf.Storage.ZooKeeper.Timeout *= time.Millisecond
+	conf.Coordinator.ZooKeeper.Timeout *= time.Millisecond
 	return conf, nil
 }
