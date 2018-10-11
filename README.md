@@ -67,7 +67,7 @@ Example:
 ```javascript
 "storage": {
     "zookeeper": {
-		"addrs": ["192.168.0.1", "192.168.0.2", "192.168.0.3"],
+        "addrs": ["192.168.0.1", "192.168.0.2", "192.168.0.3"],
         "dir": "rhythm",
         "timeout": 20000,
         "auth": {
@@ -99,7 +99,7 @@ Example:
 ```javascript
 "coordinator": {
     "zookeeper": {
-		"addrs": ["192.168.0.1", "192.168.0.2", "192.168.0.3"],
+        "addrs": ["192.168.0.1", "192.168.0.2", "192.168.0.3"],
         "dir": "rhythm",
         "timeout": 20000,
         "auth": {
