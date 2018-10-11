@@ -46,7 +46,7 @@ const StorageBackendZK = "zookeeper"
 
 type StorageZK struct {
 	Dir     string
-	Servers []string
+	Addrs   []string
 	Timeout time.Duration
 	Auth    ZKAuth
 }
@@ -60,7 +60,7 @@ type Coordinator struct {
 
 type CoordinatorZK struct {
 	Dir     string
-	Servers []string
+	Addrs   []string
 	Timeout time.Duration
 	Auth    ZKAuth
 }
@@ -164,7 +164,7 @@ func New(path string) (*Conf, error) {
 		Storage: Storage{
 			Backend: StorageBackendZK,
 			ZooKeeper: StorageZK{
-				Servers: []string{"127.0.0.1"},
+				Addrs:   []string{"127.0.0.1"},
 				Timeout: 10000, // 10s
 				Dir:     "rhythm",
 				Auth: ZKAuth{
@@ -175,7 +175,7 @@ func New(path string) (*Conf, error) {
 		Coordinator: Coordinator{
 			Backend: CoordinatorBackendZK,
 			ZooKeeper: CoordinatorZK{
-				Servers: []string{"127.0.0.1"},
+				Addrs:   []string{"127.0.0.1"},
 				Timeout: 10000, // 10s
 				Dir:     "rhythm",
 				Auth: ZKAuth{

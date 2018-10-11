@@ -123,7 +123,7 @@ func (coord *Coordinator) initZK() error {
 }
 
 func New(c *conf.CoordinatorZK) (*Coordinator, error) {
-	conn, eventChan, err := zk.Connect(c.Servers, c.Timeout)
+	conn, eventChan, err := zk.Connect(c.Addrs, c.Timeout)
 	if err != nil {
 		return nil, fmt.Errorf("Failed connecting to ZooKeeper: %s", err)
 	}

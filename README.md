@@ -51,11 +51,67 @@ Example:
 
 ### Storage
 
-TODO
+Options:
+* backend (optional) - `"zookeeper"` (`"zookeeper"` by default)
+* zookeeper (optional and used only if `backend` is set to `"zookeeper"`)
+    * dir - location (name without slashes) to store data (`"rhythm"` by default)
+    * addrs - servers locations without scheme. If port is not set then default `2181` will be used (`["127.0.0.1"]` by default)
+    * timeout (optional) - ZooKeeper client timeout in milliseconds (10s by default)
+    * auth (optional)
+		* scheme (optional) - `"digest"` or `"world"` (`"world"` by default)
+		* digest (optional and used only if `scheme` is set to `"digest"`)
+			* user (optional)
+			* password (optional)
+
+Example:
+```javascript
+"storage": {
+    "zookeeper": {
+		"addrs": ["192.168.0.1", "192.168.0.2", "192.168.0.3"],
+        "dir": "rhythm",
+        "timeout": 20000,
+        "auth": {
+            "scheme": "digest",
+            "digest": {
+                "user": "john",
+                "password": "secret"
+            }
+        }
+    }
+}
+```
 
 ### Coordinator
 
-TODO
+Options:
+* backend (optional) - `"zookeeper"` (`"zookeeper"` by default)
+* zookeeper (optional and used only if `backend` is set to `"zookeeper"`)
+    * dir - location (name without slashes) to keep state (`"rhythm"` by default)
+    * addrs - servers locations without scheme. If port is not set then default `2181` will be used (`["127.0.0.1"]` by default)
+    * timeout (optional) - ZooKeeper client timeout in milliseconds (10s by default)
+    * auth (optional)
+		* scheme (optional) - `"digest"` or `"world"` (`"world"` by default)
+		* digest (optional and used only if `scheme` is set to `"digest"`)
+			* user (optional)
+			* password (optional)
+
+Example:
+```javascript
+"coordinator": {
+    "zookeeper": {
+		"addrs": ["192.168.0.1", "192.168.0.2", "192.168.0.3"],
+        "dir": "rhythm",
+        "timeout": 20000,
+        "auth": {
+            "scheme": "digest",
+            "digest": {
+                "user": "john",
+                "password": "secret"
+            }
+        }
+    }
+}
+```
 
 ### Secrets
 

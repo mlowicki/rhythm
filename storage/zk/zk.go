@@ -24,7 +24,7 @@ const (
 func NewStorage(c *conf.StorageZK) (*storage, error) {
 	s := &storage{
 		dir:     "/" + c.Dir,
-		servers: c.Servers,
+		addrs:   c.Addrs,
 		timeout: c.Timeout,
 	}
 	err := s.connect()
@@ -45,14 +45,14 @@ func NewStorage(c *conf.StorageZK) (*storage, error) {
 
 type storage struct {
 	dir     string
-	servers []string
+	addrs   []string
 	conn    *zk.Conn
 	acl     func(perms int32) []zk.ACL
 	timeout time.Duration
 }
 
 func (s *storage) connect() error {
-	conn, _, err := zk.Connect(s.servers, s.timeout)
+	conn, _, err := zk.Connect(s.addrs, s.timeout)
 	if err != nil {
 		return err
 	}
