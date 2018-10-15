@@ -11,9 +11,10 @@ Rhythm has the concept of authorization backend. Authorization backend tells the
 * read-only (jobs can be listed)
 * read-write (jobs can be listed, modified and created)
 
-There are two built-in authorization backends:
+There are three built-in authorization backends:
 * None (default one, gives read-write access to everyone)
 * GitLab
+* LDAP
 
 ### GitLab
 
@@ -30,6 +31,15 @@ Header contains [personal access token](https://docs.gitlab.com/ee/user/profile/
 Under the hood backend connects to GitLab server and checks permissions associated with supplied token.
 
 If client want to access job under a/b/c then backend checks permissions of token for project b and group a on GitLab.
+
+### LDAP
+
+How it works?
+
+Client must authenticate using [Basic auth](https://en.wikipedia.org/wiki/Basic_access_authentication) passing username and password.
+Under the hood backend first checks `useracl` from config file ([configuration doc](https://github.com/mlowicki/rhythm#api-1)).
+If `useracl` gives read-write or read-only access then such access is granted. Otherwise LDAP is queried for groups user is a member of.
+For each group `groupacl` from config file is checked to see what access level is granted for that group. Maximum access level across all user's group is granted.
 
 # Group API v1
 

@@ -14,12 +14,12 @@ import (
 	"github.com/xanzy/go-gitlab"
 )
 
-type GitLabAuthorizer struct {
+type Authorizer struct {
 	addr       string
 	httpClient *http.Client
 }
 
-func New(c *conf.APIAuthGitLab) (*GitLabAuthorizer, error) {
+func New(c *conf.APIAuthGitLab) (*Authorizer, error) {
 	var httpClient *http.Client
 	if c.CACert != "" {
 		pool, err := tlsutils.BuildCertPool(c.CACert)
@@ -35,11 +35,11 @@ func New(c *conf.APIAuthGitLab) (*GitLabAuthorizer, error) {
 	if c.Addr == "" {
 		return nil, errors.New("GitLab address not set")
 	}
-	auth := GitLabAuthorizer{
+	a := Authorizer{
 		addr:       c.Addr,
 		httpClient: httpClient,
 	}
-	return &auth, nil
+	return &a, nil
 }
 
 func newClient(addr string, token string, httpClient *http.Client) (*gitlab.Client, error) {
@@ -58,8 +58,8 @@ func newClient(addr string, token string, httpClient *http.Client) (*gitlab.Clie
 	return client, nil
 }
 
-func (g *GitLabAuthorizer) GetProjectAccessLevel(r *http.Request, group string, project string) (auth.AccessLevel, error) {
-	client, err := newClient(g.addr, r.Header.Get("X-Token"), g.httpClient)
+func (a *Authorizer) GetProjectAccessLevel(r *http.Request, group string, project string) (auth.AccessLevel, error) {
+	client, err := newClient(a.addr, r.Header.Get("X-Token"), a.httpClient)
 	if err != nil {
 		return auth.NoAccess, err
 	}

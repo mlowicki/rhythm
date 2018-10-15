@@ -1,7 +1,18 @@
 {
     "api": {
         "auth": {
-            "backend": "none"
+            "backend": "ldap",
+            "ldap": {
+                "addrs": ["ldap://localhost"],
+                "userdn": "dc=example,dc=org",
+                "userattr": "cn",
+                "groupdn": "ou=Groups,dc=example,dc=org",
+                "groupacl": {
+                    "infra": {
+                        "infra": "readonly"
+                    }
+                }
+            }
         }
     },
     "storage": {

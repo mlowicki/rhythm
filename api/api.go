@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mlowicki/rhythm/api/auth"
 	"github.com/mlowicki/rhythm/api/auth/gitlab"
+	"github.com/mlowicki/rhythm/api/auth/ldap"
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/model"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -417,18 +418,23 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 func New(c *conf.API, s storage) {
 	r := mux.NewRouter()
 	v1 := r.PathPrefix("/api/v1").Subrouter()
-	var a authorizer
+	var (
+		a   authorizer
+		err error
+	)
 	switch c.Auth.Backend {
 	case conf.APIAuthBackendGitLab:
-		var err error
 		a, err = gitlab.New(&c.Auth.GitLab)
-		if err != nil {
-			log.Fatal(err)
-		}
 	case conf.APIAuthBackendNone:
 		a = &auth.NoneAuthorizer{}
+	case conf.APIAuthBackendLDAP:
+		ldap.SetTimeout(c.Auth.LDAP.Timeout)
+		a, err = ldap.New(&c.Auth.LDAP)
 	default:
 		log.Fatalf("Unknown authorization backend: %s", c.Auth.Backend)
+	}
+	if err != nil {
+		log.Fatal(err)
 	}
 	log.Printf("Authorization backend: %s", c.Auth.Backend)
 	v1.Handle("/jobs", &handler{a, s, getJobs}).Methods("GET")

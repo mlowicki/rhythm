@@ -25,16 +25,34 @@ type API struct {
 const (
 	APIAuthBackendGitLab = "gitlab"
 	APIAuthBackendNone   = "none"
+	APIAuthBackendLDAP   = "ldap"
 )
 
 type APIAuth struct {
 	Backend string
 	GitLab  APIAuthGitLab
+	LDAP    APIAuthLDAP
 }
 
 type APIAuthGitLab struct {
 	Addr   string
 	CACert string
+}
+
+type APIAuthLDAP struct {
+	Addrs              []string
+	UserDN             string
+	UserAttr           string
+	CACert             string
+	UserACL            map[string]map[string]string
+	GroupACL           map[string]map[string]string
+	BindDN             string
+	BindPassword       string
+	Timeout            time.Duration
+	GroupFilter        string
+	GroupDN            string
+	GroupAttr          string
+	CaseSensitiveNames bool
 }
 
 type Storage struct {
@@ -159,6 +177,11 @@ func New(path string) (*Conf, error) {
 			Addr: "localhost:8000",
 			Auth: APIAuth{
 				Backend: APIAuthBackendNone,
+				LDAP: APIAuthLDAP{
+					Timeout:     5000,
+					GroupFilter: "(|(memberUid={{.Username}})(member={{.UserDN}})(uniqueMember={{.UserDN}}))",
+					GroupAttr:   "cn",
+				},
 			},
 		},
 		Storage: Storage{
@@ -210,5 +233,6 @@ func New(path string) (*Conf, error) {
 	conf.Secrets.Vault.Timeout *= time.Millisecond
 	conf.Storage.ZooKeeper.Timeout *= time.Millisecond
 	conf.Coordinator.ZooKeeper.Timeout *= time.Millisecond
+	conf.API.Auth.LDAP.Timeout *= time.Millisecond
 	return conf, nil
 }

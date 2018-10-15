@@ -31,3 +31,27 @@ They've been generated based on https://devcenter.heroku.com/articles/ssl-certif
 2. Add `127.0.0.1 rhythm` to `/etc/hosts`
 3. Run *rhythm*
 4. `curl curl -v --cacert dev/server.crt https://rhythm:8000/api/v1/jobs/group/project/id`
+
+## LDAP
+
+1. `docker run --name my-openldap-container --detach -p 389:389 osixia/openldap:1.2.2` ([Docker image for OpenLDAP](https://github.com/osixia/docker-openldap))
+2. Changes to LDAP server database can be made with `docker exec -ti my-openldap-container ldapmodify -D "cn=admin,dc=example,dc=org" -w admin`
+3. Enable LDAP backend:
+```javascript
+"api": {
+    "auth": {
+        "backend": "ldap",
+        "ldap": {
+            "addrs": ["ldap://localhost"],
+            "userdn": "dc=example,dc=org",
+            "userattr": "cn",
+            "groupdn": "ou=Groups,dc=example,dc=org",
+            "useracl": {
+                "admin": {
+                     "group/project": "readwrite"
+                }
+            }
+        }
+    }
+}
+```
