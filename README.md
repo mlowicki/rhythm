@@ -30,10 +30,10 @@ Options:
 * certfile (optional) - absolute path to certificate
 * keyfile (optional) - absolute path to private key
 * auth (optional)
-	* backend (optional) - `"none"` or `"gitlab"` (`"none"` by default)
-	* gitlab (optional and used only if `backend` is set to `"gitlab"`)
-		* addr (required) - GitLab address with scheme like `https://`
-		* rootca (optional) - absolute path to custom root certificate used while talking to GitLab
+    * backend (optional) - `"none"` or `"gitlab"` (`"none"` by default)
+    * gitlab (optional and used only if `backend` is set to `"gitlab"`)
+        * addr (required) - GitLab address with scheme like `https://`
+        * cacert (optional) - absolute path to CA certificate to use when verifying GitLab server certificate, must be x509 PEM encoded.
 
 Example:
 ```javascript
@@ -43,7 +43,7 @@ Example:
         "backend": "gitlab",
         "gitlab": {
             "addr": "https://example.com",
-            "rootca": "/var/rootca.crt",
+            "cacert": "/var/ca.crt",
         }
     }
 }
@@ -58,10 +58,10 @@ Options:
     * addrs - servers locations without scheme. If port is not set then default `2181` will be used (`["127.0.0.1"]` by default)
     * timeout (optional) - ZooKeeper client timeout in milliseconds (10s by default)
     * auth (optional)
-		* scheme (optional) - `"digest"` or `"world"` (`"world"` by default)
-		* digest (optional and used only if `scheme` is set to `"digest"`)
-			* user (optional)
-			* password (optional)
+        * scheme (optional) - `"digest"` or `"world"` (`"world"` by default)
+        * digest (optional and used only if `scheme` is set to `"digest"`)
+            * user (optional)
+            * password (optional)
 
 Example:
 ```javascript
@@ -134,7 +134,7 @@ Options:
     * token (required) - Vault token with read access to secrets under `root`
     * root (optional) - Secret's path prefix (`"secret/rhythm/"` by defualt)
     * timeout (optional) - Client timeout in milliseconds (`0` by default which means no timeout)
-    * rootca (optional) - absolute path to custom root certificate used while talking to Vault
+    * cacert (optional) - absolute path to CA certificate to use when verifying Vault server certificate, must be x509 PEM encoded.
     
 Example:
 ```javascript
@@ -156,7 +156,7 @@ Options:
     * basic (optional and used only if `type` is set to `"basic"`)
         * username (optional)
         * password (optional)
-* rootca (optional) - absolute path to custom root certificate used while talking to Mesos
+* cacert (optional) - absolute path to CA certificate to use when verifying Mesos server certificate, must be x509 PEM encoded.
 * checkpoint (optional) - controls framework's checkpointing (`false` by default)
 * failovertimeout (optional) - number of milliseconds Mesos will wait for the framework to failover before killing all its tasks (7 days used by default)
 * hostname (optional) - host for which framework is registered in the Mesos Web UI
@@ -200,7 +200,7 @@ Options:
 
     Logs with level set to warning or error will be sent to Sentry. If logging level is higher than warning then only errors will be sent (in other words `level` defines minium tier which will be by Sentry backend).
     * dsn (required) - Sentry DSN (Data Source Name) passed as string
-    * rootca (optional) - absolute path to custom root certificate used while talking to Sentry
+    * cacert (optional) - absolute path to CA certificate to use when verifying Sentry server certificate, must be x509 PEM encoded.
     * tags (optional) - dictionary of custom tags sent with each event
 
 Examples:
@@ -210,7 +210,7 @@ Examples:
     "backend": "sentry",
     "sentry": {
         "dsn": "https://key@example.com/123",
-        "rootca": "/var/rootca.crt",
+        "cacert": "/var/ca.crt",
         "tags": {
             "one": "1",
             "two": "2"

@@ -34,7 +34,7 @@ type APIAuth struct {
 
 type APIAuthGitLab struct {
 	Addr   string
-	RootCA string
+	CACert string
 }
 
 type Storage struct {
@@ -95,13 +95,13 @@ type SecretsVault struct {
 	Addr    string
 	Timeout time.Duration
 	Root    string
-	RootCA  string
+	CACert  string
 }
 
 type Mesos struct {
 	Auth            MesosAuth
 	Addrs           []string
-	RootCA          string
+	CACert          string
 	Checkpoint      bool
 	FailoverTimeout time.Duration
 	Hostname        string
@@ -145,7 +145,7 @@ type Logging struct {
 
 type LoggingSentry struct {
 	DSN    string
-	RootCA string
+	CACert string
 	Tags   map[string]string
 }
 

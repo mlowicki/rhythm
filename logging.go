@@ -47,8 +47,8 @@ func initSentryLogging(c *conf.LoggingSentry) error {
 	if err != nil {
 		return err
 	}
-	if c.RootCA != "" {
-		pool, err := tlsutils.BuildCertPool(c.RootCA)
+	if c.CACert != "" {
+		pool, err := tlsutils.BuildCertPool(c.CACert)
 		if err != nil {
 			return err
 		}

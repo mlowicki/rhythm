@@ -36,8 +36,8 @@ func newClient(c *conf.Mesos, frameworkID store.Singleton) (calls.Caller, error)
 		return nil, fmt.Errorf("Unknown authentication type: %s", c.Auth.Type)
 	}
 	tc := &tls.Config{}
-	if c.RootCA != "" {
-		pool, err := tlsutils.BuildCertPool(c.RootCA)
+	if c.CACert != "" {
+		pool, err := tlsutils.BuildCertPool(c.CACert)
 		if err != nil {
 			return nil, err
 		}

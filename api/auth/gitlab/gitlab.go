@@ -21,8 +21,8 @@ type GitLabAuthorizer struct {
 
 func New(c *conf.APIAuthGitLab) (*GitLabAuthorizer, error) {
 	var httpClient *http.Client
-	if c.RootCA != "" {
-		pool, err := tlsutils.BuildCertPool(c.RootCA)
+	if c.CACert != "" {
+		pool, err := tlsutils.BuildCertPool(c.CACert)
 		if err != nil {
 			return nil, err
 		}

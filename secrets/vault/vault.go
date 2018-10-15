@@ -48,8 +48,8 @@ func NewClient(c *conf.SecretsVault) (*Client, error) {
 	vc := vault.DefaultConfig()
 	vc.Address = c.Addr
 	vc.Timeout = c.Timeout
-	if c.RootCA != "" {
-		pool, err := tlsutils.BuildCertPool(c.RootCA)
+	if c.CACert != "" {
+		pool, err := tlsutils.BuildCertPool(c.CACert)
 		if err != nil {
 			return nil, err
 		}
