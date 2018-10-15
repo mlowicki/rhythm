@@ -68,7 +68,8 @@ func (g *GitLabAuthorizer) GetProjectAccessLevel(r *http.Request, group string, 
 	if err != nil {
 		switch e := err.(type) {
 		case *gitlab.ErrorResponse:
-			if e.Response.StatusCode == http.StatusUnauthorized {
+			code := e.Response.StatusCode
+			if code == http.StatusUnauthorized || code == http.StatusNotFound {
 				return auth.NoAccess, nil
 			}
 			return auth.NoAccess, err
