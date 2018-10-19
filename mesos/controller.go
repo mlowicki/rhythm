@@ -2,11 +2,15 @@ package mesos
 
 import (
 	"context"
+	"fmt"
+	"net/url"
 	"time"
 
+	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
+	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
 	"github.com/mlowicki/rhythm/conf"
@@ -20,18 +24,31 @@ var (
 	registrationMaxBackoff = 15 * time.Second
 )
 
+func getLeaderHost(info *mesos.MasterInfo) string {
+	addr := info.GetAddress()
+	host := *addr.Hostname
+	if host == "" {
+		host = *addr.IP
+	}
+	if addr.Port != 0 {
+		host += fmt.Sprintf(":%d", addr.Port)
+	}
+	return host
+}
+
 func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
-	frameworkID, err := newFrameworkIDStore(stor)
+	frameworkIDStore, err := newFrameworkIDStore(stor)
 	if err != nil {
 		return err
 	}
-	cli, err := newClient(&c.Mesos, frameworkID)
+	leaderURLStore := store.NewInMemorySingleton()
+	cli, err := newClient(&c.Mesos, frameworkIDStore)
 	if err != nil {
 		log.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(ctx)
-	rec := reconciliation.New(ctx, cli, stor)
-	tun := offerstuner.New(ctx, cli, stor)
+	reconciler := reconciliation.New(ctx, cli, stor)
+	offersTuner := offerstuner.New(ctx, cli, stor)
 	logger := controller.LogEvents(func(e *scheduler.Event) {
 		log.Printf("Event: %s", e)
 	}).Unless(c.Mesos.LogAllEvents)
@@ -47,16 +64,27 @@ func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
 			log.Error(e.GetError().Message)
 			return nil
 		}),
-		scheduler.Event_SUBSCRIBED: buildSubscribedEventHandler(frameworkID, c.Mesos.FailoverTimeout, func() {
-			rec.Run()
-			tun.Run()
+		scheduler.Event_SUBSCRIBED: buildSubscribedEventHandler(frameworkIDStore, c.Mesos.FailoverTimeout, func(e *scheduler.Event) {
+			firstMesosURL, err := url.Parse(c.Mesos.Addrs[0])
+			scheme := "https"
+			if err != nil {
+				log.Error(err)
+			} else {
+				scheme = firstMesosURL.Scheme
+			}
+			leaderHost := getLeaderHost(e.GetSubscribed().GetMasterInfo())
+			leaderURL := url.URL{Scheme: scheme, Host: leaderHost}
+			log.Infof("Leading master URL: %s", leaderURL)
+			leaderURLStore.Set(leaderURL.String())
+			reconciler.Run()
+			offersTuner.Run()
 		}),
 		scheduler.Event_OFFERS: buildOffersEventHandler(stor, cli, secr),
-		scheduler.Event_UPDATE: buildUpdateEventHandler(stor, cli, rec),
+		scheduler.Event_UPDATE: buildUpdateEventHandler(stor, cli, reconciler, frameworkIDStore, leaderURLStore),
 	}.Otherwise(logger.HandleEvent))
 	controller.Run(
 		ctx,
-		newFrameworkInfo(&c.Mesos, frameworkID),
+		newFrameworkInfo(&c.Mesos, frameworkIDStore),
 		cli,
 		controller.WithRegistrationTokens(
 			backoff.Notifier(registrationMinBackoff, registrationMaxBackoff, ctx.Done()),
@@ -66,7 +94,7 @@ func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
 			log.Printf("Connection to Mesos terminated: %v\n", err)
 			if err != nil && err.Error() == "Framework has been removed" {
 				log.Println("Resetting framework ID")
-				if err := frameworkID.Set(""); err != nil {
+				if err := frameworkIDStore.Set(""); err != nil {
 					log.Fatal(err)
 				}
 				cancel()

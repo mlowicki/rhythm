@@ -3,6 +3,7 @@ package mesos
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -36,22 +37,22 @@ func init() {
 	prometheus.MustRegister(taskStateUpdatesCount)
 }
 
-func buildSubscribedEventHandler(fidStore store.Singleton, failoverTimeout time.Duration, onSuccess func()) eventrules.Rule {
+func buildSubscribedEventHandler(fidStore store.Singleton, failoverTimeout time.Duration, onSuccess func(*scheduler.Event)) eventrules.Rule {
 	return eventrules.New(
 		controller.TrackSubscription(fidStore, failoverTimeout),
 		func(ctx context.Context, e *scheduler.Event, err error, ch eventrules.Chain) (context.Context, *scheduler.Event, error) {
 			if err == nil {
-				onSuccess()
+				onSuccess(e)
 			}
 			return ch(ctx, e, err)
 		},
 	)
 }
 
-func buildUpdateEventHandler(stor storage, cli calls.Caller, rec *reconciliation.Reconciliation) eventrules.Rule {
+func buildUpdateEventHandler(stor storage, cli calls.Caller, reconciler *reconciliation.Reconciliation, frameworkIDStore, leaderURLStore store.Singleton) eventrules.Rule {
 	return controller.AckStatusUpdates(cli).AndThen().HandleF(func(ctx context.Context, e *scheduler.Event) error {
 		status := e.GetUpdate().GetStatus()
-		rec.HandleUpdate(e.GetUpdate())
+		reconciler.HandleUpdate(e.GetUpdate())
 		id, err := taskID2JobID(status.TaskID.Value)
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -105,7 +106,9 @@ func buildUpdateEventHandler(stor storage, cli calls.Caller, rec *reconciliation
 		case mesos.TASK_KILLED:
 			fallthrough
 		case mesos.TASK_ERROR:
-			handleFailedTask(job, &status)
+			frameworkID := store.GetIgnoreErrors(frameworkIDStore)()
+			leaderURL := store.GetIgnoreErrors(leaderURLStore)()
+			handleFailedTask(job, &status, &frameworkID, &leaderURL)
 		default:
 			log.Panicf("Unknown state: %s", state)
 		}
@@ -117,17 +120,24 @@ func buildUpdateEventHandler(stor storage, cli calls.Caller, rec *reconciliation
 	})
 }
 
-func handleFailedTask(job *model.Job, status *mesos.TaskStatus) {
+func handleFailedTask(job *model.Job, status *mesos.TaskStatus, frameworkID, leaderURL *string) {
 	msg := status.GetMessage()
 	reason := status.GetReason().String()
 	src := status.GetSource().String()
 	log.Errorf("Task failed: %s (%s; %s; %s; %s)", job, status.GetState(), msg, reason, src)
 	job.State = model.FAILED
-	job.LastFail = model.LastFail{
-		Message: msg,
-		Reason:  reason,
-		Source:  src,
-		When:    time.Now(),
+	executorID := status.GetExecutorID().GetValue()
+	agentID := status.GetAgentID().GetValue()
+	job.LastFailedTask = model.FailedTask{
+		Message:     msg,
+		Reason:      reason,
+		Source:      src,
+		When:        time.Now(),
+		TaskID:      status.TaskID.GetValue(),
+		ExecutorID:  executorID,
+		AgentID:     agentID,
+		FrameworkID: *frameworkID,
+		ExecutorURL: fmt.Sprintf("%s/#/agents/%s/frameworks/%s/executors/%s", *leaderURL, agentID, *frameworkID, executorID),
 	}
 	job.TaskID = ""
 	job.AgentID = ""

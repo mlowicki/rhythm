@@ -52,33 +52,38 @@ const (
 )
 
 type Job struct {
-	Group       string
-	Project     string
-	ID          string
-	Schedule    JobSchedule
-	CreatedAt   time.Time
-	LastStartAt time.Time
-	TaskID      string
-	AgentID     string
-	Env         map[string]string
-	Secrets     map[string]string
-	Container   JobContainer
-	State       State
-	LastFail    LastFail
-	CPUs        float64
-	Mem         float64
-	Cmd         string
-	User        string
-	Shell       bool
-	Arguments   []string
-	Labels      map[string]string
+	Group          string
+	Project        string
+	ID             string
+	Schedule       JobSchedule
+	CreatedAt      time.Time
+	LastStartAt    time.Time
+	TaskID         string
+	AgentID        string
+	Env            map[string]string
+	Secrets        map[string]string
+	Container      JobContainer
+	State          State
+	LastFailedTask FailedTask
+	CPUs           float64
+	Mem            float64
+	Cmd            string
+	User           string
+	Shell          bool
+	Arguments      []string
+	Labels         map[string]string
 }
 
-type LastFail struct {
-	Message string
-	Reason  string
-	Source  string
-	When    time.Time
+type FailedTask struct {
+	Message     string
+	Reason      string
+	Source      string
+	When        time.Time
+	TaskID      string
+	ExecutorID  string
+	AgentID     string
+	FrameworkID string
+	ExecutorURL string
 }
 
 func (j *Job) String() string {
