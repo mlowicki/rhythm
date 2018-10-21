@@ -74,7 +74,7 @@ func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
 			}
 			leaderHost := getLeaderHost(e.GetSubscribed().GetMasterInfo())
 			leaderURL := url.URL{Scheme: scheme, Host: leaderHost}
-			log.Infof("Leading master URL: %s", leaderURL)
+			log.Infof("Leading master URL: %s", &leaderURL)
 			leaderURLStore.Set(leaderURL.String())
 			reconciler.Run()
 			offersTuner.Run()
