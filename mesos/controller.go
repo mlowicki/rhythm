@@ -82,7 +82,7 @@ func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
 		scheduler.Event_OFFERS: buildOffersEventHandler(stor, cli, secr),
 		scheduler.Event_UPDATE: buildUpdateEventHandler(stor, cli, reconciler, frameworkIDStore, leaderURLStore),
 	}.Otherwise(logger.HandleEvent))
-	controller.Run(
+	err = controller.Run(
 		ctx,
 		newFrameworkInfo(&c.Mesos, frameworkIDStore),
 		cli,
@@ -91,9 +91,9 @@ func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
 		),
 		controller.WithEventHandler(handler),
 		controller.WithSubscriptionTerminated(func(err error) {
-			log.Printf("Connection to Mesos terminated: %v\n", err)
+			log.Infof("Connection to Mesos terminated: %s", err)
 			if err != nil && err.Error() == "Framework has been removed" {
-				log.Println("Resetting framework ID")
+				log.Info("Resetting framework ID")
 				if err := frameworkIDStore.Set(""); err != nil {
 					log.Fatal(err)
 				}
@@ -101,5 +101,5 @@ func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
 			}
 		}),
 	)
-	return nil
+	return err
 }
