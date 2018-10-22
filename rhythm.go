@@ -29,7 +29,7 @@ func init() {
 	prometheus.MustRegister(infoGauge)
 }
 
-const version = "0.1"
+const version = "0.2"
 
 func main() {
 	confPath := flag.String("config", "config.json", "Path to configuration file")
