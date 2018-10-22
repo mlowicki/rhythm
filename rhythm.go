@@ -19,18 +19,25 @@ var leaderGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "leader",
 	Help: "Indicates if instance is elected as leader.",
 })
+var infoGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "rhythm_info",
+	Help: "Information about rhythm instance.",
+}, []string{"version"})
 
 func init() {
 	prometheus.MustRegister(leaderGauge)
+	prometheus.MustRegister(infoGauge)
 }
+
+const version = "0.1"
 
 func main() {
 	confPath := flag.String("config", "config.json", "Path to configuration file")
-	testLogging := flag.Bool("testlogging", false, "log sample error and exit")
-	version := flag.Bool("version", false, "print version and exit")
+	testLoggingFlag := flag.Bool("testlogging", false, "log sample error and exit")
+	versionFlag := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
-	if *version {
-		fmt.Println("0.1")
+	if *versionFlag {
+		fmt.Println(version)
 		return
 	}
 	var conf, err = conf.New(*confPath)
@@ -38,12 +45,13 @@ func main() {
 		log.Fatalf("Error getting configuration: %s", err)
 	}
 	initLogging(&conf.Logging)
-	if *testLogging {
+	if *testLoggingFlag {
 		log.Error("test")
 		log.Info("Sending test event. Wait 10s...")
 		<-time.After(10 * time.Second)
 		return
 	}
+	infoGauge.WithLabelValues(version).Set(1)
 	stor := storage.New(&conf.Storage)
 	coord := coordinator.New(&conf.Coordinator)
 	api.New(&conf.API, stor)
