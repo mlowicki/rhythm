@@ -1,3 +1,4 @@
-# Rhythm - time-based job scheduler for Apache Mesos
+Time-based job scheduler for Apache Mesos.
 
-[API documentation](./api)
+## Documentation
+[API](./api)
