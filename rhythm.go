@@ -83,12 +83,8 @@ func main() {
 	api.New(&conf.API, stor, api.State{func() bool { return isLeader.Get() }, version})
 	secr := secrets.New(&conf.Secrets)
 	for {
-		ctx, err := coord.WaitUntilLeader()
-		if err != nil {
-			log.Errorf("Error waiting for being a leader: %s", err)
-			<-time.After(time.Second)
-			continue
-		}
+		log.Info("Waiting until Mesos scheduler leader")
+		ctx := coord.WaitUntilLeader()
 		isLeader.Set(true)
 		err = mesos.Run(conf, ctx, stor, secr)
 		isLeader.Set(false)

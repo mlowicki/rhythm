@@ -59,14 +59,14 @@ type Job struct {
 	ID             string
 	Schedule       JobSchedule
 	CreatedAt      time.Time
-	LastStartAt    time.Time
+	LastStart      time.Time
 	TaskID         string
 	AgentID        string
 	Env            map[string]string
 	Secrets        map[string]string
 	Container      JobContainer
 	State          State
-	LastFailedTask FailedTask
+	LastFailedTask Task
 	CPUs           float64
 	Mem            float64
 	Disk           float64
@@ -77,16 +77,18 @@ type Job struct {
 	Labels         map[string]string
 }
 
-type FailedTask struct {
-	Message     string
-	Reason      string
-	Source      string
-	When        time.Time
+type Task struct {
+	Start       time.Time
+	End         time.Time
 	TaskID      string
 	ExecutorID  string
 	AgentID     string
 	FrameworkID string
 	ExecutorURL string
+	// Set for failed task
+	Message string
+	Reason  string
+	Source  string
 }
 
 func (j *Job) String() string {
@@ -102,10 +104,10 @@ func (j *Job) NextRun() time.Time {
 		log.Panic(err)
 	}
 	var t time.Time
-	if j.LastStartAt.Before(j.CreatedAt) {
+	if j.LastStart.Before(j.CreatedAt) {
 		t = j.CreatedAt
 	} else {
-		t = j.LastStartAt
+		t = j.LastStart
 	}
 	return sched.Next(t)
 }

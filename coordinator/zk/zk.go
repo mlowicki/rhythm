@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/mlowicki/rhythm/conf"
 	"github.com/mlowicki/rhythm/zkutil"
@@ -13,46 +14,42 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const electionDir = "election"
-
 type Coordinator struct {
-	dir       string
-	conn      *zk.Conn
-	acl       func(perms int32) []zk.ACL
-	ticket    string
-	eventChan <-chan zk.Event
-	cancel    context.CancelFunc
+	dir         string
+	electionDir string
+	conn        *zk.Conn
+	acl         func(perms int32) []zk.ACL
+	ticket      string
+	eventChan   <-chan zk.Event
+	cancel      context.CancelFunc
 	sync.Mutex
 }
 
-func (coord *Coordinator) WaitUntilLeader() (context.Context, error) {
-	isLeader, ch, err := coord.isLeader()
-	if err != nil {
-		return nil, err
-	}
-	if !isLeader {
-		for {
-			log.Println("Not elected as leader. Waiting...")
-			<-ch
-			isLeader, ch, err = coord.isLeader()
-			if err != nil {
-				return nil, err
-			} else if isLeader {
-				break
-			}
+func (coord *Coordinator) WaitUntilLeader() context.Context {
+	for {
+		isLeader, ch, err := coord.isLeader()
+		if err != nil {
+			log.Errorf("Failed checking if elected as leader: %s", err)
+			<-time.After(time.Second)
+			continue
 		}
+		if isLeader {
+			break
+		}
+		log.Debug("Not elected as leader. Waiting...")
+		<-ch
+		continue
 	}
-	log.Println("Elected as leader")
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	coord.Lock()
 	coord.cancel = cancel
 	coord.Unlock()
-	return ctx, nil
+	return ctx
 }
 
 func (coord *Coordinator) register() error {
-	name, err := coord.conn.Create(coord.dir+"/"+electionDir+"/", []byte{}, zk.FlagEphemeral|zk.FlagSequence, coord.acl(zk.PermAll))
+	name, err := coord.conn.Create(coord.dir+"/"+coord.electionDir+"/", []byte{}, zk.FlagEphemeral|zk.FlagSequence, coord.acl(zk.PermAll))
 	if err != nil {
 		return err
 	}
@@ -73,7 +70,7 @@ func (coord *Coordinator) isLeader() (bool, <-chan zk.Event, error) {
 			return false, nil, fmt.Errorf("Registration failed: %s", err)
 		}
 	}
-	tickets, _, eventChan, err := coord.conn.ChildrenW(coord.dir + "/" + electionDir)
+	tickets, _, eventChan, err := coord.conn.ChildrenW(coord.dir + "/" + coord.electionDir)
 	if err != nil {
 		return false, nil, fmt.Errorf("Failed getting registration tickets: %s", err)
 	}
@@ -108,15 +105,18 @@ func (coord *Coordinator) initZK() error {
 			return err
 		}
 	}
-	path := coord.dir + "/" + electionDir
-	exists, _, err = coord.conn.Exists(path)
-	if err != nil {
-		return fmt.Errorf("Failed checking if election directory exists: %s", err)
-	}
-	if !exists {
-		_, err = coord.conn.Create(path, []byte{}, 0, coord.acl(zk.PermAll))
+	path := coord.dir
+	for _, part := range strings.Split(coord.electionDir, "/") {
+		path += "/" + part
+		exists, _, err = coord.conn.Exists(path)
 		if err != nil {
-			return fmt.Errorf("Failed creating election directory: %s", err)
+			return fmt.Errorf("Failed checking if election directory exists: %s", err)
+		}
+		if !exists {
+			_, err = coord.conn.Create(path, []byte{}, 0, coord.acl(zk.PermAll))
+			if err != nil {
+				return fmt.Errorf("Failed creating election directory: %s", err)
+			}
 		}
 	}
 	return nil
@@ -132,10 +132,11 @@ func New(c *conf.CoordinatorZK) (*Coordinator, error) {
 		return nil, err
 	}
 	coord := Coordinator{
-		conn:      conn,
-		acl:       acl,
-		dir:       "/" + c.Dir,
-		eventChan: eventChan,
+		conn:        conn,
+		acl:         acl,
+		dir:         "/" + c.Dir,
+		eventChan:   eventChan,
+		electionDir: c.ElectionDir,
 	}
 	err = coord.initZK()
 	if err != nil {

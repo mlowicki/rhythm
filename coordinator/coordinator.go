@@ -9,7 +9,7 @@ import (
 )
 
 type coordinator interface {
-	WaitUntilLeader() (context.Context, error)
+	WaitUntilLeader() context.Context
 }
 
 func New(c *conf.Coordinator) coordinator {

@@ -25,6 +25,7 @@ type storage interface {
 	GetFrameworkID() (string, error)
 	GetRunnableJobs() ([]*model.Job, error)
 	SaveJob(j *model.Job) error
+	AddTask(group, project, id string, task *model.Task) error
 }
 
 func newFrameworkInfo(conf *conf.Mesos, idStore store.Singleton) *mesos.FrameworkInfo {

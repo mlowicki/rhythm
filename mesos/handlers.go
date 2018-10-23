@@ -49,11 +49,16 @@ func buildSubscribedEventHandler(fidStore store.Singleton, failoverTimeout time.
 	)
 }
 
+func parseAbsoluteJobID(absoluteID string) (group, project, id string) {
+	chunks := strings.Split(absoluteID, ":")
+	return chunks[0], chunks[1], chunks[2]
+}
+
 func buildUpdateEventHandler(stor storage, cli calls.Caller, reconciler *reconciliation.Reconciliation, frameworkIDStore, leaderURLStore store.Singleton) eventrules.Rule {
 	return controller.AckStatusUpdates(cli).AndThen().HandleF(func(ctx context.Context, e *scheduler.Event) error {
 		status := e.GetUpdate().GetStatus()
 		reconciler.HandleUpdate(e.GetUpdate())
-		id, err := taskID2JobID(status.TaskID.Value)
+		absoluteJobID, err := taskID2JobID(status.TaskID.Value)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"taskID": status.TaskID.Value,
@@ -61,15 +66,15 @@ func buildUpdateEventHandler(stor storage, cli calls.Caller, reconciler *reconci
 			return nil
 		}
 		state := status.GetState()
-		log.Printf("Task state update: %s (%s)", id, state)
-		chunks := strings.Split(id, ":")
-		job, err := stor.GetJob(chunks[0], chunks[1], chunks[2])
+		log.Printf("Task state update: %s (%s)", absoluteJobID, state)
+		group, project, jobID := parseAbsoluteJobID(absoluteJobID)
+		job, err := stor.GetJob(group, project, jobID)
 		if err != nil {
-			log.Printf("Failed to get job for task: %s", id)
+			log.Printf("Failed to get job for task: %s", absoluteJobID)
 			return nil
 		}
 		if job == nil {
-			log.Printf("Update for unknown job: %s", id)
+			log.Printf("Update for unknown job: %s", absoluteJobID)
 			return nil
 		}
 		switch state {
@@ -84,6 +89,13 @@ func buildUpdateEventHandler(stor storage, cli calls.Caller, reconciler *reconci
 			job.TaskID = ""
 			job.AgentID = ""
 			job.State = model.IDLE
+			frameworkID := store.GetIgnoreErrors(frameworkIDStore)()
+			leaderURL := store.GetIgnoreErrors(leaderURLStore)()
+			task := createTask(&status, &frameworkID, &leaderURL, job.LastStart)
+			err = stor.AddTask(group, project, jobID, task)
+			if err != nil {
+				log.Errorf("Failed to save task while handling FINISHED state: %s", err)
+			}
 			taskStateUpdatesCount.WithLabelValues("finished").Inc()
 		case mesos.TASK_LOST:
 			/*
@@ -108,7 +120,17 @@ func buildUpdateEventHandler(stor storage, cli calls.Caller, reconciler *reconci
 		case mesos.TASK_ERROR:
 			frameworkID := store.GetIgnoreErrors(frameworkIDStore)()
 			leaderURL := store.GetIgnoreErrors(leaderURLStore)()
-			handleFailedTask(job, &status, &frameworkID, &leaderURL)
+			task := createTask(&status, &frameworkID, &leaderURL, job.LastStart)
+			logFailedTask(job, &status)
+			job.State = model.FAILED
+			job.LastFailedTask = *task
+			job.TaskID = ""
+			job.AgentID = ""
+			err = stor.AddTask(group, project, jobID, task)
+			if err != nil {
+				log.Errorf("Failed to save task while handling FINISHED state: %s", err)
+			}
+			taskStateUpdatesCount.WithLabelValues("failed").Inc()
 		default:
 			log.Panicf("Unknown state: %s", state)
 		}
@@ -120,28 +142,31 @@ func buildUpdateEventHandler(stor storage, cli calls.Caller, reconciler *reconci
 	})
 }
 
-func handleFailedTask(job *model.Job, status *mesos.TaskStatus, frameworkID, leaderURL *string) {
+func logFailedTask(job *model.Job, status *mesos.TaskStatus) {
 	msg := status.GetMessage()
 	reason := status.GetReason().String()
 	src := status.GetSource().String()
 	log.Errorf("Task failed: %s (%s; %s; %s; %s)", job, status.GetState(), msg, reason, src)
-	job.State = model.FAILED
+}
+
+func createTask(status *mesos.TaskStatus, frameworkID, leaderURL *string, start time.Time) *model.Task {
 	executorID := status.GetExecutorID().GetValue()
 	agentID := status.GetAgentID().GetValue()
-	job.LastFailedTask = model.FailedTask{
-		Message:     msg,
-		Reason:      reason,
-		Source:      src,
-		When:        time.Now(),
+	task := model.Task{
+		Start:       start,
+		End:         time.Now(),
 		TaskID:      status.TaskID.GetValue(),
 		ExecutorID:  executorID,
 		AgentID:     agentID,
 		FrameworkID: *frameworkID,
 		ExecutorURL: fmt.Sprintf("%s/#/agents/%s/frameworks/%s/executors/%s", *leaderURL, agentID, *frameworkID, executorID),
 	}
-	job.TaskID = ""
-	job.AgentID = ""
-	taskStateUpdatesCount.WithLabelValues("failed").Inc()
+	if status.GetState() != mesos.TASK_FINISHED {
+		task.Message = status.GetMessage()
+		task.Reason = status.GetReason().String()
+		task.Source = status.GetSource().String()
+	}
+	return &task
 }
 
 func buildOffersEventHandler(stor storage, cli calls.Caller, secr secrets) events.HandlerFunc {
@@ -213,7 +238,7 @@ func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, jobs [
 	}
 	for i, job := range jobsUsed {
 		job.State = model.STAGING
-		job.LastStartAt = time.Now()
+		job.LastStart = time.Now()
 		job.TaskID = tasks[i].TaskID.GetValue()
 		job.AgentID = tasks[i].AgentID.GetValue()
 		err := stor.SaveJob(job)

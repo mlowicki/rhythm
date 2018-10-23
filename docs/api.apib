@@ -61,7 +61,7 @@ Available under /api/v1/.
                     "Cron": "*/1 * * * *"
                 },
                 "CreatedAt": "2018-10-09T21:47:35.576513772+02:00",
-                "LastStartAt": "0001-01-01T00:00:00Z",
+                "LastStart": "0001-01-01T00:00:00Z",
                 "TaskID": "",
                 "AgentID": "",
                 "Env": {},
@@ -97,7 +97,7 @@ Available under /api/v1/.
                     "Cron": "*/2 * * * *"
                 },
                 "CreatedAt": "2018-10-09T21:52:48.196252269+02:00",
-                "LastStartAt": "0001-01-01T00:00:00Z",
+                "LastStart": "0001-01-01T00:00:00Z",
                 "TaskID": "",
                 "AgentID": "",
                 "Env": {},
@@ -274,7 +274,7 @@ Available under /api/v1/.
                     "Cron": "*/1 * * * *"
                 },
                 "CreatedAt": "2018-10-09T21:47:35.576513772+02:00",
-                "LastStartAt": "0001-01-01T00:00:00Z",
+                "LastStart": "0001-01-01T00:00:00Z",
                 "TaskID": "",
                 "AgentID": "",
                 "Env": {},
@@ -310,7 +310,7 @@ Available under /api/v1/.
                     "Cron": "*/2 * * * *"
                 },
                 "CreatedAt": "2018-10-09T21:52:48.196252269+02:00",
-                "LastStartAt": "0001-01-01T00:00:00Z",
+                "LastStart": "0001-01-01T00:00:00Z",
                 "TaskID": "",
                 "AgentID": "",
                 "Env": {},
@@ -359,7 +359,7 @@ Available under /api/v1/.
                     "Cron": "*/1 * * * *"
                 },
                 "CreatedAt": "2018-10-09T21:47:35.576513772+02:00",
-                "LastStartAt": "0001-01-01T00:00:00Z",
+                "LastStart": "0001-01-01T00:00:00Z",
                 "TaskID": "",
                 "AgentID": "",
                 "Env": {},
@@ -395,7 +395,7 @@ Available under /api/v1/.
                     "Cron": "*/2 * * * *"
                 },
                 "CreatedAt": "2018-10-09T21:52:48.196252269+02:00",
-                "LastStartAt": "0001-01-01T00:00:00Z",
+                "LastStart": "0001-01-01T00:00:00Z",
                 "TaskID": "",
                 "AgentID": "",
                 "Env": {},
@@ -444,7 +444,7 @@ Available under /api/v1/.
                 "Cron": "*/1 * * * *"
             },
             "CreatedAt": "2018-10-08T21:57:50.718196854+02:00",
-            "LastStartAt": "0001-01-01T00:00:00Z",
+            "LastStart": "0001-01-01T00:00:00Z",
             "TaskID": "",
             "AgentID": "",
             "Env": {
@@ -592,6 +592,56 @@ Available under /api/v1/.
             }
 
 + Response 204
+
+## Tasks [/api/v1/jobs/{group}/{project}/{job}/tasks]
+
+###  List history of job's tasks (runs)  [GET]
+
+Sorted in ascending order (oldest tasks first).
+If job doesn't exist then empty list is returned with 200 HTTP status code.
+Properties `Message`, `Reason` and `Source` are set to empty strings only for successful tasks.
+
++ Parameters
+    + group: a (required, string) - ID of the group
+    + project: b (required, string) - ID of the project
+    + job: c (required, string) - ID of the job
+
++ Response 200 (application/json)
+
+        [{
+            "Start": "2018-10-30T18:09:56.195107735+01:00",
+            "End": "2018-10-30T18:09:57.621237867+01:00",
+            "TaskID": "group:project:id:fa3623ff-819a-4ceb-a62c-1ce52797fb60",
+            "ExecutorID": "group:project:id:fa3623ff-819a-4ceb-a62c-1ce52797fb60",
+            "AgentID": "3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-S0",
+            "FrameworkID": "3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-0000",
+            "ExecutorURL": "http://example.com:5050/#/agents/3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-S0/frameworks/3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-0000/executors/group:project:id:fa3623ff-819a-4ceb-a62c-1ce52797fb60",
+            "Message": "",
+            "Reason": "",
+            "Source": ""
+        },{
+            "Start": "2018-10-30T18:11:07.865192348+01:00",
+            "End": "2018-10-30T18:11:09.390047795+01:00",
+            "TaskID": "group:project:id:b1fc414e-3745-4389-99a8-f1d7dd4da021",
+            "ExecutorID": "group:project:id:b1fc414e-3745-4389-99a8-f1d7dd4da021",
+            "AgentID": "3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-S0",
+            "FrameworkID": "3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-0000",
+            "ExecutorURL": "http://example.com:5050/#/agents/3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-S0/frameworks/3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-0000/executors/group:project:id:b1fc414e-3745-4389-99a8-f1d7dd4da021",
+            "Message": "",
+            "Reason": "",
+            "Source": ""
+        },{
+            "Start": "2018-10-30T18:13:07.889906135+01:00",
+            "End": "2018-10-30T18:13:09.245713177+01:00",
+            "TaskID": "group:project:id:a837bd5d-4050-4592-93e3-7c6b6bf424b0",
+            "ExecutorID": "group:project:id:a837bd5d-4050-4592-93e3-7c6b6bf424b0",
+            "AgentID": "3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-S0",
+            "FrameworkID": "3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-0000",
+            "ExecutorURL": "http://example.com:5050/#/agents/3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-S0/frameworks/3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-0000/executors/group:project:id:a837bd5d-4050-4592-93e3-7c6b6bf424b0",
+            "Message": "Failed to create executor directory '/tmp/mesos/agent/slaves/3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-S0/frameworks/3be69eb1-6b0b-4ab7-a7d1-3d3a813be77a-0000/executors/group:project:id:a837bd5d-4050-4592-93e3-7c6b6bf424b0/runs/80031a57-829e-4d0c-aeb3-2cf6d0bc30bf': Failed to chown directory to 'someone': No such user 'someone'",
+            "Reason": "REASON_EXECUTOR_TERMINATED",
+            "Source": "SOURCE_AGENT"
+        }]
 
 ## Metrics [/api/v1/metrics]
 

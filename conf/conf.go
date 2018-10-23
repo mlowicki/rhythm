@@ -3,6 +3,7 @@ package conf
 import (
 	"encoding/json"
 	"io/ioutil"
+	"reflect"
 	"time"
 )
 
@@ -67,6 +68,7 @@ type StorageZK struct {
 	Addrs   []string
 	Timeout time.Duration
 	Auth    ZKAuth
+	TaskTTL time.Duration
 }
 
 const CoordinatorBackendZK = "zookeeper"
@@ -77,10 +79,11 @@ type Coordinator struct {
 }
 
 type CoordinatorZK struct {
-	Dir     string
-	Addrs   []string
-	Timeout time.Duration
-	Auth    ZKAuth
+	Dir         string
+	Addrs       []string
+	Timeout     time.Duration
+	Auth        ZKAuth
+	ElectionDir string
 }
 
 const (
@@ -167,6 +170,22 @@ type LoggingSentry struct {
 	Tags   map[string]string
 }
 
+func millisecondFieldsToDuration(v reflect.Value) {
+	for i := 0; i < v.NumField(); i++ {
+		if v.Field(i).Kind() == reflect.Struct {
+			millisecondFieldsToDuration(v.Field(i))
+		} else {
+			if v.Field(i).Type() == reflect.TypeOf(time.Second) {
+				if v.Field(i).CanSet() {
+					d := v.Field(i).Interface().(time.Duration)
+					d *= time.Millisecond
+					v.Field(i).Set(reflect.ValueOf(d))
+				}
+			}
+		}
+	}
+}
+
 func New(path string) (*Conf, error) {
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -193,6 +212,7 @@ func New(path string) (*Conf, error) {
 				Auth: ZKAuth{
 					Scheme: ZKAuthSchemeWorld,
 				},
+				TaskTTL: 1000 * 3600 * 24, // 24h
 			},
 		},
 		Coordinator: Coordinator{
@@ -214,7 +234,7 @@ func New(path string) (*Conf, error) {
 			},
 		},
 		Mesos: Mesos{
-			FailoverTimeout: 1000 * 3600 * 24 * 7, // 7 days
+			FailoverTimeout: 1000 * 3600 * 24 * 7, // 7d
 			Roles:           []string{"*"},
 			Auth: MesosAuth{
 				Type: MesosAuthTypeNone,
@@ -229,10 +249,10 @@ func New(path string) (*Conf, error) {
 	if err != nil {
 		return nil, err
 	}
-	conf.Mesos.FailoverTimeout *= time.Millisecond
-	conf.Secrets.Vault.Timeout *= time.Millisecond
-	conf.Storage.ZooKeeper.Timeout *= time.Millisecond
-	conf.Coordinator.ZooKeeper.Timeout *= time.Millisecond
-	conf.API.Auth.LDAP.Timeout *= time.Millisecond
+	conf.Coordinator.ZooKeeper.ElectionDir = "election/mesos_scheduler"
+	// All time.Duration fields from Conf should be in milliseconds so
+	// conversion to time elapsed in nanoseconds (represented by time.Duration)
+	// is needed.
+	millisecondFieldsToDuration(reflect.ValueOf(conf).Elem())
 	return conf, nil
 }

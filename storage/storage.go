@@ -17,6 +17,8 @@ type storage interface {
 	GetRunnableJobs() ([]*model.Job, error)
 	SaveJob(j *model.Job) error
 	SetFrameworkID(id string) error
+	AddTask(group, project, id string, task *model.Task) error
+	GetTasks(group string, project string, id string) ([]*model.Task, error)
 }
 
 func New(c *conf.Storage) storage {

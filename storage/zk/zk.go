@@ -1,15 +1,21 @@
 package zk
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mlowicki/rhythm/conf"
+	zkcoord "github.com/mlowicki/rhythm/coordinator/zk"
 	"github.com/mlowicki/rhythm/model"
 	"github.com/mlowicki/rhythm/zkutil"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/samuel/go-zookeeper/zk"
+	log "github.com/sirupsen/logrus"
 )
 
 type state struct {
@@ -21,11 +27,21 @@ const (
 	stateDir = "state"
 )
 
+var tasksCleanupCount = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "storage_zookeeper_tasks_cleanups",
+	Help: "Number of old tasks cleanups.",
+})
+
+func init() {
+	prometheus.MustRegister(tasksCleanupCount)
+}
+
 func NewStorage(c *conf.StorageZK) (*storage, error) {
 	s := &storage{
 		dir:     "/" + c.Dir,
 		addrs:   c.Addrs,
 		timeout: c.Timeout,
+		taskTTL: c.TaskTTL,
 	}
 	err := s.connect()
 	if err != nil {
@@ -40,6 +56,18 @@ func NewStorage(c *conf.StorageZK) (*storage, error) {
 	if err != nil {
 		return nil, err
 	}
+	coordConf := &conf.CoordinatorZK{
+		Dir:         c.Dir,
+		Addrs:       c.Addrs,
+		Timeout:     c.Timeout,
+		Auth:        c.Auth,
+		ElectionDir: "election/tasks_cleanup",
+	}
+	coord, err := zkcoord.New(coordConf)
+	if err != nil {
+		return nil, err
+	}
+	s.runTasksCleanupScheduler(coord)
 	return s, nil
 }
 
@@ -49,6 +77,36 @@ type storage struct {
 	conn    *zk.Conn
 	acl     func(perms int32) []zk.ACL
 	timeout time.Duration
+	taskTTL time.Duration
+}
+
+func (s *storage) runTasksCleanupScheduler(coord *zkcoord.Coordinator) {
+	interval := time.Hour
+	go func() {
+		for {
+			log.Info("Waiting until tasks cleanup leader")
+			ctx := coord.WaitUntilLeader()
+			log.Info("Elected as tasks cleanup leader")
+			timer := time.After(interval)
+		inner:
+			for {
+				select {
+				case <-timer:
+					log.Debug("Old tasks cleanup started")
+					deleted, err := s.tasksCleanup(ctx)
+					if err != nil {
+						log.Errorf("Old tasks cleanup failed: %s", err)
+					} else {
+						log.Debugf("Old tasks cleanup finished. Deleted tasks: %d", deleted)
+						tasksCleanupCount.Inc()
+					}
+					timer = time.After(interval)
+				case <-ctx.Done():
+					break inner
+				}
+			}
+		}
+	}()
 }
 
 func (s *storage) connect() error {
@@ -193,6 +251,31 @@ func (s *storage) GetJobs() ([]*model.Job, error) {
 	return jobs, nil
 }
 
+func (s *storage) GetTasks(group, project, id string) ([]*model.Task, error) {
+	tasks := []*model.Task{}
+	base := s.dir + "/" + jobsDir + "/" + group + ":" + project + ":" + id
+	children, _, err := s.conn.Children(base)
+	if err != nil {
+		if err == zk.ErrNoNode {
+			return tasks, nil
+		}
+		return tasks, err
+	}
+	for _, child := range children {
+		payload, _, err := s.conn.Get(base + "/" + child)
+		if err != nil {
+			return tasks, err
+		}
+		var task model.Task
+		err = json.Unmarshal(payload, &task)
+		if err != nil {
+			return tasks, err
+		}
+		tasks = append(tasks, &task)
+	}
+	return tasks, nil
+}
+
 func (s *storage) GetRunnableJobs() ([]*model.Job, error) {
 	runnable := []*model.Job{}
 	jobs, err := s.GetJobs()
@@ -208,6 +291,59 @@ func (s *storage) GetRunnableJobs() ([]*model.Job, error) {
 		runnable[i], runnable[j] = runnable[j], runnable[i]
 	})
 	return runnable, nil
+}
+
+func (s *storage) tasksCleanup(ctx context.Context) (int64, error) {
+	deleted := int64(0)
+	base := s.dir + "/" + jobsDir
+	jobIDs, _, err := s.conn.Children(base)
+	if err != nil {
+		return 0, err
+	}
+	if ctx.Err() != nil {
+		return deleted, nil
+	}
+	for _, jobID := range jobIDs {
+		keys, _, err := s.conn.Children(base + "/" + jobID)
+		if err != nil {
+			log.Errorf("Failed getting task IDs: %s", err)
+			continue
+		}
+		if ctx.Err() != nil {
+			return deleted, nil
+		}
+		for _, key := range keys {
+			chunks := strings.SplitN(key, "@", 2)
+			timestamp, err := strconv.ParseInt(chunks[0], 10, 64)
+			if err != nil {
+				log.Errorf("Failed parsing timestamp: %s", err)
+				continue
+			}
+			if time.Now().Sub(time.Unix(timestamp, 0)) > s.taskTTL {
+				err = s.conn.Delete(base+"/"+jobID+"/"+key, 0)
+				if err != nil {
+					log.Errorf("Failed removing old task: %s", err)
+					continue
+				}
+				deleted += 1
+			}
+			if ctx.Err() != nil {
+				return deleted, nil
+			}
+		}
+	}
+	return deleted, nil
+}
+
+func (s *storage) AddTask(group, project, id string, task *model.Task) error {
+	encoded, err := json.Marshal(task)
+	if err != nil {
+		return err
+	}
+	path := fmt.Sprintf("%s/%s:%s:%s/%d@%s", s.dir+"/"+jobsDir, group, project,
+		id, task.End.Unix(), task.TaskID)
+	_, err = s.conn.Create(path, encoded, 0, s.acl(zk.PermAll))
+	return err
 }
 
 func (s *storage) SaveJob(job *model.Job) error {
@@ -235,13 +371,23 @@ func (s *storage) SaveJob(job *model.Job) error {
 }
 
 func (s *storage) DeleteJob(group string, project string, id string) error {
-	path := fmt.Sprintf("%s/%s:%s:%s", s.dir+"/"+jobsDir, group, project, id)
-	exists, stat, err := s.conn.Exists(path)
+	jobPath := fmt.Sprintf("%s/%s:%s:%s", s.dir+"/"+jobsDir, group, project, id)
+	exists, stat, err := s.conn.Exists(jobPath)
 	if err != nil {
 		return err
 	}
 	if exists {
-		err = s.conn.Delete(path, stat.Version)
+		keys, _, err := s.conn.Children(jobPath)
+		if err != nil {
+			return err
+		}
+		for _, key := range keys {
+			err = s.conn.Delete(jobPath+"/"+key, 0)
+			if err != nil {
+				return err
+			}
+		}
+		err = s.conn.Delete(jobPath, stat.Version)
 		if err != nil {
 			return err
 		}

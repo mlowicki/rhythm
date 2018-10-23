@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -44,6 +45,7 @@ type storage interface {
 	GetJob(group string, project string, id string) (*model.Job, error)
 	SaveJob(j *model.Job) error
 	DeleteJob(group string, project string, id string) error
+	GetTasks(group string, project string, id string) ([]*model.Task, error)
 }
 
 type handler struct {
@@ -101,6 +103,29 @@ func getJobs(a authorizer, s storage, w http.ResponseWriter, r *http.Request) er
 		return err
 	}
 	encoder(w).Encode(readable)
+	return nil
+}
+
+func getTasks(a authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	project := vars["project"]
+	lvl, err := a.GetProjectAccessLevel(r, group, project)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	if lvl == auth.NoAccess {
+		w.WriteHeader(http.StatusForbidden)
+		return errForbidden
+	}
+	tasks, err := s.GetTasks(group, project, vars["id"])
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	sort.Slice(tasks, func(i, j int) bool { return tasks[i].End.Before(tasks[j].End) })
+	encoder(w).Encode(tasks)
 	return nil
 }
 
@@ -450,6 +475,7 @@ func New(c *conf.API, s storage, state State) {
 	v1.Handle("/jobs/{group}/{project}/{id}", &handler{a, s, getJob}).Methods("GET")
 	v1.Handle("/jobs/{group}/{project}/{id}", &handler{a, s, deleteJob}).Methods("DELETE")
 	v1.Handle("/jobs/{group}/{project}/{id}", &handler{a, s, updateJob}).Methods("PUT")
+	v1.Handle("/jobs/{group}/{project}/{id}/tasks", &handler{a, s, getTasks}).Methods("GET")
 	v1.Handle("/metrics", promhttp.Handler())
 	srv := &http.Server{
 		Handler:      r,

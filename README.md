@@ -126,6 +126,7 @@ Options:
 		* digest (optional and used only if `scheme` is set to `"digest"`)
 			* user (optional)
 			* password (optional)
+    * taskttl (optional) - number of milliseconds record of runned task should be kept (`7 days` by default).
 
 Example:
 ```javascript
