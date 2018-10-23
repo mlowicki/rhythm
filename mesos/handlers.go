@@ -178,7 +178,7 @@ func taskID2JobID(id string) (string, error) {
 
 func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, jobs []*model.Job, secr secrets, stor storage) []*model.Job {
 	tasks := []mesos.TaskInfo{}
-	resLeft := mesos.Resources(off.Resources).ToUnreserved().Unallocate()
+	resLeft := mesos.Resources(off.Resources).Unallocate()
 	var jobsLeft, jobsUsed []*model.Job
 	for _, job := range jobs {
 		res := mesos.Resources{}
