@@ -4,7 +4,7 @@
 
 * Support for [Docker](https://mesos.apache.org/documentation/latest/docker-containerizer/) and [Mesos](https://mesos.apache.org/documentation/latest/mesos-containerizer/) Containerizers 
 * Integration with [HashiCorp Vault](https://www.vaultproject.io/) for secrets management
-* Access control list (ACL) backed by [GitLab](https://gitlab.com/)
+* Access control list (ACL) backed by [GitLab](https://gitlab.com/) or LDAP
 * [Cron syntax](http://www.nncron.ru/help/EN/working/cron-format.htm)
 * Integration with [Sentry](https://sentry.io/) for error tracking
 
