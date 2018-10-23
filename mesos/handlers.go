@@ -185,6 +185,7 @@ func handleOffer(ctx context.Context, cli calls.Caller, off *mesos.Offer, jobs [
 		res.Add(
 			resources.NewCPUs(job.CPUs).Resource,
 			resources.NewMemory(job.Mem).Resource,
+			resources.NewDisk(job.Disk).Resource,
 		)
 		if !resources.ContainsAll(resLeft, res) {
 			jobsLeft = append(jobsLeft, job)

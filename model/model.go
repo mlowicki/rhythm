@@ -67,6 +67,7 @@ type Job struct {
 	LastFailedTask FailedTask
 	CPUs           float64
 	Mem            float64
+	Disk           float64
 	Cmd            string
 	User           string
 	Shell          bool

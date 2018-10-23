@@ -200,6 +200,7 @@ type newJobPayload struct {
 	}
 	CPUs      float64
 	Mem       float64
+	Disk      float64
 	Cmd       string
 	User      string
 	Shell     *bool
@@ -250,6 +251,7 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		Container: model.JobContainer{},
 		CPUs:      payload.CPUs,
 		Mem:       payload.Mem,
+		Disk:      payload.Disk,
 		Cmd:       payload.Cmd,
 		User:      payload.User,
 		Arguments: payload.Arguments,
@@ -310,6 +312,7 @@ type updateJobPayload struct {
 	}
 	CPUs      *float64
 	Mem       *float64
+	Disk      *float64
 	Cmd       *string
 	User      *string
 	Shell     *bool
@@ -383,6 +386,9 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	}
 	if payload.Mem != nil {
 		job.Mem = *payload.Mem
+	}
+	if payload.Disk != nil {
+		job.Disk = *payload.Disk
 	}
 	if payload.Cmd != nil {
 		job.Cmd = *payload.Cmd
