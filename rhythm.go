@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/mlowicki/rhythm/api"
@@ -15,21 +16,34 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var leaderGauge = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "leader",
-	Help: "Indicates if instance is elected as leader.",
-})
 var infoGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "rhythm_info",
 	Help: "Information about rhythm instance.",
 }, []string{"version"})
 
 func init() {
-	prometheus.MustRegister(leaderGauge)
 	prometheus.MustRegister(infoGauge)
 }
 
 const version = "0.2"
+
+type threadSafeBool struct {
+	v bool
+	sync.Mutex
+}
+
+func (b *threadSafeBool) Get() bool {
+	b.Lock()
+	v := b.v
+	b.Unlock()
+	return v
+}
+
+func (b *threadSafeBool) Set(v bool) {
+	b.Lock()
+	b.v = v
+	b.Unlock()
+}
 
 func main() {
 	confPath := flag.String("config", "config.json", "Path to configuration file")
@@ -52,9 +66,21 @@ func main() {
 		return
 	}
 	infoGauge.WithLabelValues(version).Set(1)
+	var isLeader threadSafeBool
+	var leaderGauge = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Name: "leader",
+		Help: "Indicates if instance is elected as leader.",
+	}, func() float64 {
+		if isLeader.Get() {
+			return 1
+		} else {
+			return 0
+		}
+	})
+	prometheus.MustRegister(leaderGauge)
 	stor := storage.New(&conf.Storage)
 	coord := coordinator.New(&conf.Coordinator)
-	api.New(&conf.API, stor)
+	api.New(&conf.API, stor, api.State{func() bool { return isLeader.Get() }, version})
 	secr := secrets.New(&conf.Secrets)
 	for {
 		ctx, err := coord.WaitUntilLeader()
@@ -63,9 +89,9 @@ func main() {
 			<-time.After(time.Second)
 			continue
 		}
-		leaderGauge.Set(1)
+		isLeader.Set(true)
 		err = mesos.Run(conf, ctx, stor, secr)
-		leaderGauge.Set(0)
+		isLeader.Set(false)
 		if err != nil {
 			log.Errorf("Controller error: %s", err)
 			<-time.After(time.Second)

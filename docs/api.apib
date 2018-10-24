@@ -568,3 +568,15 @@ Backed by [Prometheus instrumenting library](https://github.com/prometheus/clien
         # TYPE leader gauge
         leader 1 
         ...
+
+## Health [/api/v1/health]
+
+### Health [GET]
+
++ Response 200 (application/json)
+
+        {
+            "ServerTime": "Wed Oct 24 20:54:08 CEST 2018",
+            "Version": "0.2",
+            "Leader": true
+        }

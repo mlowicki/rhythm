@@ -415,7 +415,12 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
-func New(c *conf.API, s storage) {
+type State struct {
+	IsLeader func() bool
+	Version  string
+}
+
+func New(c *conf.API, s storage, state State) {
 	r := mux.NewRouter()
 	v1 := r.PathPrefix("/api/v1").Subrouter()
 	var (
@@ -437,6 +442,17 @@ func New(c *conf.API, s storage) {
 		log.Fatal(err)
 	}
 	log.Printf("Authorization backend: %s", c.Auth.Backend)
+	v1.Handle("/health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		encoder(w).Encode(struct {
+			ServerTime string
+			Version    string
+			Leader     bool
+		}{
+			time.Now().Format(time.UnixDate),
+			state.Version,
+			state.IsLeader(),
+		})
+	}))
 	v1.Handle("/jobs", &handler{a, s, getJobs}).Methods("GET")
 	v1.Handle("/jobs", &handler{a, s, createJob}).Methods("POST")
 	v1.Handle("/jobs/{group}", &handler{a, s, getGroupJobs}).Methods("GET")
