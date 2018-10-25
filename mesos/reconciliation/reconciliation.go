@@ -106,13 +106,13 @@ func (rec *Reconciliation) Run() {
 				case <-timer:
 					rec.queueRound()
 				case <-rec.roundQ:
-					log.Println("Round started")
+					log.Debug("Round started")
 					err := rec.round()
 					if err != nil {
 						log.Errorf("Round failed: %s", err)
 						timer = time.After(roundRetry)
 					} else {
-						log.Println("Round finished")
+						log.Debug("Round finished")
 						timer = time.After(roundInterval)
 					}
 				}
