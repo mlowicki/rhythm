@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/hashicorp/go-multierror"
 	"github.com/mlowicki/rhythm/api/auth"
 	"github.com/mlowicki/rhythm/api/auth/gitlab"
 	"github.com/mlowicki/rhythm/api/auth/ldap"
@@ -15,6 +16,7 @@ import (
 	"github.com/mlowicki/rhythm/model"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 var (
@@ -54,9 +56,15 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := h.h(h.a, h.s, w, r)
 	if err != nil {
 		log.Errorf("API handler error: %s", err)
-		encoder(w).Encode(struct {
-			Error string
-		}{err.Error()})
+		errs := make([]string, 0, 1)
+		if merr, ok := err.(*multierror.Error); ok {
+			for _, err := range merr.Errors {
+				errs = append(errs, err.Error())
+			}
+		} else {
+			errs = append(errs, err.Error())
+		}
+		encoder(w).Encode(struct{ Errors []string }{errs})
 	}
 }
 
@@ -181,32 +189,19 @@ func deleteJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
-type newJobPayload struct {
-	Group    string
-	Project  string
-	ID       string
-	Schedule struct {
-		Cron string
+func validateSchema(payload gojsonschema.JSONLoader, schema gojsonschema.JSONLoader) error {
+	res, err := gojsonschema.Validate(schema, payload)
+	if err != nil {
+		return err
 	}
-	Env       map[string]string
-	Secrets   map[string]string
-	Container struct {
-		Docker *struct {
-			Image          string
-			ForcePullImage bool
+	if !res.Valid() {
+		var errs *multierror.Error
+		for _, err := range res.Errors() {
+			errs = multierror.Append(errs, errors.New(err.String()))
 		}
-		Mesos *struct {
-			Image string
-		}
+		return errs
 	}
-	CPUs      float64
-	Mem       float64
-	Disk      float64
-	Cmd       string
-	User      string
-	Shell     *bool
-	Arguments []string
-	Labels    map[string]string
+	return nil
 }
 
 func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
@@ -216,6 +211,12 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return fmt.Errorf("JSON decoding failed: %s", err)
+	}
+	schemaLoader := gojsonschema.NewGoLoader(newJobSchema)
+	payloadLoader := gojsonschema.NewGoLoader(payload)
+	err = validateSchema(payloadLoader, schemaLoader)
+	if err != nil {
+		return err
 	}
 	if payload.Env == nil {
 		payload.Env = make(map[string]string)
@@ -258,19 +259,17 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		Arguments: payload.Arguments,
 		Labels:    payload.Labels,
 	}
-	if payload.Container.Docker != nil {
+	if payload.Container.Docker.Image != "" {
 		j.Container.Type = model.Docker
 		j.Container.Docker = &model.JobDocker{
 			Image:          payload.Container.Docker.Image,
 			ForcePullImage: payload.Container.Docker.ForcePullImage,
 		}
-	} else if payload.Container.Mesos != nil {
+	} else {
 		j.Container.Type = model.Mesos
 		j.Container.Mesos = &model.JobMesos{
 			Image: payload.Container.Mesos.Image,
 		}
-	} else {
-		return fmt.Errorf("Set container type (Mesos or Docker)")
 	}
 	if payload.Shell == nil {
 		j.Shell = true
@@ -296,31 +295,6 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
-type updateJobPayload struct {
-	Schedule *struct {
-		Cron *string
-	}
-	Env       *map[string]string
-	Secrets   *map[string]string
-	Container *struct {
-		Docker *struct {
-			Image          *string
-			ForcePullImage *bool
-		}
-		Mesos *struct {
-			Image *string
-		}
-	}
-	CPUs      *float64
-	Mem       *float64
-	Disk      *float64
-	Cmd       *string
-	User      *string
-	Shell     *bool
-	Arguments *[]string
-	Labels    *map[string]string
-}
-
 func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	var payload updateJobPayload
@@ -331,6 +305,12 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return fmt.Errorf("JSON decoding failed: %s", err)
+	}
+	schemaLoader := gojsonschema.NewGoLoader(updateJobSchema)
+	payloadLoader := gojsonschema.NewGoLoader(payload)
+	err = validateSchema(payloadLoader, schemaLoader)
+	if err != nil {
+		return err
 	}
 	lvl, err := a.GetProjectAccessLevel(r, group, project)
 	if err != nil {
@@ -368,16 +348,32 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		container := job.Container
 		if payload.Container.Docker != nil {
 			container.Type = model.Docker
+			container.Mesos = nil
+			if container.Docker == nil {
+				container.Docker = &model.JobDocker{}
+			}
 			if payload.Container.Docker.Image != nil {
 				container.Docker.Image = *payload.Container.Docker.Image
 			}
 			if payload.Container.Docker.ForcePullImage != nil {
 				container.Docker.ForcePullImage = *payload.Container.Docker.ForcePullImage
 			}
+			if container.Docker.Image == "" {
+				w.WriteHeader(http.StatusBadRequest)
+				return errors.New("container.docker.image is required")
+			}
 		} else if payload.Container.Mesos != nil {
 			container.Type = model.Mesos
+			container.Docker = nil
+			if container.Mesos == nil {
+				container.Mesos = &model.JobMesos{}
+			}
 			if payload.Container.Mesos.Image != nil {
 				container.Mesos.Image = *payload.Container.Mesos.Image
+			}
+			if container.Mesos.Image == "" {
+				w.WriteHeader(http.StatusBadRequest)
+				return errors.New("container.mesos.image is required")
 			}
 		}
 		job.Container = container

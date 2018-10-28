@@ -159,21 +159,26 @@ Available under /api/v1/.
                 "type": "object",
                 "properties": {
                     "group": {
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "^[a-zA-Z0-9-_]+$"
                     },
                     "project": {
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "^[a-zA-Z0-9-_]+$"
                     },
                     "id": {
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "^[a-zA-Z0-9-_]+$"
                     },
                     "schedule": {
                         "type": "object",
                         "properties": {
                             "cron": {
-                                "type": "string"
+                                "type": "string",
+                                "format": "cron"
                             }
-                        }
+                        },
+                        "required": ["cron"]
                     },
                     "env": {
                         "type": "object"
@@ -188,7 +193,8 @@ Available under /api/v1/.
                                 "type": "object",
                                 "properties": {
                                     "image": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "minLength": 1
                                     },
                                     "forcepullimage": {
                                         "type": "boolean"
@@ -199,17 +205,27 @@ Available under /api/v1/.
                                 "type": "object",
                                 "properties": {
                                     "image": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "minLength": 1
                                     }
                                 }
                             }   
                         }
                     },
                     "cpus": {
-                        "type": "number"
+                        "type": "number",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
                     },
                     "mem": {
-                        "type": "number"
+                        "type": "number",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                    },
+                    "disk": {
+                        "type": "number",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
                     },
                     "cmd": {
                         "type": "string"
@@ -229,7 +245,8 @@ Available under /api/v1/.
                     "labels": {
                         "type": "object"
                     }
-                }
+                },
+                "required": ["group", "project", "id", "schedule", "mem", "cpus", "disk"]
             }
 
 + Response 204
@@ -485,12 +502,14 @@ Available under /api/v1/.
                 "type": "object",
                 "properties": {
                     "schedule": {
-                        "type": "object",
+                        "type": ["object", "null"],
                         "properties": {
                             "cron": {
-                                "type": "string"
+                                "type": "string",
+                                "format": "cron"
                             }
-                        }
+                        },
+                        "required": ["cron"]
                     },
                     "env": {
                         "type": "object"
@@ -499,13 +518,14 @@ Available under /api/v1/.
                         "type": "object"
                     },
                     "container": {
-                        "type": "object",
+                        "type": ["object", "null"],
                         "properties": {
                             "docker": {
                                 "type": "object",
                                 "properties": {
                                     "image": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "minLength": 1
                                     },
                                     "forcepullimage": {
                                         "type": "boolean"
@@ -516,17 +536,27 @@ Available under /api/v1/.
                                 "type": "object",
                                 "properties": {
                                     "image": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "minLength": 1
                                     }
                                 }
                             }   
                         }
                     },
                     "cpus": {
-                        "type": "number"
+                        "type": ["number", "null"],
+                        "minimum": 0,
+                        "exclusiveMinimum": true
                     },
                     "mem": {
-                        "type": "number"
+                        "type": ["number", "null"],
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                    },
+                    "disk": {
+                        "type": ["number", "null"],
+                        "minimum": 0,
+                        "exclusiveMinimum": true
                     },
                     "cmd": {
                         "type": "string"

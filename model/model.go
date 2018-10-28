@@ -8,6 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var CronParser = cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+
 type State string
 
 const (
@@ -92,11 +94,10 @@ func (j *Job) String() string {
 }
 
 func (j *Job) NextRun() time.Time {
-	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 	if j.Schedule.Type != Cron {
 		log.Panic("Only Cron schedule is supported")
 	}
-	sched, err := parser.Parse(j.Schedule.Cron)
+	sched, err := CronParser.Parse(j.Schedule.Cron)
 	if err != nil {
 		log.Panic(err)
 	}
