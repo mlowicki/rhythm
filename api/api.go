@@ -368,13 +368,7 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 			if container.Mesos == nil {
 				container.Mesos = &model.JobMesos{}
 			}
-			if payload.Container.Mesos.Image != nil {
-				container.Mesos.Image = *payload.Container.Mesos.Image
-			}
-			if container.Mesos.Image == "" {
-				w.WriteHeader(http.StatusBadRequest)
-				return errors.New("container.mesos.image is required")
-			}
+			container.Mesos.Image = *payload.Container.Mesos.Image
 		}
 		job.Container = container
 	}

@@ -182,6 +182,9 @@ var updateJobSchema = schema{
 									"type":      []string{"string", "null"},
 									"minLength": 1,
 								},
+								"ForcePullImage": schema{
+									"type": []string{"boolean", "null"},
+								},
 							},
 						},
 					},

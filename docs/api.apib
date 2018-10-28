@@ -188,29 +188,34 @@ Available under /api/v1/.
                     },
                     "container": {
                         "type": "object",
-                        "properties": {
-                            "docker": {
-                                "type": "object",
+                        "oneOf": [
+                            {
                                 "properties": {
-                                    "image": {
-                                        "type": "string",
-                                        "minLength": 1
-                                    },
-                                    "forcepullimage": {
-                                        "type": "boolean"
+                                    "docker": {
+                                        "type": "object",
+                                        "properties": {
+                                            "image": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                            }
+                                        }
                                     }
                                 }
                             },
-                            "mesos": {
-                                "type": "object",
+                            {
                                 "properties": {
-                                    "image": {
-                                        "type": "string",
-                                        "minLength": 1
+                                    "mesos": {
+                                        "type": "object",
+                                        "properties": {
+                                            "image": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                            }
+                                        }
                                     }
                                 }
-                            }   
-                        }
+                            }
+                        ]
                     },
                     "cpus": {
                         "type": "number",
@@ -519,29 +524,38 @@ Available under /api/v1/.
                     },
                     "container": {
                         "type": ["object", "null"],
-                        "properties": {
-                            "docker": {
-                                "type": "object",
+                        "oneOf": [
+                            {
                                 "properties": {
-                                    "image": {
-                                        "type": "string",
-                                        "minLength": 1
-                                    },
-                                    "forcepullimage": {
-                                        "type": "boolean"
+                                    "docker": {
+                                        "type": "object",
+                                        "properties": {
+                                            "image": {
+                                                "type": ["string", "null"],
+                                                "minLength": 1,
+                                            },
+                                            "forcepullimage": {
+                                                "type": ["boolean", "null"]
+                                            }
+                                        }
                                     }
-                                }
+                                },
+                                "required"; []
                             },
-                            "mesos": {
-                                "type": "object",
+                            {
                                 "properties": {
-                                    "image": {
-                                        "type": "string",
-                                        "minLength": 1
+                                    "mesos": {
+                                        "type": "object",
+                                        "properties": {
+                                            "image": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                            }
+                                        }
                                     }
                                 }
-                            }   
-                        }
+                            }
+                        ]
                     },
                     "cpus": {
                         "type": ["number", "null"],
