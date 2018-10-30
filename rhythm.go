@@ -25,7 +25,7 @@ func init() {
 	prometheus.MustRegister(infoGauge)
 }
 
-const version = "0.3"
+const version = "0.4"
 
 type threadSafeBool struct {
 	v bool
