@@ -229,8 +229,7 @@ Available under /api/v1/.
                     },
                     "disk": {
                         "type": "number",
-                        "minimum": 0,
-                        "exclusiveMinimum": true
+                        "minimum": 0
                     },
                     "cmd": {
                         "type": "string"
@@ -251,7 +250,7 @@ Available under /api/v1/.
                         "type": "object"
                     }
                 },
-                "required": ["group", "project", "id", "schedule", "mem", "cpus", "disk"]
+                "required": ["group", "project", "id", "schedule", "mem", "cpus"]
             }
 
 + Response 204
@@ -569,8 +568,7 @@ Available under /api/v1/.
                     },
                     "disk": {
                         "type": ["number", "null"],
-                        "minimum": 0,
-                        "exclusiveMinimum": true
+                        "minimum": 0
                     },
                     "cmd": {
                         "type": "string"

@@ -119,9 +119,8 @@ var newJobSchema = schema{
 			"exclusiveMinimum": true,
 		},
 		"Disk": schema{
-			"type":             "number",
-			"minimum":          0,
-			"exclusiveMinimum": true,
+			"type":    "number",
+			"minimum": 0,
 		},
 		"Mem": schema{
 			"type":             "number",
@@ -129,7 +128,7 @@ var newJobSchema = schema{
 			"exclusiveMinimum": true,
 		},
 	},
-	"required": []string{"Group", "Project", "ID", "Schedule", "Mem", "CPUs", "Disk"},
+	"required": []string{"Group", "Project", "ID", "Schedule", "Mem", "CPUs"},
 }
 
 type updateJobPayload struct {
@@ -211,9 +210,8 @@ var updateJobSchema = schema{
 			"exclusiveMinimum": true,
 		},
 		"Disk": schema{
-			"type":             []string{"number", "null"},
-			"minimum":          0,
-			"exclusiveMinimum": true,
+			"type":    []string{"number", "null"},
+			"minimum": 0,
 		},
 		"Mem": schema{
 			"type":             []string{"number", "null"},
