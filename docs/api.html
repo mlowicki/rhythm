@@ -57,10 +57,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
       "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
       "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/1 * * * *"</span>
     </span>}</span>,
-    "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-09T21:47:35.576513772+02:00"</span></span>,
     "<span class="hljs-attribute">LastStart</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
-    "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-    "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">CurrentTaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">CurrentAgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
     "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{}</span>,
     "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
     "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
@@ -71,12 +70,6 @@ For each group <code>groupacl</code> from config file is checked to see what acc
       </span>}
     </span>}</span>,
     "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
-    "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
-      "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
-    </span>}</span>,
     "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">4</span></span>,
     "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
     "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
@@ -93,10 +86,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
       "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
       "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/2 * * * *"</span>
     </span>}</span>,
-    "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-09T21:52:48.196252269+02:00"</span></span>,
     "<span class="hljs-attribute">LastStart</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
-    "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-    "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">CurrentTaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">CurrentAgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
     "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{}</span>,
     "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
     "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
@@ -107,12 +99,6 @@ For each group <code>groupacl</code> from config file is checked to see what acc
       </span>}
     </span>}</span>,
     "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
-    "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
-      "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
-    </span>}</span>,
     "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">1</span></span>,
     "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
     "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
@@ -246,10 +232,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
       "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
       "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/1 * * * *"</span>
     </span>}</span>,
-    "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-09T21:47:35.576513772+02:00"</span></span>,
     "<span class="hljs-attribute">LastStart</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
-    "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-    "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">CurrentTaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">CurrentAgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
     "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{}</span>,
     "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
     "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
@@ -260,12 +245,6 @@ For each group <code>groupacl</code> from config file is checked to see what acc
       </span>}
     </span>}</span>,
     "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
-    "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
-      "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
-    </span>}</span>,
     "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">4</span></span>,
     "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
     "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
@@ -282,10 +261,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
       "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
       "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/2 * * * *"</span>
     </span>}</span>,
-    "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-09T21:52:48.196252269+02:00"</span></span>,
     "<span class="hljs-attribute">LastStart</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
-    "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-    "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">CurrentTaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">CurrentAgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
     "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{}</span>,
     "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
     "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
@@ -296,12 +274,6 @@ For each group <code>groupacl</code> from config file is checked to see what acc
       </span>}
     </span>}</span>,
     "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
-    "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
-      "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
-    </span>}</span>,
     "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">1</span></span>,
     "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
     "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
@@ -321,10 +293,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
       "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
       "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/1 * * * *"</span>
     </span>}</span>,
-    "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-09T21:47:35.576513772+02:00"</span></span>,
     "<span class="hljs-attribute">LastStart</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
-    "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-    "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">CurrentTaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">CurrentAgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
     "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{}</span>,
     "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
     "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
@@ -335,12 +306,6 @@ For each group <code>groupacl</code> from config file is checked to see what acc
       </span>}
     </span>}</span>,
     "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
-    "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
-      "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
-    </span>}</span>,
     "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">4</span></span>,
     "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
     "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
@@ -357,10 +322,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
       "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
       "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/2 * * * *"</span>
     </span>}</span>,
-    "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-09T21:52:48.196252269+02:00"</span></span>,
     "<span class="hljs-attribute">LastStart</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
-    "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-    "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">CurrentTaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+    "<span class="hljs-attribute">CurrentAgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
     "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{}</span>,
     "<span class="hljs-attribute">Secrets</span>": <span class="hljs-value">{}</span>,
     "<span class="hljs-attribute">Container</span>": <span class="hljs-value">{
@@ -371,12 +335,6 @@ For each group <code>groupacl</code> from config file is checked to see what acc
       </span>}
     </span>}</span>,
     "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
-    "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
-      "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-      "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
-    </span>}</span>,
     "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">1</span></span>,
     "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
     "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
@@ -396,10 +354,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
     "<span class="hljs-attribute">Type</span>": <span class="hljs-value"><span class="hljs-string">"Cron"</span></span>,
     "<span class="hljs-attribute">Cron</span>": <span class="hljs-value"><span class="hljs-string">"*/1 * * * *"</span>
   </span>}</span>,
-  "<span class="hljs-attribute">CreatedAt</span>": <span class="hljs-value"><span class="hljs-string">"2018-10-08T21:57:50.718196854+02:00"</span></span>,
   "<span class="hljs-attribute">LastStart</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span></span>,
-  "<span class="hljs-attribute">TaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-  "<span class="hljs-attribute">AgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+  "<span class="hljs-attribute">CurrentTaskID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
+  "<span class="hljs-attribute">CurrentAgentID</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
   "<span class="hljs-attribute">Env</span>": <span class="hljs-value">{
     "<span class="hljs-attribute">FOO</span>": <span class="hljs-value"><span class="hljs-string">"foo"</span>
   </span>}</span>,
@@ -412,12 +369,6 @@ For each group <code>groupacl</code> from config file is checked to see what acc
     </span>}
   </span>}</span>,
   "<span class="hljs-attribute">State</span>": <span class="hljs-value"><span class="hljs-string">"Idle"</span></span>,
-  "<span class="hljs-attribute">LastFail</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">Message</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-    "<span class="hljs-attribute">Reason</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-    "<span class="hljs-attribute">Source</span>": <span class="hljs-value"><span class="hljs-string">""</span></span>,
-    "<span class="hljs-attribute">When</span>": <span class="hljs-value"><span class="hljs-string">"0001-01-01T00:00:00Z"</span>
-  </span>}</span>,
   "<span class="hljs-attribute">CPUs</span>": <span class="hljs-value"><span class="hljs-number">4</span></span>,
   "<span class="hljs-attribute">Mem</span>": <span class="hljs-value"><span class="hljs-number">7168</span></span>,
   "<span class="hljs-attribute">Cmd</span>": <span class="hljs-value"><span class="hljs-string">"echo $FOO"</span></span>,
@@ -578,7 +529,7 @@ leader 1
   "<span class="hljs-attribute">ServerTime</span>": <span class="hljs-value"><span class="hljs-string">"Wed Oct 24 20:54:08 CEST 2018"</span></span>,
   "<span class="hljs-attribute">Version</span>": <span class="hljs-value"><span class="hljs-string">"0.2"</span></span>,
   "<span class="hljs-attribute">Leader</span>": <span class="hljs-value"><span class="hljs-literal">true</span>
-</span>}</code></pre><div style="height: 1px;"></div></div></div></div></div></section></div></div></div><p style="text-align: center;" class="text-muted">Generated by&nbsp;<a href="https://github.com/danielgtaylor/aglio" class="aglio">aglio</a>&nbsp;on 30 Oct 2018</p><script>/* eslint-env browser */
+</span>}</code></pre><div style="height: 1px;"></div></div></div></div></div></section></div></div></div><p style="text-align: center;" class="text-muted">Generated by&nbsp;<a href="https://github.com/danielgtaylor/aglio" class="aglio">aglio</a>&nbsp;on 03 Nov 2018</p><script>/* eslint-env browser */
 /* eslint quotes: [2, "single"] */
 'use strict';
 
