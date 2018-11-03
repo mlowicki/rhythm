@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/mesos/mesos-go/api/v1/lib"
+	"github.com/mesos/mesos-go/api/v1/lib/resources"
 	"github.com/robfig/cron"
 	log "github.com/sirupsen/logrus"
 )
@@ -53,28 +55,78 @@ const (
 	Cron ScheduleType = "Cron"
 )
 
-type Job struct {
-	Group          string
-	Project        string
-	ID             string
-	Schedule       JobSchedule
-	CreatedAt      time.Time
-	LastStart      time.Time
-	TaskID         string
-	AgentID        string
-	Env            map[string]string
-	Secrets        map[string]string
-	Container      JobContainer
+type JobConf struct {
+	Group     string
+	Project   string
+	ID        string
+	Schedule  JobSchedule
+	Env       map[string]string
+	Secrets   map[string]string
+	Container JobContainer
+	CPUs      float64
+	Mem       float64
+	Disk      float64
+	Cmd       string
+	User      string
+	Shell     bool
+	Arguments []string
+	Labels    map[string]string
+}
+
+func (j *JobConf) String() string {
+	return j.FQID()
+}
+
+// Fully qualified identifier unique across jobs from all groups and projects.
+func (j *JobConf) FQID() string {
+	return fmt.Sprintf("%s:%s:%s", j.Group, j.Project, j.ID)
+}
+
+func (j *JobConf) Resources() mesos.Resources {
+	res := mesos.Resources{}
+	res.Add(
+		resources.NewCPUs(j.CPUs).Resource,
+		resources.NewMemory(j.Mem).Resource,
+		resources.NewDisk(j.Disk).Resource,
+	)
+	return res
+}
+
+type JobRuntime struct {
 	State          State
-	LastFailedTask Task
-	CPUs           float64
-	Mem            float64
-	Disk           float64
-	Cmd            string
-	User           string
-	Shell          bool
-	Arguments      []string
-	Labels         map[string]string
+	LastStart      time.Time
+	CurrentTaskID  string
+	CurrentAgentID string
+}
+
+type Job struct {
+	JobConf
+	JobRuntime
+}
+
+func (j *Job) NextRun() time.Time {
+	if j.Schedule.Type != Cron {
+		log.Panic("Only Cron schedule is supported")
+	}
+	sched, err := CronParser.Parse(j.Schedule.Cron)
+	if err != nil {
+		log.Panic(err)
+	}
+	var t time.Time
+	if j.LastStart.IsZero() {
+		now := time.Now()
+		t = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	} else {
+		t = j.LastStart
+	}
+	return sched.Next(t)
+}
+
+func (j *Job) IsRunnable() bool {
+	if j.State != IDLE && j.State != FAILED {
+		return false
+	}
+	return j.NextRun().Before(time.Now())
 }
 
 type Task struct {
@@ -89,32 +141,4 @@ type Task struct {
 	Message string
 	Reason  string
 	Source  string
-}
-
-func (j *Job) String() string {
-	return fmt.Sprintf("%s:%s:%s", j.Group, j.Project, j.ID)
-}
-
-func (j *Job) NextRun() time.Time {
-	if j.Schedule.Type != Cron {
-		log.Panic("Only Cron schedule is supported")
-	}
-	sched, err := CronParser.Parse(j.Schedule.Cron)
-	if err != nil {
-		log.Panic(err)
-	}
-	var t time.Time
-	if j.LastStart.Before(j.CreatedAt) {
-		t = j.CreatedAt
-	} else {
-		t = j.LastStart
-	}
-	return sched.Next(t)
-}
-
-func (j *Job) IsRunnable() bool {
-	if j.State != IDLE && j.State != FAILED {
-		return false
-	}
-	return j.NextRun().Before(time.Now())
 }

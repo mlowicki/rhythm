@@ -14,11 +14,14 @@ type storage interface {
 	GetJob(group string, project string, id string) (*model.Job, error)
 	GetJobs() ([]*model.Job, error)
 	GetProjectJobs(group string, project string) ([]*model.Job, error)
-	GetRunnableJobs() ([]*model.Job, error)
 	SaveJob(j *model.Job) error
 	SetFrameworkID(id string) error
 	AddTask(group, project, id string, task *model.Task) error
 	GetTasks(group string, project string, id string) ([]*model.Task, error)
+	GetJobRuntime(group, project, id string) (*model.JobRuntime, error)
+	SaveJobRuntime(group, project, id string, state *model.JobRuntime) error
+	GetJobConf(group, project, id string) (*model.JobConf, error)
+	SaveJobConf(state *model.JobConf) error
 }
 
 func New(c *conf.Storage) storage {

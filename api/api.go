@@ -46,6 +46,8 @@ type storage interface {
 	SaveJob(j *model.Job) error
 	DeleteJob(group string, project string, id string) error
 	GetTasks(group string, project string, id string) ([]*model.Task, error)
+	GetJobConf(group, project, id string) (*model.JobConf, error)
+	SaveJobConf(state *model.JobConf) error
 }
 
 type handler struct {
@@ -264,7 +266,7 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusForbidden)
 		return errForbidden
 	}
-	j := &model.Job{
+	jobConf := &model.JobConf{
 		Group:   payload.Group,
 		Project: payload.Project,
 		ID:      payload.ID,
@@ -272,7 +274,6 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 			Type: model.Cron,
 			Cron: payload.Schedule.Cron,
 		},
-		CreatedAt: time.Now(),
 		Env:       payload.Env,
 		Secrets:   payload.Secrets,
 		Container: model.JobContainer{},
@@ -284,34 +285,36 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		Arguments: payload.Arguments,
 		Labels:    payload.Labels,
 	}
+	jobRuntime := &model.JobRuntime{}
+	job := &model.Job{JobConf: *jobConf, JobRuntime: *jobRuntime}
 	if payload.Container.Docker.Image != "" {
-		j.Container.Type = model.Docker
-		j.Container.Docker = &model.JobDocker{
+		job.Container.Type = model.Docker
+		job.Container.Docker = &model.JobDocker{
 			Image:          payload.Container.Docker.Image,
 			ForcePullImage: payload.Container.Docker.ForcePullImage,
 		}
 	} else {
-		j.Container.Type = model.Mesos
-		j.Container.Mesos = &model.JobMesos{
+		job.Container.Type = model.Mesos
+		job.Container.Mesos = &model.JobMesos{
 			Image: payload.Container.Mesos.Image,
 		}
 	}
 	if payload.Shell == nil {
-		j.Shell = true
+		job.Shell = true
 	} else {
-		j.Shell = *payload.Shell
+		job.Shell = *payload.Shell
 	}
-	job, err := s.GetJob(payload.Group, payload.Project, payload.ID)
+	storedJob, err := s.GetJob(payload.Group, payload.Project, payload.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
-	if job != nil {
+	if storedJob != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return errJobAlreadyExists
 	}
-	j.State = model.IDLE
-	err = s.SaveJob(j)
+	job.State = model.IDLE
+	err = s.SaveJob(job)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
@@ -346,7 +349,7 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusForbidden)
 		return errForbidden
 	}
-	job, err := s.GetJob(group, project, vars["id"])
+	job, err := s.GetJobConf(group, project, vars["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
@@ -421,7 +424,7 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	if payload.Labels != nil {
 		job.Labels = *payload.Labels
 	}
-	err = s.SaveJob(job)
+	err = s.SaveJobConf(job)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err

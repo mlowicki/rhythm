@@ -1,9 +1,6 @@
 package mesos
 
 import (
-	"fmt"
-
-	"github.com/gofrs/uuid"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
@@ -23,9 +20,12 @@ type storage interface {
 	GetJob(group string, project string, id string) (*model.Job, error)
 	SetFrameworkID(id string) error
 	GetFrameworkID() (string, error)
-	GetRunnableJobs() ([]*model.Job, error)
 	SaveJob(j *model.Job) error
 	AddTask(group, project, id string, task *model.Task) error
+	GetJobRuntime(group, project, id string) (*model.JobRuntime, error)
+	SaveJobRuntime(group, project, id string, state *model.JobRuntime) error
+	GetJobConf(group, project, id string) (*model.JobConf, error)
+	SaveJobConf(state *model.JobConf) error
 }
 
 func newFrameworkInfo(conf *conf.Mesos, idStore store.Singleton) *mesos.FrameworkInfo {
@@ -71,68 +71,4 @@ func newFrameworkIDStore(s storage) (store.Singleton, error) {
 			err := s.SetFrameworkID(v)
 			return err
 		})), nil
-}
-
-func newTaskInfo(j *model.Job, sec secrets) (error, *mesos.TaskInfo) {
-	u4, err := uuid.NewV4()
-	if err != nil {
-		return err, nil
-	}
-	id := fmt.Sprintf("%s:%s:%s:%s", j.Group, j.Project, j.ID, u4)
-	env := mesos.Environment{
-		Variables: []mesos.Environment_Variable{
-			{Name: "TASK_ID", Value: &id},
-		},
-	}
-	for k, v := range j.Env {
-		env.Variables = append(env.Variables, mesos.Environment_Variable{Name: k, Value: func(v string) *string { return &v }(v)})
-	}
-	for k, v := range j.Secrets {
-		path := fmt.Sprintf("%s/%s/%s", j.Group, j.Project, v)
-		secret, err := sec.Read(path)
-		if err != nil {
-			return fmt.Errorf("Reading secret failed: %s", err), nil
-		}
-		env.Variables = append(env.Variables, mesos.Environment_Variable{Name: k, Value: &secret})
-	}
-	var containerInfo mesos.ContainerInfo
-	switch j.Container.Type {
-	case model.Docker:
-		containerInfo = mesos.ContainerInfo{
-			Type: mesos.ContainerInfo_DOCKER.Enum(),
-			Docker: &mesos.ContainerInfo_DockerInfo{
-				Image:          j.Container.Docker.Image,
-				ForcePullImage: &j.Container.Docker.ForcePullImage,
-			},
-		}
-	case model.Mesos:
-		containerInfo = mesos.ContainerInfo{
-			Type: mesos.ContainerInfo_MESOS.Enum(),
-			Docker: &mesos.ContainerInfo_DockerInfo{
-				Image: j.Container.Mesos.Image,
-			},
-		}
-	default:
-		log.Fatalf("Unknown container type: %d", j.Container.Type)
-	}
-	labels := make([]mesos.Label, len(j.Labels))
-	for k, v := range j.Labels {
-		func(v string) {
-			labels = append(labels, mesos.Label{Key: k, Value: &v})
-		}(v)
-	}
-	task := mesos.TaskInfo{
-		TaskID: mesos.TaskID{Value: id},
-		Command: &mesos.CommandInfo{
-			Value:       proto.String(j.Cmd),
-			Environment: &env,
-			User:        proto.String(j.User),
-			Shell:       proto.Bool(j.Shell),
-			Arguments:   j.Arguments,
-		},
-		Container: &containerInfo,
-		Labels:    &mesos.Labels{labels},
-	}
-	task.Name = "Task " + task.TaskID.Value
-	return nil, &task
 }

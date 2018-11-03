@@ -7,7 +7,6 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/mesos/mesos-go/api/v1/lib"
-	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mlowicki/rhythm/model"
 	log "github.com/sirupsen/logrus"
@@ -33,8 +32,7 @@ type storage interface {
 	GetJobs() ([]*model.Job, error)
 }
 
-func (rec *Reconciliation) HandleUpdate(update *scheduler.Event_Update) {
-	status := update.GetStatus()
+func (rec *Reconciliation) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 	if status.GetReason() != mesos.REASON_RECONCILIATION {
 		return
 	}
@@ -51,8 +49,8 @@ func (rec *Reconciliation) round() error {
 	}
 	tasks := make(map[string]string)
 	for _, job := range jobs {
-		if job.TaskID != "" {
-			tasks[job.TaskID] = job.AgentID
+		if job.CurrentTaskID != "" {
+			tasks[job.CurrentTaskID] = job.CurrentAgentID
 		}
 	}
 	boff := backoff.NewExponentialBackOff()
