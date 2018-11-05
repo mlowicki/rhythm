@@ -56,7 +56,7 @@ func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
 	ctx, cancel := context.WithCancel(ctx)
 	reconciler := reconciliation.New(ctx, cli, stor)
 	offersTuner := offerstuner.New(ctx, cli, stor)
-	jobsSched := jobsscheduler.New(stor, secr, frameworkID, leaderURL, ctx)
+	jobsSched := jobsscheduler.New(c.Mesos.Roles, stor, secr, frameworkID, leaderURL, ctx)
 	logger := controller.LogEvents(func(e *scheduler.Event) {
 		log.Printf("Event: %s", e)
 	}).Unless(c.Mesos.LogAllEvents)

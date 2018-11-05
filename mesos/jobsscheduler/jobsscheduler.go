@@ -28,6 +28,7 @@ type storage interface {
 
 // Decides which jobs to run in response to received offers.
 type Scheduler struct {
+	roles       []string
 	storage     storage
 	secrets     secrets
 	frameworkID func() string
@@ -54,8 +55,9 @@ func (sched *Scheduler) setJob(job model.Job) {
 	sched.jobsMut.Unlock()
 }
 
-func New(stor storage, secr secrets, frameworkID, leaderURL func() string, ctx context.Context) *Scheduler {
+func New(roles []string, stor storage, secr secrets, frameworkID, leaderURL func() string, ctx context.Context) *Scheduler {
 	sched := Scheduler{
+		roles:       roles,
 		storage:     stor,
 		secrets:     secr,
 		frameworkID: frameworkID,
@@ -165,37 +167,60 @@ func (sched *Scheduler) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 	}
 }
 
+func (sched *Scheduler) findTaskResources(taskResources, offerResources mesos.Resources) mesos.Resources {
+	var found mesos.Resources
+	role := sched.roles[0]
+	if role == "*" {
+		found = resources.Find(taskResources, offerResources...)
+	} else {
+		reservation := mesos.Resource_ReservationInfo{
+			Type: mesos.Resource_ReservationInfo_STATIC.Enum(),
+			Role: &role,
+		}
+		found = resources.Find(taskResources.PushReservation(reservation), offerResources...)
+	}
+	return found
+}
+
 func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []mesos.TaskInfo {
-	tasks := []mesos.TaskInfo{}
-	var runnable []model.Job
+	var tasksResources []mesos.Resources
+	var runnableJobs []model.Job
 	resourcesLeft := mesos.Resources(offer.Resources).Unallocate()
+	resourcesLeftUnreserved := resourcesLeft.ToUnreserved()
+	log.Debugf("Getting tasks for offer: %s", resourcesLeft)
 	sched.jobsMut.Lock()
 	for _, job := range sched.jobs {
 		if !job.IsRunnable() {
 			continue
 		}
-		if !resources.ContainsAll(resourcesLeft, job.Resources()) {
+		jobResources := job.Resources()
+		if !resources.ContainsAll(resourcesLeftUnreserved, jobResources) {
 			continue
 		}
 		if sched.bookedJobs.Exists(job.FQID()) {
 			continue
 		}
-		runnable = append(runnable, *job)
+		taskResources := sched.findTaskResources(jobResources, resourcesLeft)
+		if len(taskResources) == 0 {
+			log.Fatal("Resources not found")
+		}
+		log.Debugf("Found resources for job: %s", job)
+		runnableJobs = append(runnableJobs, *job)
+		tasksResources = append(tasksResources, taskResources)
+		resourcesLeft.Subtract(taskResources...)
+		resourcesLeftUnreserved = resourcesLeft.ToUnreserved()
 		sched.bookedJobs.Set(job.FQID())
 	}
 	sched.jobsMut.Unlock()
-	for _, job := range runnable {
+	var tasks []mesos.TaskInfo
+	for i, job := range runnableJobs {
 		task, err := sched.newMesosTaskInfo(&job)
 		if err != nil {
 			log.Errorf("Failed to create Mesos task info: %s", err)
 			continue
 		}
 		task.AgentID = offer.AgentID
-		task.Resources = resources.Find(job.Resources(), resourcesLeft...)
-		if task.Resources == nil {
-			log.Fatal("Resources not found")
-		}
-		resourcesLeft.Subtract(task.Resources...)
+		task.Resources = tasksResources[i]
 		tasks = append(tasks, *task)
 		job.State = model.STAGING
 		job.LastStart = time.Now()
@@ -211,6 +236,7 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 		}
 		sched.bookedJobs.Del(job.FQID())
 	}
+	log.Debugf("Number of tasks found for offer: %d", len(tasks))
 	return tasks
 }
 
