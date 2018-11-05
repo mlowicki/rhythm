@@ -70,7 +70,7 @@ func buildOffersEventHandler(cli calls.Caller, jobsSched *jobsscheduler.Schedule
 	return func(ctx context.Context, e *scheduler.Event) error {
 		offers := e.GetOffers().GetOffers()
 		offersCount.Add(float64(len(offers)))
-		log.Debugf("Received offers: %d", len(offers))
+		log.Debugf("Number of received offers: %d", len(offers))
 		for i := range offers {
 			if ctx.Err() != nil {
 				break
