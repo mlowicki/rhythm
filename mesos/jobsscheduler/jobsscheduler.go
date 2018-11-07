@@ -213,37 +213,55 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 	}
 	sched.jobsMut.Unlock()
 	var tasks []mesos.TaskInfo
-	for i, job := range runnableJobs {
-		task, err := sched.newMesosTaskInfo(&job)
-		if err != nil {
-			log.Errorf("Failed to create Mesos task info: %s", err)
-			continue
-		}
-		task.AgentID = offer.AgentID
-		task.Resources = tasksResources[i]
-		tasks = append(tasks, *task)
-		job.State = model.STAGING
-		job.LastStart = time.Now()
-		job.CurrentTaskID = task.TaskID.GetValue()
-		job.CurrentAgentID = task.AgentID.GetValue()
-		sched.setJob(job)
-		if ctx.Err() != nil {
-			return nil
-		}
-		err = sched.storage.SaveJobRuntime(job.Group, job.Project, job.ID, &job.JobRuntime)
-		if err != nil {
-			log.Errorf("Failed to update job while staging: %s", err)
-		}
-		sched.bookedJobs.Del(job.FQID())
+	var wg sync.WaitGroup
+	for i := range runnableJobs {
+		wg.Add(1)
+		go func(i int, job *model.Job) {
+			defer wg.Done()
+			job.LastStart = time.Now()
+			task, err := sched.newTaskInfo(job)
+			if err != nil {
+				log.Errorf("Failed to create TaskInfo: %s", err)
+				job.State = model.FAILED
+				go func() {
+					now := time.Now()
+					task := model.Task{
+						Start:   now,
+						End:     now,
+						Message: err.Error(),
+						Reason:  "Failed to create task",
+						Source:  "Scheduler",
+					}
+					err := sched.storage.AddTask(job.Group, job.Project, job.ID, &task)
+					if err != nil {
+						log.Errorf("Failed saving task: %s", err)
+					}
+				}()
+			} else {
+				job.State = model.STAGING
+				job.CurrentTaskID = task.TaskID.GetValue()
+				job.CurrentAgentID = offer.AgentID.GetValue()
+				task.AgentID = offer.AgentID
+				task.Resources = tasksResources[i]
+				tasks = append(tasks, *task)
+			}
+			err = sched.storage.SaveJobRuntime(job.Group, job.Project, job.ID, &job.JobRuntime)
+			if err != nil {
+				log.Errorf("Failed to update job runtime info: %s", err)
+			}
+			sched.setJob(*job)
+			sched.bookedJobs.Del(job.FQID())
+		}(i, &runnableJobs[i])
 	}
+	wg.Wait()
 	log.Debugf("Number of tasks found for offer: %d", len(tasks))
 	return tasks
 }
 
-func (sched *Scheduler) newMesosTaskInfo(job *model.Job) (*mesos.TaskInfo, error) {
+func (sched *Scheduler) newTaskInfo(job *model.Job) (*mesos.TaskInfo, error) {
 	taskID, err := newTaskID(job.Group, job.Project, job.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Getting task ID failed: %s", err)
 	}
 	env := mesos.Environment{
 		Variables: []mesos.Environment_Variable{
@@ -281,7 +299,7 @@ func (sched *Scheduler) newMesosTaskInfo(job *model.Job) (*mesos.TaskInfo, error
 			},
 		}
 	default:
-		log.Fatalf("Unknown container type: %d", job.Container.Type)
+		return nil, fmt.Errorf("Unknown container type: %s", job.Container.Type)
 	}
 	labels := make([]mesos.Label, len(job.Labels))
 	for k, v := range job.Labels {

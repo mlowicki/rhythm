@@ -37,7 +37,7 @@
         "backend": "vault",
         "vault": {
             "token": "token",
-            "address": "http://localhost:8200"
+            "addr": "http://localhost:8200"
         }
     },
     "mesos": {

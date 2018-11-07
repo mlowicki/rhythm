@@ -171,7 +171,7 @@ var updateJobSchema = schema{
 		},
 		"Container": schema{
 			"type": []string{"object", "null"},
-			"oneOf": []schema{
+			"anyOf": []schema{
 				schema{
 					"properties": schema{
 						"Docker": schema{
