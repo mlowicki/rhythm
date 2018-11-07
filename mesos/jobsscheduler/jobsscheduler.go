@@ -210,6 +210,9 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 	log.Debugf("Getting tasks for offer: %s", resourcesLeft)
 	sched.jobsMut.Lock()
 	for _, job := range sched.jobs {
+		if sched.bookedJobs.Exists(job.FQID()) {
+			continue
+		}
 		if !job.IsRunnable() {
 			continue
 		}
@@ -217,8 +220,10 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 		if !resources.ContainsAll(resourcesLeftUnreserved, jobResources) {
 			continue
 		}
-		if sched.bookedJobs.Exists(job.FQID()) {
-			continue
+		if job.IsRetryable() {
+			job.Retries += 1
+		} else {
+			job.Retries = 0
 		}
 		taskResources := sched.findTaskResources(jobResources, resourcesLeft)
 		if len(taskResources) == 0 {

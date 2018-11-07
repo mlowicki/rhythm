@@ -47,14 +47,15 @@ type newJobPayload struct {
 			Image string
 		}
 	}
-	CPUs      float64
-	Mem       float64
-	Disk      float64
-	Cmd       string
-	User      string
-	Shell     *bool
-	Arguments []string
-	Labels    map[string]string
+	CPUs       float64
+	Mem        float64
+	Disk       float64
+	Cmd        string
+	User       string
+	Shell      *bool
+	Arguments  []string
+	Labels     map[string]string
+	MaxRetries int
 }
 
 var newJobSchema = schema{
@@ -127,6 +128,10 @@ var newJobSchema = schema{
 			"minimum":          0,
 			"exclusiveMinimum": true,
 		},
+		"MaxRetries": schema{
+			"type":    "integer",
+			"minimum": 0,
+		},
 	},
 	"required": []string{"Group", "Project", "ID", "Schedule", "Mem", "CPUs"},
 }
@@ -146,14 +151,15 @@ type updateJobPayload struct {
 			Image *string
 		}
 	}
-	CPUs      *float64
-	Mem       *float64
-	Disk      *float64
-	Cmd       *string
-	User      *string
-	Shell     *bool
-	Arguments *[]string
-	Labels    *map[string]string
+	CPUs       *float64
+	Mem        *float64
+	Disk       *float64
+	Cmd        *string
+	User       *string
+	Shell      *bool
+	Arguments  *[]string
+	Labels     *map[string]string
+	MaxRetries *int
 }
 
 var updateJobSchema = schema{
@@ -217,6 +223,10 @@ var updateJobSchema = schema{
 			"type":             []string{"number", "null"},
 			"minimum":          0,
 			"exclusiveMinimum": true,
+		},
+		"MaxRetries": schema{
+			"type":    "integer",
+			"minimum": 0,
 		},
 	},
 }

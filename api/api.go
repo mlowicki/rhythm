@@ -274,16 +274,17 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 			Type: model.Cron,
 			Cron: payload.Schedule.Cron,
 		},
-		Env:       payload.Env,
-		Secrets:   payload.Secrets,
-		Container: model.JobContainer{},
-		CPUs:      payload.CPUs,
-		Mem:       payload.Mem,
-		Disk:      payload.Disk,
-		Cmd:       payload.Cmd,
-		User:      payload.User,
-		Arguments: payload.Arguments,
-		Labels:    payload.Labels,
+		Env:        payload.Env,
+		Secrets:    payload.Secrets,
+		Container:  model.JobContainer{},
+		CPUs:       payload.CPUs,
+		Mem:        payload.Mem,
+		Disk:       payload.Disk,
+		Cmd:        payload.Cmd,
+		User:       payload.User,
+		Arguments:  payload.Arguments,
+		Labels:     payload.Labels,
+		MaxRetries: payload.MaxRetries,
 	}
 	jobRuntime := &model.JobRuntime{}
 	job := &model.Job{JobConf: *jobConf, JobRuntime: *jobRuntime}
@@ -423,6 +424,9 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	}
 	if payload.Labels != nil {
 		job.Labels = *payload.Labels
+	}
+	if payload.MaxRetries != nil {
+		job.MaxRetries = *payload.MaxRetries
 	}
 	err = s.SaveJobConf(job)
 	if err != nil {

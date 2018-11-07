@@ -56,21 +56,22 @@ const (
 )
 
 type JobConf struct {
-	Group     string
-	Project   string
-	ID        string
-	Schedule  JobSchedule
-	Env       map[string]string
-	Secrets   map[string]string
-	Container JobContainer
-	CPUs      float64
-	Mem       float64
-	Disk      float64
-	Cmd       string
-	User      string
-	Shell     bool
-	Arguments []string
-	Labels    map[string]string
+	Group      string
+	Project    string
+	ID         string
+	Schedule   JobSchedule
+	Env        map[string]string
+	Secrets    map[string]string
+	Container  JobContainer
+	CPUs       float64
+	Mem        float64
+	Disk       float64
+	Cmd        string
+	User       string
+	Shell      bool
+	Arguments  []string
+	Labels     map[string]string
+	MaxRetries int
 }
 
 func (j *JobConf) String() string {
@@ -97,6 +98,7 @@ type JobRuntime struct {
 	LastStart      time.Time
 	CurrentTaskID  string
 	CurrentAgentID string
+	Retries        int
 }
 
 type Job struct {
@@ -104,29 +106,33 @@ type Job struct {
 	JobRuntime
 }
 
-func (j *Job) NextRun() time.Time {
-	if j.Schedule.Type != Cron {
+func (job *Job) NextRun() time.Time {
+	if job.IsRetryable() {
+		return job.LastStart
+	}
+	if job.Schedule.Type != Cron {
 		log.Panic("Only Cron schedule is supported")
 	}
-	sched, err := CronParser.Parse(j.Schedule.Cron)
+	sched, err := CronParser.Parse(job.Schedule.Cron)
 	if err != nil {
 		log.Panic(err)
 	}
-	var t time.Time
-	if j.LastStart.IsZero() {
+	var lastStart time.Time
+	if job.LastStart.IsZero() {
 		now := time.Now()
-		t = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		lastStart = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	} else {
-		t = j.LastStart
+		lastStart = job.LastStart
 	}
-	return sched.Next(t)
+	return sched.Next(lastStart)
 }
 
-func (j *Job) IsRunnable() bool {
-	if j.State != IDLE && j.State != FAILED {
-		return false
-	}
-	return j.NextRun().Before(time.Now())
+func (job *Job) IsRetryable() bool {
+	return job.State == FAILED && job.Retries < job.MaxRetries
+}
+
+func (job *Job) IsRunnable() bool {
+	return (job.State == IDLE || job.State == FAILED) && job.NextRun().Before(time.Now())
 }
 
 type Task struct {

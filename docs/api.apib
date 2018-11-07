@@ -79,7 +79,9 @@ Available under /api/v1/.
                 "User": "someone",
                 "Shell": true,
                 "Arguments": [],
-                "Labels": {}
+                "Labels": {},
+                "MaxRetries": 3,
+                "Retries": 0
             },
             {
                 "Group": "group2",
@@ -108,7 +110,9 @@ Available under /api/v1/.
                 "User": "someone",
                 "Shell": true,
                 "Arguments": [],
-                "Labels": {}
+                "Labels": {},
+                "MaxRetries": 0,
+                "Retries": 0
             }
         ]
 
@@ -234,6 +238,10 @@ Available under /api/v1/.
                     },
                     "labels": {
                         "type": "object"
+                    },
+                    "maxretries": {
+                        "type": "integer",
+                        "minimum": 0
                     }
                 },
                 "required": ["group", "project", "id", "schedule", "mem", "cpus"]
@@ -278,7 +286,9 @@ Available under /api/v1/.
                 "User": "someone",
                 "Shell": true,
                 "Arguments": [],
-                "Labels": {}
+                "Labels": {},
+                "MaxRetries": 0,
+                "Retries": 0
             },
             {
                 "Group": "group",
@@ -307,7 +317,9 @@ Available under /api/v1/.
                 "User": "someone",
                 "Shell": true,
                 "Arguments": [],
-                "Labels": {}
+                "Labels": {},
+                "MaxRetries": 0,
+                "Retries": 0
             }
         ]
 
@@ -349,7 +361,9 @@ Available under /api/v1/.
                 "User": "user",
                 "Shell": true,
                 "Arguments": [],
-                "Labels": {}
+                "Labels": {},
+                "MaxRetries": 0,
+                "Retries": 0
             },
             {
                 "Group": "group",
@@ -378,7 +392,9 @@ Available under /api/v1/.
                 "User": "user",
                 "Shell": true,
                 "Arguments": [],
-                "Labels": {}
+                "Labels": {},
+                "MaxRetries": 0,
+                "Retries": 0
             }
         ]
 
@@ -422,7 +438,9 @@ Available under /api/v1/.
             "User": "someone",
             "Shell": true,
             "Arguments": [],
-            "Labels": {}
+            "Labels": {},
+            "MaxRetries": 0,
+            "Retries": 0
         }
 
 ###  Delete job [DELETE]
@@ -538,7 +556,11 @@ Available under /api/v1/.
                     },
                     "labels": {
                         "type": "object"
-                    }
+                    },
+                    "maxretries": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
                 }
             }
 
