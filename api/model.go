@@ -225,7 +225,7 @@ var updateJobSchema = schema{
 			"exclusiveMinimum": true,
 		},
 		"MaxRetries": schema{
-			"type":    "integer",
+			"type":    []string{"integer", "null"},
 			"minimum": 0,
 		},
 	},
