@@ -76,7 +76,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
     "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"someone"</span></span>,
     "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
     "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
-    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">MaxRetries</span>": <span class="hljs-value"><span class="hljs-number">3</span></span>,
+    "<span class="hljs-attribute">Retries</span>": <span class="hljs-value"><span class="hljs-number">0</span>
   </span>},
   {
     "<span class="hljs-attribute">Group</span>": <span class="hljs-value"><span class="hljs-string">"group2"</span></span>,
@@ -105,7 +107,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
     "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"someone"</span></span>,
     "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
     "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
-    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">MaxRetries</span>": <span class="hljs-value"><span class="hljs-number">0</span></span>,
+    "<span class="hljs-attribute">Retries</span>": <span class="hljs-value"><span class="hljs-number">0</span>
   </span>}
 ]</code></pre><div style="height: 1px;"></div></div></div></div><div id="api-v1-jobs-post" class="action post"><h4 class="action-heading"><div class="name">Create new job</div><a href="#api-v1-jobs-post" class="method post">POST</a><code class="uri">/api/v1/jobs</code></h4><h4>Example URI</h4><div class="definition"><span class="method post">POST</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs</span></div><div class="title"><strong>Request</strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Body</h5><pre><code>{
   "<span class="hljs-attribute">id</span>": <span class="hljs-value"><span class="hljs-string">"id"</span></span>,
@@ -219,6 +223,10 @@ For each group <code>groupacl</code> from config file is checked to see what acc
         </span>}</span>,
         "<span class="hljs-attribute">labels</span>": <span class="hljs-value">{
             "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">maxretries</span>": <span class="hljs-value">{
+            "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"integer"</span></span>,
+            "<span class="hljs-attribute">minimum</span>": <span class="hljs-value"><span class="hljs-number">0</span>
         </span>}
     </span>}</span>,
     "<span class="hljs-attribute">required</span>": <span class="hljs-value">[<span class="hljs-string">"group"</span>, <span class="hljs-string">"project"</span>, <span class="hljs-string">"id"</span>, <span class="hljs-string">"schedule"</span>, <span class="hljs-string">"mem"</span>, <span class="hljs-string">"cpus"</span>]
@@ -251,7 +259,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
     "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"someone"</span></span>,
     "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
     "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
-    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">MaxRetries</span>": <span class="hljs-value"><span class="hljs-number">0</span></span>,
+    "<span class="hljs-attribute">Retries</span>": <span class="hljs-value"><span class="hljs-number">0</span>
   </span>},
   {
     "<span class="hljs-attribute">Group</span>": <span class="hljs-value"><span class="hljs-string">"group"</span></span>,
@@ -280,7 +290,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
     "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"someone"</span></span>,
     "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
     "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
-    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">MaxRetries</span>": <span class="hljs-value"><span class="hljs-number">0</span></span>,
+    "<span class="hljs-attribute">Retries</span>": <span class="hljs-value"><span class="hljs-number">0</span>
   </span>}
 ]</code></pre><div style="height: 1px;"></div></div></div></div></div><div id="api-v1-project-s-jobs" class="resource"><h3 class="resource-heading">Project's jobs <a href="#api-v1-project-s-jobs" class="permalink">&nbsp;&para;</a></h3><div id="api-v1-project-s-jobs-get" class="action get"><h4 class="action-heading"><div class="name">List all project's jobs</div><a href="#api-v1-project-s-jobs-get" class="method get">GET</a><code class="uri">/api/v1/jobs/{group}/{project}</code></h4><h4>Example URI</h4><div class="definition"><span class="method get">GET</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs/<span class="hljs-attribute" title="group">a</span>/<span class="hljs-attribute" title="project">b</span></span></div><div class="title"><strong>URI Parameters</strong><div class="collapse-button show"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><dl class="inner"><dt>group</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>a</span></span><p>ID of the group</p>
 </dd><dt>project</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>b</span></span><p>ID of the project</p>
@@ -312,7 +324,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
     "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"user"</span></span>,
     "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
     "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
-    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">MaxRetries</span>": <span class="hljs-value"><span class="hljs-number">0</span></span>,
+    "<span class="hljs-attribute">Retries</span>": <span class="hljs-value"><span class="hljs-number">0</span>
   </span>},
   {
     "<span class="hljs-attribute">Group</span>": <span class="hljs-value"><span class="hljs-string">"group"</span></span>,
@@ -341,7 +355,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
     "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"user"</span></span>,
     "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
     "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
-    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+    "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}</span>,
+    "<span class="hljs-attribute">MaxRetries</span>": <span class="hljs-value"><span class="hljs-number">0</span></span>,
+    "<span class="hljs-attribute">Retries</span>": <span class="hljs-value"><span class="hljs-number">0</span>
   </span>}
 ]</code></pre><div style="height: 1px;"></div></div></div></div></div><div id="api-v1-job" class="resource"><h3 class="resource-heading">Job <a href="#api-v1-job" class="permalink">&nbsp;&para;</a></h3><div id="api-v1-job-get" class="action get"><h4 class="action-heading"><div class="name">List job</div><a href="#api-v1-job-get" class="method get">GET</a><code class="uri">/api/v1/jobs/{group}/{project}/{job}</code></h4><h4>Example URI</h4><div class="definition"><span class="method get">GET</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs/<span class="hljs-attribute" title="group">a</span>/<span class="hljs-attribute" title="project">b</span>/<span class="hljs-attribute" title="job">c</span></span></div><div class="title"><strong>URI Parameters</strong><div class="collapse-button show"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><dl class="inner"><dt>group</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>a</span></span><p>ID of the group</p>
 </dd><dt>project</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>b</span></span><p>ID of the project</p>
@@ -375,7 +391,9 @@ For each group <code>groupacl</code> from config file is checked to see what acc
   "<span class="hljs-attribute">User</span>": <span class="hljs-value"><span class="hljs-string">"someone"</span></span>,
   "<span class="hljs-attribute">Shell</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
   "<span class="hljs-attribute">Arguments</span>": <span class="hljs-value">[]</span>,
-  "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}
+  "<span class="hljs-attribute">Labels</span>": <span class="hljs-value">{}</span>,
+  "<span class="hljs-attribute">MaxRetries</span>": <span class="hljs-value"><span class="hljs-number">0</span></span>,
+  "<span class="hljs-attribute">Retries</span>": <span class="hljs-value"><span class="hljs-number">0</span>
 </span>}</code></pre><div style="height: 1px;"></div></div></div></div><div id="api-v1-job-delete" class="action delete"><h4 class="action-heading"><div class="name">Delete job</div><a href="#api-v1-job-delete" class="method delete">DELETE</a><code class="uri">/api/v1/jobs/{group}/{project}/{job}</code></h4><h4>Example URI</h4><div class="definition"><span class="method delete">DELETE</span>&nbsp;<span class="uri"><span class="hostname"></span>/api/v1/jobs/<span class="hljs-attribute" title="group">a</span>/<span class="hljs-attribute" title="project">b</span>/<span class="hljs-attribute" title="job">c</span></span></div><div class="title"><strong>URI Parameters</strong><div class="collapse-button show"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><dl class="inner"><dt>group</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>a</span></span><p>ID of the group</p>
 </dd><dt>project</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>b</span></span><p>ID of the project</p>
 </dd><dt>job</dt><dd><code>string</code>&nbsp;<span class="required">(required)</span>&nbsp;<span class="text-muted example"><strong>Example:&nbsp;</strong><span>c</span></span><p>ID of the job</p>
@@ -471,8 +489,12 @@ For each group <code>groupacl</code> from config file is checked to see what acc
         </span>}</span>,
         "<span class="hljs-attribute">labels</span>": <span class="hljs-value">{
             "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span>
-        </span>}
-    </span>}
+        </span>}</span>,
+        "<span class="hljs-attribute">maxretries</span>": <span class="hljs-value">{
+            "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"integer"</span></span>,
+            "<span class="hljs-attribute">minimum</span>": <span class="hljs-value"><span class="hljs-number">0</span>
+        </span>}</span>,
+    }
 </span>}</code></pre><div style="height: 1px;"></div></div></div><div class="title"><strong>Response&nbsp;&nbsp;<code>204</code></strong></div></div></div><div id="api-v1-tasks" class="resource"><h3 class="resource-heading">Tasks <a href="#api-v1-tasks" class="permalink">&nbsp;&para;</a></h3><div id="api-v1-tasks-get" class="action get"><h4 class="action-heading"><div class="name">List history of job's tasks (runs)</div><a href="#api-v1-tasks-get" class="method get">GET</a><code class="uri">/api/v1/jobs/{group}/{project}/{job}/tasks</code></h4><p>Sorted in ascending order (oldest tasks first).
 If job doesn’t exist then empty list is returned with 200 HTTP status code.
 Properties <code>Message</code>, <code>Reason</code> and <code>Source</code> are set to empty strings only for successful tasks.</p>
@@ -529,7 +551,7 @@ leader 1
   "<span class="hljs-attribute">ServerTime</span>": <span class="hljs-value"><span class="hljs-string">"Wed Oct 24 20:54:08 CEST 2018"</span></span>,
   "<span class="hljs-attribute">Version</span>": <span class="hljs-value"><span class="hljs-string">"0.2"</span></span>,
   "<span class="hljs-attribute">Leader</span>": <span class="hljs-value"><span class="hljs-literal">true</span>
-</span>}</code></pre><div style="height: 1px;"></div></div></div></div></div></section></div></div></div><p style="text-align: center;" class="text-muted">Generated by&nbsp;<a href="https://github.com/danielgtaylor/aglio" class="aglio">aglio</a>&nbsp;on 03 Nov 2018</p><script>/* eslint-env browser */
+</span>}</code></pre><div style="height: 1px;"></div></div></div></div></div></section></div></div></div><p style="text-align: center;" class="text-muted">Generated by&nbsp;<a href="https://github.com/danielgtaylor/aglio" class="aglio">aglio</a>&nbsp;on 08 Nov 2018</p><script>/* eslint-env browser */
 /* eslint quotes: [2, "single"] */
 'use strict';
 
