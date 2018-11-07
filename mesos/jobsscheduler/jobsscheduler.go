@@ -84,19 +84,39 @@ func New(roles []string, stor storage, secr secrets, frameworkID, leaderURL func
 
 func (sched *Scheduler) syncJobsCache() {
 	log.Debugf("Jobs cache syncing...")
-	var jobs []*model.Job
+	var newJobs []*model.Job
 	for {
 		var err error
-		jobs, err = sched.storage.GetJobs()
+		newJobs, err = sched.storage.GetJobs()
 		if err == nil {
 			break
 		}
 		log.Error(err)
 		<-time.After(time.Second)
 	}
-	for _, job := range jobs {
-		sched.setJob(*job)
+	sched.jobsMut.Lock()
+	ids := make(map[string]struct{}, len(newJobs))
+	for _, newJob := range newJobs {
+		id := newJob.Group + ":" + newJob.Project + ":" + newJob.ID
+		ids[id] = struct{}{}
+		oldJob, ok := sched.jobs[id]
+		if ok {
+			// Modify only conf since running instance has most up-to-date
+			// runtime state as saving updates in storage can fail.
+			oldJob.JobConf = newJob.JobConf
+		} else {
+			sched.jobs[id] = newJob
+		}
 	}
+	// Evict from cache jobs not present in storage.
+	for _, job := range sched.jobs {
+		id := job.Group + ":" + job.Project + ":" + job.ID
+		_, ok := ids[id]
+		if !ok {
+			delete(sched.jobs, id)
+		}
+	}
+	sched.jobsMut.Unlock()
 	log.Debugf("Jobs cache synced")
 }
 
