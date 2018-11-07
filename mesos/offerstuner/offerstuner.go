@@ -82,7 +82,7 @@ func (t *Tuner) round(reviveTokens <-chan struct{}, suppressed bool) (bool, erro
 	minDeadline := findMinDeadline(jobs)
 	log.Debugf("Max delay: %s", maxDelay)
 	log.Debugf("Min deadline: %s", minDeadline)
-	if (maxDelay > time.Minute) || (suppressed && (maxDelay > 0 || minDeadline < time.Minute)) {
+	if (maxDelay > time.Minute) || (suppressed && maxDelay > 0) {
 		select {
 		case <-reviveTokens:
 			err := calls.CallNoData(t.ctx, t.cli, calls.Revive())
