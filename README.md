@@ -7,6 +7,7 @@
 * Access control list (ACL) backed by [GitLab](https://gitlab.com/) or LDAP
 * [Cron syntax](http://www.nncron.ru/help/EN/working/cron-format.htm)
 * Integration with [Sentry](https://sentry.io/) for error tracking
+* Command-line client ([Documentation](#command-line-client))
 
 ## API
 
@@ -14,7 +15,12 @@
 
 ## Configuration
 
-Rhythm is configured using file in JSON format. By default config.json from current  directory is used but it can overwritten using `-config` parameter.
+Rhythm server can be started with:
+```
+rhythm server -config=/etc/rhythm/config.json
+```
+
+Server is configured using file in JSON format. By default config.json from current  directory is used but it can overwritten using `-config` parameter.
 There are couple of sections in configuration file:
 * api
 * storage
@@ -291,3 +297,50 @@ Examples:
 ```
 
 There is `-testlogging` option which is used to test events logging. It logs sample error and then program exits. Useful to test backend like Sentry to verify that events are received.
+
+## Command-line client
+Rhythm binary besides running in server mode provides also CLI tool. To see the list of available commands use `-help`.
+Address of Rhythm server is set either via `-addr` flag or `RHYTHM_ADDR` environment variable. If both are set then flag takes precedence.
+
+### health
+Provides basic information about state of the server.
+
+Examples:
+
+```
+$ rhythm health -addr https://example.com
+Leader: true
+Version: 0.5
+ServerTime: Mon Nov 12 20:15:49 CET 2018
+```
+
+```
+$ RHYTHM_ADDR=https://example.com rhythm health
+Leader: true
+Version: 0.5
+ServerTime: Mon Nov 12 23:53:11 CET 2018
+```
+
+### get-job
+Shows configuration and current state of job with the given fully-qualified ID.
+
+Example:
+```
+$ rhythm get-job -addr https://example.com group/project/id
+State: Idle
+    Last start: Mon Nov 12 20:17:22 CET 2018
+Scheduler: Cron
+    Rule: */1 * * * *
+    Next start: Mon Nov 12 20:18:00 CET 2018
+Container: Docker
+    Image: alpine:3.8
+    Force pull image: false
+Cmd: /bin/sh -c 'echo $FOO'
+Environment:
+    FOO: foo
+User: someone
+Resources:
+    Memory: 1024.0 MB
+    Disk: 0.0 MB
+    CPUs: 1.0
+```

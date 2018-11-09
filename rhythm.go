@@ -1,96 +1,47 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"sync"
-	"time"
+	"os"
 
-	"github.com/mlowicki/rhythm/api"
-	"github.com/mlowicki/rhythm/conf"
-	"github.com/mlowicki/rhythm/coordinator"
-	"github.com/mlowicki/rhythm/mesos"
-	"github.com/mlowicki/rhythm/secrets"
-	"github.com/mlowicki/rhythm/storage"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/mitchellh/cli"
+	"github.com/mlowicki/rhythm/command"
+	"github.com/onrik/logrus/filename"
 	log "github.com/sirupsen/logrus"
 )
 
-var infoGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "rhythm_info",
-	Help: "Information about rhythm instance.",
-}, []string{"version"})
-
 func init() {
-	prometheus.MustRegister(infoGauge)
+	log.AddHook(filename.NewHook())
 }
 
 const version = "0.5"
 
-type threadSafeBool struct {
-	v bool
-	sync.Mutex
-}
-
-func (b *threadSafeBool) Get() bool {
-	b.Lock()
-	v := b.v
-	b.Unlock()
-	return v
-}
-
-func (b *threadSafeBool) Set(v bool) {
-	b.Lock()
-	b.v = v
-	b.Unlock()
-}
-
 func main() {
-	confPath := flag.String("config", "config.json", "Path to configuration file")
-	testLoggingFlag := flag.Bool("testlogging", false, "log sample error and exit")
-	versionFlag := flag.Bool("version", false, "print version and exit")
-	flag.Parse()
-	if *versionFlag {
-		fmt.Println(version)
-		return
+	ui := &cli.BasicUi{
+		Reader:      os.Stdin,
+		Writer:      os.Stdout,
+		ErrorWriter: os.Stderr,
 	}
-	var conf, err = conf.New(*confPath)
+	coloredUi := &cli.ColoredUi{
+		Ui:         ui,
+		ErrorColor: cli.UiColorRed,
+	}
+	c := cli.NewCLI("rhythm", version)
+	c.Args = os.Args[1:]
+	baseCmd := command.BaseCommand{Ui: coloredUi}
+	c.Commands = map[string]cli.CommandFactory{
+		"server": func() (cli.Command, error) {
+			return &command.ServerCommand{BaseCommand: &baseCmd, Version: version}, nil
+		},
+		"health": func() (cli.Command, error) {
+			return &command.HealthCommand{BaseCommand: &baseCmd}, nil
+		},
+		"get-job": func() (cli.Command, error) {
+			return &command.GetJobCommand{BaseCommand: &baseCmd}, nil
+		},
+	}
+	exitStatus, err := c.Run()
 	if err != nil {
-		log.Fatalf("Error getting configuration: %s", err)
+		log.Error(err)
 	}
-	initLogging(&conf.Logging)
-	if *testLoggingFlag {
-		log.Error("test")
-		log.Info("Sending test event. Wait 10s...")
-		<-time.After(10 * time.Second)
-		return
-	}
-	infoGauge.WithLabelValues(version).Set(1)
-	var isLeader threadSafeBool
-	var leaderGauge = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Name: "leader",
-		Help: "Indicates if instance is elected as leader.",
-	}, func() float64 {
-		if isLeader.Get() {
-			return 1
-		} else {
-			return 0
-		}
-	})
-	prometheus.MustRegister(leaderGauge)
-	stor := storage.New(&conf.Storage)
-	coord := coordinator.New(&conf.Coordinator)
-	api.New(&conf.API, stor, api.State{func() bool { return isLeader.Get() }, version})
-	secr := secrets.New(&conf.Secrets)
-	for {
-		log.Info("Waiting until Mesos scheduler leader")
-		ctx := coord.WaitUntilLeader()
-		isLeader.Set(true)
-		err = mesos.Run(conf, ctx, stor, secr)
-		isLeader.Set(false)
-		if err != nil {
-			log.Errorf("Controller error: %s", err)
-			<-time.After(time.Second)
-		}
-	}
+	os.Exit(exitStatus)
 }

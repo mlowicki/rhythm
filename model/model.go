@@ -22,6 +22,10 @@ const (
 	FAILED         = "Failed"
 )
 
+func (s State) String() string {
+	return string(s)
+}
+
 type JobDocker struct {
 	Image          string
 	ForcePullImage bool
