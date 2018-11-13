@@ -1,60 +1,33 @@
 package command
 
 import (
-	"encoding/json"
 	"flag"
-	"io/ioutil"
-	"net/http"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/mlowicki/rhythm/command/apiclient"
 	"github.com/mlowicki/rhythm/model"
 )
 
 type GetJobCommand struct {
 	*BaseCommand
 	addr string
+	auth string
 }
 
 func (c *GetJobCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
-	u, err := c.getAddr(c.addr)
-	if err != nil {
-		c.Errorf(err.Error())
-		return 1
-	}
 	args = fs.Args()
 	if len(args) != 1 {
 		c.Errorf("Exactly one argument is required (fully-qualified job ID)")
 		return 1
 	}
-	u.Path = "api/v1/jobs/" + fs.Args()[0]
-	resp, err := http.Get(u.String())
+	fqid := fs.Args()[0]
+	job, err := apiclient.New(c.addr, c.authReq(c.auth)).GetJob(fqid)
 	if err != nil {
-		c.Errorf("Error getting job: %s", err)
-		return 1
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		c.Errorf("Job not found")
-		return 1
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		c.Errorf("Error reading response body: %s", err)
-		return 1
-	}
-	if resp.StatusCode != http.StatusOK {
-		c.printErrResp(body)
-		return 1
-	}
-	var job model.Job
-	err = json.Unmarshal(body, &job)
-	if err != nil {
-		c.Errorf("Error decoding job: %s", err)
-		c.Errorf("Response:\n%s", body)
+		c.Errorf("%s", err)
 		return 1
 	}
 	c.Printf("State: %s", coloredState(job.State))
@@ -125,6 +98,7 @@ func (c *GetJobCommand) Flags() *flagSet {
 	fs := flag.NewFlagSet("get-job", flag.ContinueOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
 	fs.StringVar(&c.addr, "addr", "", "Address of Rhythm server (with protocol e.g. \"https://example.com\")")
+	fs.StringVar(&c.auth, "auth", "", "Authentication method (\"ldap\" or \"gitlab\")")
 	return &flagSet{fs}
 }
 

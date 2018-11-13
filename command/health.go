@@ -1,11 +1,10 @@
 package command
 
 import (
-	"encoding/json"
 	"flag"
-	"io/ioutil"
-	"net/http"
 	"strings"
+
+	"github.com/mlowicki/rhythm/command/apiclient"
 )
 
 type HealthCommand struct {
@@ -16,37 +15,9 @@ type HealthCommand struct {
 func (c *HealthCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
-	u, err := c.getAddr(c.addr)
+	health, err := apiclient.New(c.addr, c.authReq("")).Health()
 	if err != nil {
-		c.Errorf(err.Error())
-		return 1
-	}
-	u.Path = "api/v1/health"
-	resp, err := http.Get(u.String())
-	if err != nil {
-		c.Errorf("Error getting server status: %s", err)
-		return 1
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		c.Errorf("Error reading response body: %s", err)
-		return 1
-	}
-	if resp.StatusCode != http.StatusOK {
-		c.Errorf("Server error: %d", resp.StatusCode)
-		c.Errorf("Response:\n%s", body)
-		return 1
-	}
-	var health struct {
-		Leader     bool
-		Version    string
-		ServerTime string
-	}
-	err = json.Unmarshal(body, &health)
-	if err != nil {
-		c.Errorf("Error decoding server status: %s", err)
-		c.Errorf("Response:\n%s", body)
+		c.Errorf("%s", err)
 		return 1
 	}
 	c.Printf("Leader: %t", health.Leader)

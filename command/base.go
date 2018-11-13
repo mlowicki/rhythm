@@ -2,18 +2,14 @@ package command
 
 import (
 	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
-	"net/url"
-	"os"
+	"net/http"
 
 	"github.com/fatih/color"
 	"github.com/mitchellh/cli"
 	"github.com/mlowicki/rhythm/model"
 )
-
-const envRhythmAddr = "RHYTHM_ADDR"
 
 type BaseCommand struct {
 	Ui cli.Ui
@@ -27,36 +23,30 @@ func (c *BaseCommand) Printf(format string, a ...interface{}) {
 	c.Ui.Output(fmt.Sprintf(format, a...))
 }
 
-func (c *BaseCommand) getAddr(flagAddr string) (*url.URL, error) {
-	var addr string
-	if v := os.Getenv(envRhythmAddr); v != "" {
-		addr = v
-	}
-	if flagAddr != "" {
-		addr = flagAddr
-	}
-	u, err := url.Parse(addr)
-	if err != nil {
-		return nil, fmt.Errorf("Failed parsing server address: %s", err)
-	}
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return nil, fmt.Errorf("Invalid server address scheme: %s", u.Scheme)
-	}
-	return u, nil
-}
-
-func (c *BaseCommand) printErrResp(body []byte) {
-	var resp struct {
-		Errors []string
-	}
-	err := json.Unmarshal(body, &resp)
-	if err != nil {
-		c.Errorf("Error decoding response: %s", err)
-		c.Errorf("Response:\n%s", body)
-		return
-	}
-	for _, err := range resp.Errors {
-		c.Errorf(err)
+func (c *BaseCommand) authReq(method string) func(*http.Request) error {
+	return func(req *http.Request) error {
+		switch method {
+		case "":
+		case "gitlab":
+			token, err := c.Ui.AskSecret("GitLab token:")
+			if err != nil {
+				return err
+			}
+			req.Header.Add("X-Token", token)
+		case "ldap":
+			username, err := c.Ui.AskSecret("LDAP username:")
+			if err != nil {
+				return err
+			}
+			password, err := c.Ui.AskSecret("LDAP password:")
+			if err != nil {
+				return err
+			}
+			req.SetBasicAuth(username, password)
+		default:
+			return fmt.Errorf("Unknown authentication method: %s", method)
+		}
+		return nil
 	}
 }
 
