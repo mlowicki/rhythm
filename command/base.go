@@ -2,6 +2,7 @@ package command
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net/url"
@@ -42,6 +43,21 @@ func (c *BaseCommand) getAddr(flagAddr string) (*url.URL, error) {
 		return nil, fmt.Errorf("Invalid server address scheme: %s", u.Scheme)
 	}
 	return u, nil
+}
+
+func (c *BaseCommand) printErrResp(body []byte) {
+	var resp struct {
+		Errors []string
+	}
+	err := json.Unmarshal(body, &resp)
+	if err != nil {
+		c.Errorf("Error decoding response: %s", err)
+		c.Errorf("Response:\n%s", body)
+		return
+	}
+	for _, err := range resp.Errors {
+		c.Errorf(err)
+	}
 }
 
 var stateColorFunc = map[model.State]func(format string, a ...interface{}) string{

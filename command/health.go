@@ -3,6 +3,7 @@ package command
 import (
 	"encoding/json"
 	"flag"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -23,19 +24,29 @@ func (c *HealthCommand) Run(args []string) int {
 	u.Path = "api/v1/health"
 	resp, err := http.Get(u.String())
 	if err != nil {
-		c.Errorf("Failed retrieving server status: %s", err)
+		c.Errorf("Error getting server status: %s", err)
 		return 1
 	}
 	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		c.Errorf("Error reading response body: %s", err)
+		return 1
+	}
+	if resp.StatusCode != http.StatusOK {
+		c.Errorf("Server error: %d", resp.StatusCode)
+		c.Errorf("Response:\n%s", body)
+		return 1
+	}
 	var health struct {
 		Leader     bool
 		Version    string
 		ServerTime string
 	}
-	decoder := json.NewDecoder(resp.Body)
-	err = decoder.Decode(&health)
+	err = json.Unmarshal(body, &health)
 	if err != nil {
-		c.Errorf("Failed decoding server status: %s", err)
+		c.Errorf("Error decoding server status: %s", err)
+		c.Errorf("Response:\n%s", body)
 		return 1
 	}
 	c.Printf("Leader: %t", health.Leader)

@@ -3,7 +3,7 @@ package command
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
+	"io/ioutil"
 	"net/http"
 	"sort"
 	"strings"
@@ -33,35 +33,28 @@ func (c *GetJobCommand) Run(args []string) int {
 	u.Path = "api/v1/jobs/" + fs.Args()[0]
 	resp, err := http.Get(u.String())
 	if err != nil {
-		c.Errorf("Failed retrieving job: %s", err)
+		c.Errorf("Error getting job: %s", err)
 		return 1
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNotFound {
-		c.Errorf("Not found")
+		c.Errorf("Job not found")
+		return 1
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		c.Errorf("Error reading response body: %s", err)
 		return 1
 	}
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println(resp.StatusCode)
-		var errResp struct {
-			Errors []string
-		}
-		decoder := json.NewDecoder(resp.Body)
-		err = decoder.Decode(&errResp)
-		if err != nil {
-			c.Errorf("Failed decoding errors: %s", err)
-			return 1
-		}
-		for _, err := range errResp.Errors {
-			c.Errorf(err)
-		}
+		c.printErrResp(body)
 		return 1
 	}
 	var job model.Job
-	decoder := json.NewDecoder(resp.Body)
-	err = decoder.Decode(&job)
+	err = json.Unmarshal(body, &job)
 	if err != nil {
-		c.Errorf("Failed decoding job: %s", err)
+		c.Errorf("Error decoding job: %s", err)
+		c.Errorf("Response:\n%s", body)
 		return 1
 	}
 	c.Printf("State: %s", coloredState(job.State))
