@@ -351,38 +351,38 @@ Shows tasks (runs) of job with the given fully-qualified ID.
 Example:
 ```
 $ rhythm get-tasks -addr https://example.com group/project/id
-Status: 	    SUCCESS
-Start: 		    Wed Nov 14 23:38:51 CET 2018
-End: 		    Wed Nov 14 23:38:51 CET 2018
-Task ID: 	    group:project:id:7eb8d4fa-f133-4880-9840-f8f62d3d06b2
-Executor ID: 	group:project:id:7eb8d4fa-f133-4880-9840-f8f62d3d06b2
-Agent ID: 	    18fd8e84-9213-4f51-9343-bae8b9c517fe-S0
-Framework ID: 	18fd8e84-9213-4f51-9343-bae8b9c517fe-0000
-Executor URL: 	https://example.com:5050/#/agents/18fd8e84-9213-4f51-9343-bae8b9c517fe-S0/frameworks/18fd8e84-9213-4f51-9343-bae8b9c517fe-0000/executors/group:project:id:7eb8d4fa-f133-4880-9840-f8f62d3d06b2
+Status:         SUCCESS
+Start:          Wed Nov 14 23:38:51 CET 2018
+End:            Wed Nov 14 23:38:51 CET 2018
+Task ID:        group:project:id:7eb8d4fa-f133-4880-9840-f8f62d3d06b2
+Executor ID:    group:project:id:7eb8d4fa-f133-4880-9840-f8f62d3d06b2
+Agent ID:       18fd8e84-9213-4f51-9343-bae8b9c517fe-S0
+Framework ID:   18fd8e84-9213-4f51-9343-bae8b9c517fe-0000
+Executor URL:   https://example.com:5050/#/agents/18fd8e84-9213-4f51-9343-bae8b9c517fe-S0/frameworks/18fd8e84-9213-4f51-9343-bae8b9c517fe-0000/executors/group:project:id:7eb8d4fa-f133-4880-9840-f8f62d3d06b2
 
-Status: 	    FAIL
-Start: 		    Wed Nov 14 23:41:06 CET 2018
-End: 		    Wed Nov 14 23:41:06 CET 2018
-Message: 	    Reading secret failed: Get https://example.com/v1/secret/rhythm/group/project/foo: dial tcp [::1]:8200: connect: connection refused
-Reason: 	    Failed to create task
-Source: 	    Scheduler
+Status:         FAIL
+Start:          Wed Nov 14 23:41:06 CET 2018
+End:            Wed Nov 14 23:41:06 CET 2018
+Message:        Reading secret failed: Get https://example.com/v1/secret/rhythm/group/project/foo: dial tcp [::1]:8200: connect: connection refused
+Reason:         Failed to create task
+Source:         Scheduler
 
-Status: 	    FAIL
-Start: 		    Wed Nov 14 23:43:06 CET 2018
-End: 		    Wed Nov 14 23:43:06 CET 2018
-Message: 	    Reading secret failed: Get https://example.com/v1/secret/rhythm/group/project/foo: dial tcp [::1]:8200: connect: connection refused
-Reason: 	    Failed to create task
-Source: 	    Scheduler
+Status:         FAIL
+Start:          Wed Nov 14 23:43:06 CET 2018
+End:            Wed Nov 14 23:43:06 CET 2018
+Message:        Reading secret failed: Get https://example.com/v1/secret/rhythm/group/project/foo: dial tcp [::1]:8200: connect: connection refused
+Reason:         Failed to create task
+Source:         Scheduler
 
-Status: 	    FAIL
-Start: 		    Wed Nov 14 23:51:04 CET 2018
-End: 		    Wed Nov 14 23:51:04 CET 2018
-Task ID: 	    group:project:id:504d8c5c-f4d1-41f6-8797-c608bee7195b
-Executor ID: 	group:project:id:504d8c5c-f4d1-41f6-8797-c608bee7195b
-Agent ID: 	    18fd8e84-9213-4f51-9343-bae8b9c517fe-S0
-Framework ID: 	18fd8e84-9213-4f51-9343-bae8b9c517fe-0000
-Executor URL: 	https://example.com:5050/#/agents/18fd8e84-9213-4f51-9343-bae8b9c517fe-S0/frameworks/18fd8e84-9213-4f51-9343-bae8b9c517fe-0000/executors/group:project:id:504d8c5c-f4d1-41f6-8797-c608bee7195b
-Message: 	    Container exited with status 127
-Reason: 	    REASON_COMMAND_EXECUTOR_FAILED
-Source: 	    SOURCE_EXECUTOR
+Status:         FAIL
+Start:          Wed Nov 14 23:51:04 CET 2018
+End:            Wed Nov 14 23:51:04 CET 2018
+Task ID:        group:project:id:504d8c5c-f4d1-41f6-8797-c608bee7195b
+Executor ID:    group:project:id:504d8c5c-f4d1-41f6-8797-c608bee7195b
+Agent ID:       18fd8e84-9213-4f51-9343-bae8b9c517fe-S0
+Framework ID:   18fd8e84-9213-4f51-9343-bae8b9c517fe-0000
+Executor URL:   https://example.com:5050/#/agents/18fd8e84-9213-4f51-9343-bae8b9c517fe-S0/frameworks/18fd8e84-9213-4f51-9343-bae8b9c517fe-0000/executors/group:project:id:504d8c5c-f4d1-41f6-8797-c608bee7195b
+Message:        Container exited with status 127
+Reason:         REASON_COMMAND_EXECUTOR_FAILED
+Source:         SOURCE_EXECUTOR
 ```
