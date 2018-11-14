@@ -16,6 +16,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const srcScheduler = "Scheduler"
+
 type secrets interface {
 	Read(string) (string, error)
 }
@@ -125,7 +127,7 @@ func (sched *Scheduler) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"taskID": status.TaskID.Value,
-		}).Errorf("Failed to get job ID from task ID: %s", err)
+		}).Errorf("Error getting job ID from task ID: %s", err)
 		return
 	}
 	state := status.GetState()
@@ -183,7 +185,7 @@ func (sched *Scheduler) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 	sched.setJob(job)
 	err = sched.storage.SaveJobRuntime(taskID.groupID, taskID.projectID, taskID.jobID, &job.JobRuntime)
 	if err != nil {
-		log.Errorf("Failed to save job while handling update: %s", err)
+		log.Errorf("Error saving job while handling update: %s", err)
 	}
 }
 
@@ -246,7 +248,7 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 			job.LastStart = time.Now()
 			task, err := sched.newTaskInfo(job)
 			if err != nil {
-				log.Errorf("Failed to create TaskInfo: %s", err)
+				log.Errorf("Error creating TaskInfo: %s", err)
 				job.State = model.FAILED
 				go func() {
 					now := time.Now()
@@ -254,12 +256,12 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 						Start:   now,
 						End:     now,
 						Message: err.Error(),
-						Reason:  "Failed to create task",
-						Source:  "Scheduler",
+						Reason:  "Error creating TaskInfo",
+						Source:  srcScheduler,
 					}
 					err := sched.storage.AddTask(job.Group, job.Project, job.ID, &task)
 					if err != nil {
-						log.Errorf("Failed saving task: %s", err)
+						log.Errorf("Error saving task: %s", err)
 					}
 				}()
 			} else {
@@ -272,7 +274,7 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 			}
 			err = sched.storage.SaveJobRuntime(job.Group, job.Project, job.ID, &job.JobRuntime)
 			if err != nil {
-				log.Errorf("Failed to update job runtime info: %s", err)
+				log.Errorf("Error updating job runtime info: %s", err)
 			}
 			sched.setJob(*job)
 			sched.bookedJobs.Del(job.FQID())
@@ -369,7 +371,7 @@ func (sched *Scheduler) addTaskHistory(status *mesos.TaskStatus, start time.Time
 	}
 	err := sched.storage.AddTask(taskID.groupID, taskID.projectID, taskID.jobID, &task)
 	if err != nil {
-		log.Errorf("Failed saving task: %s", err)
+		log.Errorf("Error saving task: %s", err)
 	}
 }
 

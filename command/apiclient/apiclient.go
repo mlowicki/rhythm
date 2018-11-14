@@ -92,6 +92,37 @@ func (c *Client) parseErrResp(body []byte) error {
 	return errs
 }
 
+func (c *Client) GetTasks(fqid string) ([]*model.Task, error) {
+	u, err := c.getAddr()
+	if err != nil {
+		return nil, err
+	}
+	u.Path = fmt.Sprintf("api/v1/jobs/%s/tasks", fqid)
+	req, err := http.NewRequest("GET", u.String(), nil)
+	err = c.authReq(req)
+	if err != nil {
+		return nil, fmt.Errorf("Authentication failed: %s", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting tasks: %s", err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading response: %s", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, c.parseErrResp(body)
+	}
+	var tasks []*model.Task
+	err = json.Unmarshal(body, &tasks)
+	if err != nil {
+		return nil, fmt.Errorf("Error decoding tasks: %s", err)
+	}
+	return tasks, nil
+}
+
 func (c *Client) GetJob(fqid string) (*model.Job, error) {
 	u, err := c.getAddr()
 	if err != nil {
