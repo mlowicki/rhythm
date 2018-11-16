@@ -170,3 +170,32 @@ func (c *Client) GetJob(fqid string) (*model.Job, error) {
 	}
 	return &job, nil
 }
+
+func (c *Client) DeleteJob(fqid string) error {
+	u, err := c.getAddr()
+	if err != nil {
+		return err
+	}
+	u.Path = "api/v1/jobs/" + fqid
+	req, err := http.NewRequest("DELETE", u.String(), nil)
+	if err != nil {
+		return fmt.Errorf("Error creating request: %s", err)
+	}
+	err = c.authReq(req)
+	if err != nil {
+		return fmt.Errorf("Authentication failed: %s", err)
+	}
+	resp, err := c.getHTTPClient().Do(req)
+	if err != nil {
+		return fmt.Errorf("Error deleting job: %s", err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("Error reading response: %s", err)
+	}
+	if resp.StatusCode != http.StatusNoContent {
+		return c.parseErrResp(body)
+	}
+	return nil
+}

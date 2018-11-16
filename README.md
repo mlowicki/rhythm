@@ -386,3 +386,11 @@ Message:        Container exited with status 127
 Reason:         REASON_COMMAND_EXECUTOR_FAILED
 Source:         SOURCE_EXECUTOR
 ```
+
+### delete-job
+Delete job with the given fully-qualified ID.
+
+Example:
+```
+$ rhythm delete-job -addr https://example.com group/project/id
+```

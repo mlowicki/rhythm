@@ -78,7 +78,7 @@ func (c *GetTasksCommand) Help() string {
 	help := `
 Usage: rhythm get-tasks [options] FQID
 
-  Show tasks (runs) of job with given fully-qualified ID (e.g. "group/project/id")
+  Show tasks (runs) of job with given fully-qualified ID (e.g. "group/project/id").
 
 ` + c.Flags().help()
 	return strings.TrimSpace(help)

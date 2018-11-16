@@ -88,7 +88,7 @@ func (c *GetJobCommand) Help() string {
 	help := `
 Usage: rhythm get-job [options] FQID
 
-  Show configuration and current state of job with the given fully-qualified ID (e.g. "group/project/id")
+  Show configuration and current state of job with the given fully-qualified ID (e.g. "group/project/id").
 
 ` + c.Flags().help()
 	return strings.TrimSpace(help)
