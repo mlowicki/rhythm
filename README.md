@@ -9,6 +9,11 @@
 * Integration with [Sentry](https://sentry.io/) for error tracking
 * Command-line client ([Documentation](#command-line-client))
 
+## Glossary
+
+job - periodic action to perform (e.g. database backup).
+task - single run (instance) of job. If task fails and job allows for retries then new task will be launched.
+
 ## API
 
 [Documentation](https://mlowicki.github.io/rhythm/api)
