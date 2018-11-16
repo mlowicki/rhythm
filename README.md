@@ -11,8 +11,8 @@
 
 ## Glossary
 
-job - periodic action to perform (e.g. database backup).
-task - single run (instance) of job. If task fails and job allows for retries then new task will be launched.
+* job - periodic action to perform (e.g. database backup).
+* task - single run (instance) of job. If task fails and job allows for retries then new task will be launched.
 
 ## API
 
