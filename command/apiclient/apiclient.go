@@ -57,7 +57,11 @@ func (c *Client) Health() (*HealthInfo, error) {
 		return nil, err
 	}
 	u.Path = "api/v1/health"
-	resp, err := http.Get(u.String())
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating request: %s", err)
+	}
+	resp, err := c.getHTTPClient().Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting server status: %s", err)
 	}
@@ -92,6 +96,10 @@ func (c *Client) parseErrResp(body []byte) error {
 	return errs
 }
 
+func (c *Client) getHTTPClient() *http.Client {
+	return http.DefaultClient
+}
+
 func (c *Client) GetTasks(fqid string) ([]*model.Task, error) {
 	u, err := c.getAddr()
 	if err != nil {
@@ -99,11 +107,14 @@ func (c *Client) GetTasks(fqid string) ([]*model.Task, error) {
 	}
 	u.Path = fmt.Sprintf("api/v1/jobs/%s/tasks", fqid)
 	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating request: %s", err)
+	}
 	err = c.authReq(req)
 	if err != nil {
 		return nil, fmt.Errorf("Authentication failed: %s", err)
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.getHTTPClient().Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting tasks: %s", err)
 	}
@@ -130,11 +141,14 @@ func (c *Client) GetJob(fqid string) (*model.Job, error) {
 	}
 	u.Path = "api/v1/jobs/" + fqid
 	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating request: %s", err)
+	}
 	err = c.authReq(req)
 	if err != nil {
 		return nil, fmt.Errorf("Authentication failed: %s", err)
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.getHTTPClient().Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting job: %s", err)
 	}
