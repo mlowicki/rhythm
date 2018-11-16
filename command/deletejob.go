@@ -34,14 +34,14 @@ func (c *DeleteJobCommand) Help() string {
 	help := `
 Usage: rhythm delete-job [options] FQID
 
-  Delete job with the given fully-qualified ID (e.g. "group/project/id").
+  Remove job with the given fully-qualified ID (e.g. "group/project/id").
 
 ` + c.Flags().help()
 	return strings.TrimSpace(help)
 }
 
 func (c *DeleteJobCommand) Flags() *flagSet {
-	fs := flag.NewFlagSet("get-job", flag.ContinueOnError)
+	fs := flag.NewFlagSet("delete-job", flag.ContinueOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
 	fs.StringVar(&c.addr, "addr", "", "Address of Rhythm server (with protocol e.g. \"https://example.com\")")
 	fs.StringVar(&c.auth, "auth", "", "Authentication method (\"ldap\" or \"gitlab\")")
@@ -49,5 +49,5 @@ func (c *DeleteJobCommand) Flags() *flagSet {
 }
 
 func (c *DeleteJobCommand) Synopsis() string {
-	return "Show job configuration and current state"
+	return "Remove job"
 }

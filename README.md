@@ -388,7 +388,7 @@ Source:         SOURCE_EXECUTOR
 ```
 
 ### delete-job
-Delete job with the given fully-qualified ID.
+Remove job with the given fully-qualified ID.
 
 Example:
 ```
