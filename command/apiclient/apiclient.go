@@ -1,6 +1,7 @@
 package apiclient
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -188,6 +189,35 @@ func (c *Client) DeleteJob(fqid string) error {
 	resp, err := c.getHTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("Error deleting job: %s", err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("Error reading response: %s", err)
+	}
+	if resp.StatusCode != http.StatusNoContent {
+		return c.parseErrResp(body)
+	}
+	return nil
+}
+
+func (c *Client) CreateJob(jobEncoded []byte) error {
+	u, err := c.getAddr()
+	if err != nil {
+		return err
+	}
+	u.Path = "api/v1/jobs"
+	req, err := http.NewRequest("POST", u.String(), bytes.NewReader(jobEncoded))
+	if err != nil {
+		return fmt.Errorf("Error creating request: %s", err)
+	}
+	err = c.authReq(req)
+	if err != nil {
+		return fmt.Errorf("Authentication failed: %s", err)
+	}
+	resp, err := c.getHTTPClient().Do(req)
+	if err != nil {
+		return fmt.Errorf("Error creating job: %s", err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)

@@ -399,3 +399,35 @@ Example:
 ```
 $ rhythm delete-job -addr https://example.com group/project/id
 ```
+
+### create-job
+Add new job specified by config file.
+
+Example:
+```
+$ rhythm create-job --addr=https://example.com echo.json
+```
+
+echo.json:
+```javascript
+{
+    "id": "id",
+    "group": "group",
+    "project": "project",
+    "cpus": 1,
+    "mem": 1024,
+    "cmd": "echo $FOO",
+    "user": "someone",
+    "env": {
+        "FOO": "bar"
+    },
+    "schedule": {
+        "cron": "*/1 * * * *"
+    },
+    "container": {
+        "docker": {
+            "image": "alpine:3.8"
+        }
+    }
+}
+```

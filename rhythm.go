@@ -38,6 +38,9 @@ func main() {
 		"get-job": func() (cli.Command, error) {
 			return &command.GetJobCommand{BaseCommand: &baseCmd}, nil
 		},
+		"create-job": func() (cli.Command, error) {
+			return &command.CreateJobCommand{BaseCommand: &baseCmd}, nil
+		},
 		"delete-job": func() (cli.Command, error) {
 			return &command.DeleteJobCommand{BaseCommand: &baseCmd}, nil
 		},
