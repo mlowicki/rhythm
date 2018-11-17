@@ -21,8 +21,7 @@ func (c *DeleteJobCommand) Run(args []string) int {
 		c.Errorf("Exactly one argument is required (fully-qualified job ID)")
 		return 1
 	}
-	fqid := fs.Args()[0]
-	err := apiclient.New(c.addr, c.authReq(c.auth)).DeleteJob(fqid)
+	err := apiclient.New(c.addr, c.authReq(c.auth)).DeleteJob(args[0])
 	if err != nil {
 		c.Errorf("%s", err)
 		return 1

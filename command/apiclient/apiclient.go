@@ -229,3 +229,32 @@ func (c *Client) CreateJob(jobEncoded []byte) error {
 	}
 	return nil
 }
+
+func (c *Client) UpdateJob(fqid string, changesEncoded []byte) error {
+	u, err := c.getAddr()
+	if err != nil {
+		return err
+	}
+	u.Path = "api/v1/jobs/" + fqid
+	req, err := http.NewRequest("PUT", u.String(), bytes.NewReader(changesEncoded))
+	if err != nil {
+		return fmt.Errorf("Error creating request: %s", err)
+	}
+	err = c.authReq(req)
+	if err != nil {
+		return fmt.Errorf("Authentication failed: %s", err)
+	}
+	resp, err := c.getHTTPClient().Do(req)
+	if err != nil {
+		return fmt.Errorf("Error updating job: %s", err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("Error reading response: %s", err)
+	}
+	if resp.StatusCode != http.StatusNoContent {
+		return c.parseErrResp(body)
+	}
+	return nil
+}

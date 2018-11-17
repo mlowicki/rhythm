@@ -23,8 +23,7 @@ func (c *GetTasksCommand) Run(args []string) int {
 		c.Errorf("Exactly one argument is required (fully-qualified job ID)")
 		return 1
 	}
-	fqid := fs.Args()[0]
-	tasks, err := apiclient.New(c.addr, c.authReq(c.auth)).GetTasks(fqid)
+	tasks, err := apiclient.New(c.addr, c.authReq(c.auth)).GetTasks(args[0])
 	if err != nil {
 		c.Errorf("%s", err)
 		return 1

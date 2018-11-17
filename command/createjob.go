@@ -22,7 +22,7 @@ func (c *CreateJobCommand) Run(args []string) int {
 		c.Errorf("Exactly one argument is required (path to job config)")
 		return 1
 	}
-	jobEncoded, err := ioutil.ReadFile(fs.Args()[0])
+	jobEncoded, err := ioutil.ReadFile(args[0])
 	if err != nil {
 		c.Errorf("%s", err)
 		return 1
