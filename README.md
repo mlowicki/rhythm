@@ -431,3 +431,19 @@ echo.json:
     }
 }
 ```
+
+### update-job
+Modify job specified by given fully-qualified ID (e.g. "group/project/id") with config file containing parameters to change.
+Only parameters form config file will be changed - absent parameters wont' be modified.
+
+Example:
+```
+rhythm update-job --addr=https://example.com group/project/id diff.json
+```
+
+diff.json:
+```javascript
+{
+    "user": "root"
+}
+```
