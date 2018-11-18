@@ -452,9 +452,9 @@ diff.json:
 Show IDs of jobs matching FILTER.
 
 FILTER can be one of:
-    * GROUP to return all jobs from group
-    * GROUP/PROJECT to return all jobs from project
-    * no set to return all jobs across all groups and projects
+* GROUP to return all jobs from group
+* GROUP/PROJECT to return all jobs from project
+* no set to return all jobs across all groups and projects
 
 Examples:
 ```
