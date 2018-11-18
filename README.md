@@ -438,7 +438,7 @@ Only parameters form config file will be changed - absent parameters wont' be mo
 
 Example:
 ```
-rhythm update-job --addr=https://example.com group/project/id diff.json
+$ rhythm update-job --addr=https://example.com group/project/id diff.json
 ```
 
 diff.json:
@@ -458,7 +458,7 @@ FILTER can be one of:
 
 Examples:
 ```
-rhythm find-jobs --addr=https://example.com
+$ rhythm find-jobs --addr=https://example.com
 group:project:id
 group:project:id2
 group:project2:id
@@ -466,14 +466,14 @@ group2:project:id
 ```
 
 ```
-rhythm find-jobs --addr=https://example.com group
+$ rhythm find-jobs --addr=https://example.com group
 group:project:id
 group:project:id2
 group:project2:id
 ```
 
 ```
-rhythm find-jobs --addr=https://example.com group/project
+$ rhythm find-jobs --addr=https://example.com group/project
 group:project:id
 group:project:id2
 ```
