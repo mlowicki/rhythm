@@ -13,6 +13,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/mlowicki/rhythm/model"
+	log "github.com/sirupsen/logrus"
 )
 
 const envRhythmAddr = "RHYTHM_ADDR"
@@ -50,6 +51,9 @@ func (c *Client) getAddr() (*url.URL, error) {
 	}
 	if u.Scheme != "http" && u.Scheme != "https" {
 		return nil, fmt.Errorf("Invalid server address scheme: %s", u.Scheme)
+	}
+	if u.Scheme == "http" {
+		log.Warnf("HTTP scheme is used to talk with Rhythm API. Consider using HTTPS")
 	}
 	return u, nil
 }
