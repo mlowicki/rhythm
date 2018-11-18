@@ -28,13 +28,17 @@ func New(addr string, authReq func(*http.Request) error) *Client {
 	c := Client{
 		addr:    addr,
 		authReq: authReq,
+		httpClient: &http.Client{
+			Timeout: time.Second * 10,
+		},
 	}
 	return &c
 }
 
 type Client struct {
-	addr    string
-	authReq func(*http.Request) error
+	addr       string
+	authReq    func(*http.Request) error
+	httpClient *http.Client
 }
 
 func (c *Client) getAddr() (*url.URL, error) {
@@ -58,6 +62,33 @@ func (c *Client) getAddr() (*url.URL, error) {
 	return u, nil
 }
 
+func (c *Client) parseErrResp(body []byte) error {
+	var errs *multierror.Error
+	var resp struct {
+		Errors []string
+	}
+	err := json.Unmarshal(body, &resp)
+	if err != nil {
+		return fmt.Errorf("Error decoding response: %s", err)
+	}
+	for _, err := range resp.Errors {
+		errs = multierror.Append(errs, fmt.Errorf(err))
+	}
+	return errs
+}
+
+func (c *Client) send(req *http.Request) (*http.Response, error) {
+	err := c.authReq(req)
+	if err != nil {
+		return nil, fmt.Errorf("Authentication failed: %s", err)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading tasks: %s", err)
+	}
+	return resp, nil
+}
+
 func (c *Client) Health() (*HealthInfo, error) {
 	u, err := c.getAddr()
 	if err != nil {
@@ -68,9 +99,9 @@ func (c *Client) Health() (*HealthInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error creating request: %s", err)
 	}
-	resp, err := c.getHTTPClient().Do(req)
+	resp, err := c.send(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting server status: %s", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -88,27 +119,6 @@ func (c *Client) Health() (*HealthInfo, error) {
 	return &health, nil
 }
 
-func (c *Client) parseErrResp(body []byte) error {
-	var errs *multierror.Error
-	var resp struct {
-		Errors []string
-	}
-	err := json.Unmarshal(body, &resp)
-	if err != nil {
-		return fmt.Errorf("Error decoding response: %s", err)
-	}
-	for _, err := range resp.Errors {
-		errs = multierror.Append(errs, fmt.Errorf(err))
-	}
-	return errs
-}
-
-func (c *Client) getHTTPClient() *http.Client {
-	return &http.Client{
-		Timeout: time.Second * 10,
-	}
-}
-
 func (c *Client) ReadTasks(fqid string) ([]*model.Task, error) {
 	u, err := c.getAddr()
 	if err != nil {
@@ -119,13 +129,9 @@ func (c *Client) ReadTasks(fqid string) ([]*model.Task, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error creating request: %s", err)
 	}
-	err = c.authReq(req)
+	resp, err := c.send(req)
 	if err != nil {
-		return nil, fmt.Errorf("Authentication failed: %s", err)
-	}
-	resp, err := c.getHTTPClient().Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("Error reading tasks: %s", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -156,13 +162,9 @@ func (c *Client) ReadJob(fqid string) (*model.Job, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error creating request: %s", err)
 	}
-	err = c.authReq(req)
+	resp, err := c.send(req)
 	if err != nil {
-		return nil, fmt.Errorf("Authentication failed: %s", err)
-	}
-	resp, err := c.getHTTPClient().Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("Error reading job: %s", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNotFound {
@@ -193,13 +195,9 @@ func (c *Client) DeleteJob(fqid string) error {
 	if err != nil {
 		return fmt.Errorf("Error creating request: %s", err)
 	}
-	err = c.authReq(req)
+	resp, err := c.send(req)
 	if err != nil {
-		return fmt.Errorf("Authentication failed: %s", err)
-	}
-	resp, err := c.getHTTPClient().Do(req)
-	if err != nil {
-		return fmt.Errorf("Error deleting job: %s", err)
+		return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -222,13 +220,9 @@ func (c *Client) CreateJob(jobEncoded []byte) error {
 	if err != nil {
 		return fmt.Errorf("Error creating request: %s", err)
 	}
-	err = c.authReq(req)
+	resp, err := c.send(req)
 	if err != nil {
-		return fmt.Errorf("Authentication failed: %s", err)
-	}
-	resp, err := c.getHTTPClient().Do(req)
-	if err != nil {
-		return fmt.Errorf("Error creating job: %s", err)
+		return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -251,13 +245,9 @@ func (c *Client) UpdateJob(fqid string, changesEncoded []byte) error {
 	if err != nil {
 		return fmt.Errorf("Error creating request: %s", err)
 	}
-	err = c.authReq(req)
+	resp, err := c.send(req)
 	if err != nil {
-		return fmt.Errorf("Authentication failed: %s", err)
-	}
-	resp, err := c.getHTTPClient().Do(req)
-	if err != nil {
-		return fmt.Errorf("Error updating job: %s", err)
+		return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -283,13 +273,9 @@ func (c *Client) FindJobs(filter string) ([]*model.Job, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error creating request: %s", err)
 	}
-	err = c.authReq(req)
+	resp, err := c.send(req)
 	if err != nil {
-		return nil, fmt.Errorf("Authentication failed: %s", err)
-	}
-	resp, err := c.getHTTPClient().Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("Error finding jobs: %s", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
