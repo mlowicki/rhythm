@@ -326,12 +326,12 @@ Version: 0.5
 ServerTime: Mon Nov 12 23:53:11 CET 2018
 ```
 
-### get-job
-Shows configuration and current state of job with the given fully-qualified ID.
+### read-job
+Shows configuration and state of job with the given fully-qualified ID.
 
 Example:
 ```
-$ rhythm get-job -addr https://example.com group/project/id
+$ rhythm read-job -addr https://example.com group/project/id
 State: Idle
     Last start: Mon Nov 12 20:17:22 CET 2018
 Scheduler: Cron

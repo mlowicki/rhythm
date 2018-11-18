@@ -136,7 +136,7 @@ func (c *Client) GetTasks(fqid string) ([]*model.Task, error) {
 	return tasks, nil
 }
 
-func (c *Client) GetJob(fqid string) (*model.Job, error) {
+func (c *Client) ReadJob(fqid string) (*model.Job, error) {
 	u, err := c.getAddr()
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func (c *Client) GetJob(fqid string) (*model.Job, error) {
 	}
 	resp, err := c.getHTTPClient().Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting job: %s", err)
+		return nil, fmt.Errorf("Error reading job: %s", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNotFound {

@@ -10,13 +10,13 @@ import (
 	"github.com/mlowicki/rhythm/model"
 )
 
-type GetJobCommand struct {
+type ReadJobCommand struct {
 	*BaseCommand
 	addr string
 	auth string
 }
 
-func (c *GetJobCommand) Run(args []string) int {
+func (c *ReadJobCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
 	args = fs.Args()
@@ -24,7 +24,7 @@ func (c *GetJobCommand) Run(args []string) int {
 		c.Errorf("Exactly one argument is required (fully-qualified job ID)")
 		return 1
 	}
-	job, err := apiclient.New(c.addr, c.authReq(c.auth)).GetJob(args[0])
+	job, err := apiclient.New(c.addr, c.authReq(c.auth)).ReadJob(args[0])
 	if err != nil {
 		c.Errorf("%s", err)
 		return 1
@@ -69,7 +69,7 @@ func (c *GetJobCommand) Run(args []string) int {
 	return 0
 }
 
-func (c *GetJobCommand) printMap(title string, m map[string]string) {
+func (c *ReadJobCommand) printMap(title string, m map[string]string) {
 	if len(m) > 0 {
 		c.Printf("%s:", title)
 		var keys []string
@@ -83,24 +83,24 @@ func (c *GetJobCommand) printMap(title string, m map[string]string) {
 	}
 }
 
-func (c *GetJobCommand) Help() string {
+func (c *ReadJobCommand) Help() string {
 	help := `
-Usage: rhythm get-job [options] FQID
+Usage: rhythm read-job [options] FQID
 
-  Show configuration and current state of job with the given fully-qualified ID (e.g. "group/project/id").
+  Show configuration and state of job with the given fully-qualified ID (e.g. "group/project/id").
 
 ` + c.Flags().help()
 	return strings.TrimSpace(help)
 }
 
-func (c *GetJobCommand) Flags() *flagSet {
-	fs := flag.NewFlagSet("get-job", flag.ContinueOnError)
+func (c *ReadJobCommand) Flags() *flagSet {
+	fs := flag.NewFlagSet("read-job", flag.ContinueOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
 	fs.StringVar(&c.addr, "addr", "", "Address of Rhythm server (with protocol e.g. \"https://example.com\")")
 	fs.StringVar(&c.auth, "auth", "", "Authentication method (\"ldap\" or \"gitlab\")")
 	return &flagSet{fs}
 }
 
-func (c *GetJobCommand) Synopsis() string {
-	return "Show job configuration and current state"
+func (c *ReadJobCommand) Synopsis() string {
+	return "Show job configuration and state"
 }
