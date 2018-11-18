@@ -50,8 +50,8 @@ func main() {
 		"find-jobs": func() (cli.Command, error) {
 			return &command.FindJobsCommand{BaseCommand: &baseCmd}, nil
 		},
-		"get-tasks": func() (cli.Command, error) {
-			return &command.GetTasksCommand{BaseCommand: &baseCmd}, nil
+		"read-tasks": func() (cli.Command, error) {
+			return &command.ReadTasksCommand{BaseCommand: &baseCmd}, nil
 		},
 	}
 	exitStatus, err := c.Run()

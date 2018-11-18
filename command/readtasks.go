@@ -9,13 +9,13 @@ import (
 	"github.com/mlowicki/rhythm/command/apiclient"
 )
 
-type GetTasksCommand struct {
+type ReadTasksCommand struct {
 	*BaseCommand
 	addr string
 	auth string
 }
 
-func (c *GetTasksCommand) Run(args []string) int {
+func (c *ReadTasksCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
 	args = fs.Args()
@@ -23,14 +23,10 @@ func (c *GetTasksCommand) Run(args []string) int {
 		c.Errorf("Exactly one argument is required (fully-qualified job ID)")
 		return 1
 	}
-	tasks, err := apiclient.New(c.addr, c.authReq(c.auth)).GetTasks(args[0])
+	tasks, err := apiclient.New(c.addr, c.authReq(c.auth)).ReadTasks(args[0])
 	if err != nil {
 		c.Errorf("%s", err)
 		return 1
-	}
-
-	if len(tasks) == 0 {
-		c.Printf("No tasks")
 	}
 	for i, task := range tasks {
 		if i > 0 {
@@ -73,9 +69,9 @@ func (c *GetTasksCommand) Run(args []string) int {
 	return 0
 }
 
-func (c *GetTasksCommand) Help() string {
+func (c *ReadTasksCommand) Help() string {
 	help := `
-Usage: rhythm get-tasks [options] FQID
+Usage: rhythm read-tasks [options] FQID
 
   Show tasks (runs) of job with given fully-qualified ID (e.g. "group/project/id").
 
@@ -83,14 +79,14 @@ Usage: rhythm get-tasks [options] FQID
 	return strings.TrimSpace(help)
 }
 
-func (c *GetTasksCommand) Flags() *flagSet {
-	fs := flag.NewFlagSet("get-tasks", flag.ContinueOnError)
+func (c *ReadTasksCommand) Flags() *flagSet {
+	fs := flag.NewFlagSet("read-tasks", flag.ContinueOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
 	fs.StringVar(&c.addr, "addr", "", "Address of Rhythm server (with protocol e.g. \"https://example.com\")")
 	fs.StringVar(&c.auth, "auth", "", "Authentication method (\"ldap\" or \"gitlab\")")
 	return &flagSet{fs}
 }
 
-func (c *GetTasksCommand) Synopsis() string {
+func (c *ReadTasksCommand) Synopsis() string {
 	return "Show job's tasks (runs)"
 }

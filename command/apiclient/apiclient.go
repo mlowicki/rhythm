@@ -102,7 +102,7 @@ func (c *Client) getHTTPClient() *http.Client {
 	return http.DefaultClient
 }
 
-func (c *Client) GetTasks(fqid string) ([]*model.Task, error) {
+func (c *Client) ReadTasks(fqid string) ([]*model.Task, error) {
 	u, err := c.getAddr()
 	if err != nil {
 		return nil, err
@@ -118,7 +118,7 @@ func (c *Client) GetTasks(fqid string) ([]*model.Task, error) {
 	}
 	resp, err := c.getHTTPClient().Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting tasks: %s", err)
+		return nil, fmt.Errorf("Error reading tasks: %s", err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)

@@ -350,12 +350,12 @@ Resources:
     CPUs: 1.0
 ```
 
-### get-tasks
+### read-tasks
 Shows tasks (runs) of job with the given fully-qualified ID.
 
 Example:
 ```
-$ rhythm get-tasks -addr https://example.com group/project/id
+$ rhythm read-tasks -addr https://example.com group/project/id
 Status:         SUCCESS
 Start:          Wed Nov 14 23:38:51 CET 2018
 End:            Wed Nov 14 23:38:51 CET 2018
