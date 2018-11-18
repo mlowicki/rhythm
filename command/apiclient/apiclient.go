@@ -137,6 +137,9 @@ func (c *Client) GetTasks(fqid string) ([]*model.Task, error) {
 }
 
 func (c *Client) ReadJob(fqid string) (*model.Job, error) {
+	if strings.Count(fqid, "/") != 2 {
+		return nil, fmt.Errorf("Invalid job ID")
+	}
 	u, err := c.getAddr()
 	if err != nil {
 		return nil, err
@@ -260,7 +263,7 @@ func (c *Client) UpdateJob(fqid string, changesEncoded []byte) error {
 	return nil
 }
 
-func (c *Client) GetJobs(filter string) ([]*model.Job, error) {
+func (c *Client) FindJobs(filter string) ([]*model.Job, error) {
 	if strings.Count(filter, "/") > 1 {
 		return nil, fmt.Errorf("Invalid filter")
 	}
@@ -279,7 +282,7 @@ func (c *Client) GetJobs(filter string) ([]*model.Job, error) {
 	}
 	resp, err := c.getHTTPClient().Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting jobs: %s", err)
+		return nil, fmt.Errorf("Error finding jobs: %s", err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
