@@ -444,7 +444,7 @@ type State struct {
 
 func New(c *conf.API, s storage, state State) {
 	r := mux.NewRouter()
-	v1 := r.PathPrefix("/api/v1").Subrouter()
+	v1 := r.PathPrefix("/api/v1").Subrouter().StrictSlash(true)
 	var (
 		a   authorizer
 		err error

@@ -35,17 +35,20 @@ func main() {
 		"health": func() (cli.Command, error) {
 			return &command.HealthCommand{BaseCommand: &baseCmd}, nil
 		},
-		"get-job": func() (cli.Command, error) {
-			return &command.GetJobCommand{BaseCommand: &baseCmd}, nil
-		},
 		"create-job": func() (cli.Command, error) {
 			return &command.CreateJobCommand{BaseCommand: &baseCmd}, nil
 		},
 		"update-job": func() (cli.Command, error) {
 			return &command.UpdateJobCommand{BaseCommand: &baseCmd}, nil
 		},
+		"get-job": func() (cli.Command, error) {
+			return &command.GetJobCommand{BaseCommand: &baseCmd}, nil
+		},
 		"delete-job": func() (cli.Command, error) {
 			return &command.DeleteJobCommand{BaseCommand: &baseCmd}, nil
+		},
+		"get-jobs": func() (cli.Command, error) {
+			return &command.GetJobsCommand{BaseCommand: &baseCmd}, nil
 		},
 		"get-tasks": func() (cli.Command, error) {
 			return &command.GetTasksCommand{BaseCommand: &baseCmd}, nil

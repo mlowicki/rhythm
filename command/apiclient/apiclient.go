@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/mlowicki/rhythm/model"
@@ -257,4 +258,41 @@ func (c *Client) UpdateJob(fqid string, changesEncoded []byte) error {
 		return c.parseErrResp(body)
 	}
 	return nil
+}
+
+func (c *Client) GetJobs(filter string) ([]*model.Job, error) {
+	if strings.Count(filter, "/") > 1 {
+		return nil, fmt.Errorf("Invalid filter")
+	}
+	u, err := c.getAddr()
+	if err != nil {
+		return nil, err
+	}
+	u.Path = fmt.Sprintf("api/v1/jobs/%s", filter)
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating request: %s", err)
+	}
+	err = c.authReq(req)
+	if err != nil {
+		return nil, fmt.Errorf("Authentication failed: %s", err)
+	}
+	resp, err := c.getHTTPClient().Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting jobs: %s", err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading response: %s", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, c.parseErrResp(body)
+	}
+	var jobs []*model.Job
+	err = json.Unmarshal(body, &jobs)
+	if err != nil {
+		return nil, fmt.Errorf("Error decoding jobs: %s", err)
+	}
+	return jobs, nil
 }

@@ -447,3 +447,33 @@ diff.json:
     "user": "root"
 }
 ```
+
+### get-jobs
+Show IDs of jobs matching FILTER.
+
+FILTER can be one of:
+    * GROUP to return all jobs from group
+    * GROUP/PROJECT to return all jobs from project
+    * no set to return all jobs across all groups and projects
+
+Examples:
+```
+rhythm get-jobs --addr=https://example.com group
+group:project:id
+group:project:id2
+group:project2:id
+```
+
+```
+rhythm get-jobs --addr=https://example.com group/project
+group:project:id
+group:project:id2
+```
+
+```
+rhythm get-jobs --addr=https://example.com
+group:project:id
+group:project:id2
+group:project2:id
+group2:project:id
+```
