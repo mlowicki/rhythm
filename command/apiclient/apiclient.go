@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/mlowicki/rhythm/model"
@@ -99,7 +100,9 @@ func (c *Client) parseErrResp(body []byte) error {
 }
 
 func (c *Client) getHTTPClient() *http.Client {
-	return http.DefaultClient
+	return &http.Client{
+		Timeout: time.Second * 10,
+	}
 }
 
 func (c *Client) ReadTasks(fqid string) ([]*model.Task, error) {
