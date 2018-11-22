@@ -5,11 +5,14 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/fatih/color"
 	"github.com/mitchellh/cli"
 	"github.com/mlowicki/rhythm/model"
 )
+
+const envRhythmAuth = "RHYTHM_AUTH"
 
 type BaseCommand struct {
 	Ui cli.Ui
@@ -25,6 +28,11 @@ func (c *BaseCommand) Printf(format string, a ...interface{}) {
 
 func (c *BaseCommand) authReq(method string) func(*http.Request) error {
 	return func(req *http.Request) error {
+		if method == "" {
+			if v := os.Getenv(envRhythmAuth); v != "" {
+				method = v
+			}
+		}
 		switch method {
 		case "":
 		case "gitlab":

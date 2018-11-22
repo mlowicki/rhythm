@@ -17,6 +17,7 @@ type UpdateJobCommand struct {
 func (c *UpdateJobCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
+	args = fs.Args()
 	if len(args) != 2 {
 		c.Errorf("Exactly two arguments are required (fully-qualified job ID and path to job config)")
 		return 1
