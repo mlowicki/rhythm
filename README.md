@@ -305,7 +305,10 @@ There is `-testlogging` option which is used to test events logging. It logs sam
 
 ## Command-line client
 Rhythm binary besides running in server mode provides also CLI tool. To see the list of available commands use `-help`.
+
 Address of Rhythm server is set either via `-addr` flag or `RHYTHM_ADDR` environment variable. If both are set then flag takes precedence.
+
+Authentication method is set either via `-auth` flag or `RHYTHM_AUTH` environment variable. If both are set then flag takes precedence. Possible values are `gitlab`, `ldap` or blank (not authentication). No method set means no authentication. 
 
 ### health
 Provides basic information about state of the server.
