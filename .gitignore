@@ -17,3 +17,6 @@ Session.vim
 tags
 # Persistent undo
 [._]*.un~
+
+# Built binaries
+dist/
