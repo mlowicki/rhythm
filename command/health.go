@@ -15,7 +15,7 @@ type HealthCommand struct {
 func (c *HealthCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
-	health, err := apiclient.New(c.addr, c.authReq("")).Health()
+	health, err := apiclient.New(c.addr, nil).Health()
 	if err != nil {
 		c.Errorf("%s", err)
 		return 1

@@ -26,6 +26,12 @@ func (c *BaseCommand) Printf(format string, a ...interface{}) {
 	c.Ui.Output(fmt.Sprintf(format, a...))
 }
 
+/**
+ * Possible methods are "gitlab", "ldap" or "" (blank),
+ *
+ * If blank is passed then method is read from env var. If env var is not set
+ * or empty then no authentication is assumed.
+ */
 func (c *BaseCommand) authReq(method string) func(*http.Request) error {
 	return func(req *http.Request) error {
 		if method == "" {
@@ -35,6 +41,7 @@ func (c *BaseCommand) authReq(method string) func(*http.Request) error {
 		}
 		switch method {
 		case "":
+			return nil
 		case "gitlab":
 			token, err := c.Ui.AskSecret("GitLab token:")
 			if err != nil {

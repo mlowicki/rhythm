@@ -78,9 +78,11 @@ func (c *Client) parseErrResp(body []byte) error {
 }
 
 func (c *Client) send(req *http.Request) (*http.Response, error) {
-	err := c.authReq(req)
-	if err != nil {
-		return nil, fmt.Errorf("Authentication failed: %s", err)
+	if c.authReq != nil {
+		err := c.authReq(req)
+		if err != nil {
+			return nil, fmt.Errorf("Authentication failed: %s", err)
+		}
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
