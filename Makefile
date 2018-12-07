@@ -1,4 +1,4 @@
-all: osx linux
+all: clean osx linux
 
 osx:
 	GOOS=darwin GOARCH=amd64 go build -o dist/rhythm_osx.amd64
