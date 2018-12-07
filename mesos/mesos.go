@@ -26,6 +26,8 @@ type storage interface {
 	SaveJobRuntime(group, project, id string, state *model.JobRuntime) error
 	GetJobConf(group, project, id string) (*model.JobConf, error)
 	SaveJobConf(state *model.JobConf) error
+	GetQueuedJobs() ([]model.JobID, error)
+	DequeueJob(group, project, id string) error
 }
 
 func newFrameworkInfo(conf *conf.Mesos, idStore store.Singleton) *mesos.FrameworkInfo {

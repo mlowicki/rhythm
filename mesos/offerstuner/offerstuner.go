@@ -31,6 +31,8 @@ var (
 	})
 )
 
+const roundInterval = time.Second * 30
+
 func init() {
 	prometheus.MustRegister(suppressCount)
 	prometheus.MustRegister(reviveCount)
@@ -39,6 +41,7 @@ func init() {
 
 type storage interface {
 	GetJobs() ([]*model.Job, error)
+	GetQueuedJobs() ([]model.JobID, error)
 }
 
 func findMaxDelay(jobs []*model.Job) time.Duration {
@@ -78,11 +81,21 @@ func (t *Tuner) round(reviveTokens <-chan struct{}, suppressed bool) (bool, erro
 	if err != nil {
 		return suppressed, err
 	}
-	maxDelay := findMaxDelay(jobs)
+	queuedJobs, err := t.stor.GetQueuedJobs()
+	if err != nil {
+		return suppressed, err
+	}
+	var maxDelay time.Duration
+	var minDelayToRevive = time.Minute
+	if len(queuedJobs) > 0 {
+		maxDelay = minDelayToRevive
+	} else {
+		maxDelay = findMaxDelay(jobs)
+	}
 	minDeadline := findMinDeadline(jobs)
 	log.Debugf("Max delay: %s", maxDelay)
 	log.Debugf("Min deadline: %s", minDeadline)
-	if (maxDelay > time.Minute) || (suppressed && maxDelay > 0) {
+	if (maxDelay >= minDelayToRevive) || (suppressed && maxDelay > 0) {
 		select {
 		case <-reviveTokens:
 			err := calls.CallNoData(t.ctx, t.cli, calls.Revive())
@@ -95,7 +108,7 @@ func (t *Tuner) round(reviveTokens <-chan struct{}, suppressed bool) (bool, erro
 			}
 		default:
 		}
-	} else if maxDelay == 0 && minDeadline > time.Minute && !suppressed {
+	} else if maxDelay == 0 && minDeadline > roundInterval/4 && !suppressed {
 		err := calls.CallNoData(t.ctx, t.cli, calls.Suppress())
 		if err != nil {
 			return suppressed, err
@@ -130,7 +143,7 @@ func (t *Tuner) Run() {
 			case <-t.ctx.Done():
 				log.Println("Terminated")
 				return
-			case <-time.After(time.Minute):
+			case <-time.After(roundInterval):
 				var err error
 				suppressed, err = t.round(reviveTokens, suppressed)
 				if err != nil {

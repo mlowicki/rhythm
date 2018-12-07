@@ -23,6 +23,7 @@ type frameworkState struct {
 
 const (
 	jobsDir           = "jobs"
+	queuedJobsDir     = "queuedJobs"
 	jobTasksDir       = "tasks"
 	jobRuntimeDir     = "runtime"
 	frameworkStateDir = "state"
@@ -162,6 +163,10 @@ func (s *storage) init() error {
 		return err
 	}
 	_, err = s.conn.Create(s.dir+"/"+jobsDir, []byte{}, 0, s.acl(zk.PermAll))
+	if err != nil && err != zk.ErrNodeExists {
+		return err
+	}
+	_, err = s.conn.Create(s.dir+"/"+queuedJobsDir, []byte{}, 0, s.acl(zk.PermAll))
 	if err != nil && err != zk.ErrNodeExists {
 		return err
 	}
@@ -419,6 +424,37 @@ func (s *storage) SaveJob(job *model.Job) error {
 	}
 	err = s.SaveJobRuntime(job.Group, job.Project, job.ID, &job.JobRuntime)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *storage) GetQueuedJobs() ([]model.JobID, error) {
+	children, _, err := s.conn.Children(s.dir + "/" + queuedJobsDir)
+	var ids []model.JobID
+	for _, child := range children {
+		chunks := strings.Split(child, ":")
+		id := model.JobID{Group: chunks[0], Project: chunks[1], ID: chunks[2]}
+		ids = append(ids, id)
+	}
+	return ids, err
+}
+
+func (s *storage) DequeueJob(groupID, projectID, jobID string) error {
+	fqid := groupID + ":" + projectID + ":" + jobID
+	path := s.dir + "/" + queuedJobsDir + "/" + fqid
+	err := s.conn.Delete(path, 0)
+	if err != nil && err != zk.ErrNoNode {
+		return err
+	}
+	return nil
+}
+
+func (s *storage) QueueJob(groupID, projectID, jobID string) error {
+	fqid := groupID + ":" + projectID + ":" + jobID
+	path := s.dir + "/" + queuedJobsDir + "/" + fqid
+	_, err := s.conn.Create(path, []byte{}, 0, s.acl(zk.PermAll))
+	if err != nil && err != zk.ErrNodeExists {
 		return err
 	}
 	return nil

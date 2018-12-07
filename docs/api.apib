@@ -566,6 +566,17 @@ Available under /api/v1/.
 
 + Response 204
 
+## Run [/api/v1/jobs/{group}/{project}/{job}/run]
+
+### Schedule job for immediate run [POST]
+
++ Parameters
+    + group: a (required, string) - ID of the group
+    + project: b (required, string) - ID of the project
+    + job: c (required, string) - ID of the job
+
++ Response 204
+
 ## Tasks [/api/v1/jobs/{group}/{project}/{job}/tasks]
 
 ###  List history of job's tasks (runs)  [GET]

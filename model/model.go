@@ -60,9 +60,7 @@ const (
 )
 
 type JobConf struct {
-	Group      string
-	Project    string
-	ID         string
+	JobID
 	Schedule   JobSchedule
 	Env        map[string]string
 	Secrets    map[string]string
@@ -80,11 +78,6 @@ type JobConf struct {
 
 func (j *JobConf) String() string {
 	return j.FQID()
-}
-
-// Fully qualified identifier unique across jobs from all groups and projects.
-func (j *JobConf) FQID() string {
-	return fmt.Sprintf("%s:%s:%s", j.Group, j.Project, j.ID)
 }
 
 func (j *JobConf) Resources() mesos.Resources {
@@ -121,14 +114,7 @@ func (job *Job) NextRun() time.Time {
 	if err != nil {
 		log.Panic(err)
 	}
-	var lastStart time.Time
-	if job.LastStart.IsZero() {
-		now := time.Now()
-		lastStart = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	} else {
-		lastStart = job.LastStart
-	}
-	return sched.Next(lastStart)
+	return sched.Next(job.LastStart)
 }
 
 func (job *Job) IsRetryable() bool {
@@ -151,4 +137,15 @@ type Task struct {
 	Message string
 	Reason  string
 	Source  string
+}
+
+type JobID struct {
+	Group   string
+	Project string
+	ID      string
+}
+
+// Fully qualified identifier unique across jobs from all groups and projects.
+func (jid *JobID) FQID() string {
+	return fmt.Sprintf("%s:%s:%s", jid.Group, jid.Project, jid.ID)
 }

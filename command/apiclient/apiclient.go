@@ -212,6 +212,31 @@ func (c *Client) DeleteJob(fqid string) error {
 	return nil
 }
 
+func (c *Client) RunJob(fqid string) error {
+	u, err := c.getAddr()
+	if err != nil {
+		return err
+	}
+	u.Path = "api/v1/jobs/" + fqid + "/run"
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return fmt.Errorf("Error creating request: %s", err)
+	}
+	resp, err := c.send(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("Error reading response: %s", err)
+	}
+	if resp.StatusCode != http.StatusNoContent {
+		return c.parseErrResp(body)
+	}
+	return nil
+}
+
 func (c *Client) CreateJob(jobEncoded []byte) error {
 	u, err := c.getAddr()
 	if err != nil {

@@ -26,6 +26,8 @@ type storage interface {
 	GetJobs() ([]*model.Job, error)
 	AddTask(group, project, id string, task *model.Task) error
 	SaveJobRuntime(group, project, id string, state *model.JobRuntime) error
+	GetQueuedJobs() ([]model.JobID, error)
+	DequeueJob(group, project, id string) error
 }
 
 // Decides which jobs to run in response to received offers.
@@ -42,6 +44,9 @@ type Scheduler struct {
 	// of received offers but offer hasn't been accepted yet.
 	// Used to ensure to run simultaneously maximum one task per job.
 	bookedJobs *ttlSet
+	// Queued job is scheduled for immediate run.
+	queuedJobs    map[string]struct{}
+	queuedJobsMut sync.Mutex
 }
 
 func (sched *Scheduler) getJob(groupID, projectID, jobID string) (model.Job, bool) {
@@ -49,6 +54,22 @@ func (sched *Scheduler) getJob(groupID, projectID, jobID string) (model.Job, boo
 	job, ok := sched.jobs[groupID+":"+projectID+":"+jobID]
 	sched.jobsMut.Unlock()
 	return *job, ok
+}
+
+func (sched *Scheduler) dequeueJob(job *model.Job) {
+	fqid := job.FQID()
+	sched.queuedJobsMut.Lock()
+	_, isQueued := sched.queuedJobs[fqid]
+	sched.queuedJobsMut.Unlock()
+	if isQueued {
+		err := sched.storage.DequeueJob(job.Group, job.Project, job.ID)
+		if err != nil {
+			log.Errorf("Error dequeuing job: %s", err)
+		}
+		sched.queuedJobsMut.Lock()
+		delete(sched.queuedJobs, job.FQID())
+		sched.queuedJobsMut.Unlock()
+	}
 }
 
 func (sched *Scheduler) setJob(job model.Job) {
@@ -67,21 +88,47 @@ func New(roles []string, stor storage, secr secrets, frameworkID, leaderURL func
 		jobs:        make(map[string]*model.Job),
 		bookedJobs:  newTTLSet(time.Minute),
 	}
-	sched.syncJobsCache()
+	sync := func() {
+		sched.syncJobsCache()
+		sched.syncQueuedJobsCache()
+	}
+	sync()
 	go func() {
-		interval := time.Minute
+		interval := time.Second * 30
 		timer := time.After(interval)
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-timer:
-				sched.syncJobsCache()
+				sync()
 				timer = time.After(interval)
 			}
 		}
 	}()
 	return &sched
+}
+
+func (sched *Scheduler) syncQueuedJobsCache() {
+	log.Debugf("Queued jobs cache syncing...")
+	var jids []model.JobID
+	for {
+		var err error
+		jids, err = sched.storage.GetQueuedJobs()
+		if err == nil {
+			break
+		}
+		log.Error(err)
+		<-time.After(time.Second)
+	}
+	queuedJobs := make(map[string]struct{}, len(jids))
+	for _, jid := range jids {
+		queuedJobs[jid.FQID()] = struct{}{}
+	}
+	sched.queuedJobsMut.Lock()
+	sched.queuedJobs = queuedJobs
+	sched.queuedJobsMut.Unlock()
+	log.Debugf("Queued jobs cache synced")
 }
 
 func (sched *Scheduler) syncJobsCache() {
@@ -211,11 +258,12 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 	resourcesLeftUnreserved := resourcesLeft.ToUnreserved()
 	log.Debugf("Getting tasks for offer: %s", resourcesLeft)
 	sched.jobsMut.Lock()
+	sched.queuedJobsMut.Lock()
 	for _, job := range sched.jobs {
 		if sched.bookedJobs.Exists(job.FQID()) {
 			continue
 		}
-		if !job.IsRunnable() {
+		if _, isQueued := sched.queuedJobs[job.FQID()]; !job.IsRunnable() && !isQueued {
 			continue
 		}
 		jobResources := job.Resources()
@@ -238,6 +286,7 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 		resourcesLeftUnreserved = resourcesLeft.ToUnreserved()
 		sched.bookedJobs.Set(job.FQID())
 	}
+	sched.queuedJobsMut.Unlock()
 	sched.jobsMut.Unlock()
 	var tasks []mesos.TaskInfo
 	var wg sync.WaitGroup
@@ -277,6 +326,7 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 				log.Errorf("Error updating job runtime info: %s", err)
 			}
 			sched.setJob(*job)
+			sched.dequeueJob(job)
 			sched.bookedJobs.Del(job.FQID())
 		}(i, &runnableJobs[i])
 	}

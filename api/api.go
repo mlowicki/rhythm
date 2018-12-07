@@ -41,13 +41,14 @@ func encoder(w http.ResponseWriter) *json.Encoder {
 type storage interface {
 	GetJobs() ([]*model.Job, error)
 	GetGroupJobs(group string) ([]*model.Job, error)
-	GetProjectJobs(group string, project string) ([]*model.Job, error)
-	GetJob(group string, project string, id string) (*model.Job, error)
+	GetProjectJobs(group, project string) ([]*model.Job, error)
+	GetJob(group, project, id string) (*model.Job, error)
 	SaveJob(j *model.Job) error
-	DeleteJob(group string, project string, id string) error
-	GetTasks(group string, project string, id string) ([]*model.Task, error)
+	DeleteJob(group, project, id string) error
+	GetTasks(group, project, id string) ([]*model.Task, error)
 	GetJobConf(group, project, id string) (*model.JobConf, error)
 	SaveJobConf(state *model.JobConf) error
+	QueueJob(group, project, id string) error
 }
 
 type handler struct {
@@ -216,6 +217,27 @@ func deleteJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
+func runJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	project := vars["project"]
+	lvl, err := a.GetProjectAccessLevel(r, group, project)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	if lvl != auth.ReadWrite {
+		w.WriteHeader(http.StatusForbidden)
+		return errForbidden
+	}
+	err = s.QueueJob(group, project, vars["id"])
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
 func validateSchema(payload gojsonschema.JSONLoader, schema gojsonschema.JSONLoader) error {
 	res, err := gojsonschema.Validate(schema, payload)
 	if err != nil {
@@ -267,9 +289,11 @@ func createJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 		return errForbidden
 	}
 	jobConf := &model.JobConf{
-		Group:   payload.Group,
-		Project: payload.Project,
-		ID:      payload.ID,
+		JobID: model.JobID{
+			Group:   payload.Group,
+			Project: payload.Project,
+			ID:      payload.ID,
+		},
 		Schedule: model.JobSchedule{
 			Type: model.Cron,
 			Cron: payload.Schedule.Cron,
@@ -483,6 +507,7 @@ func New(c *conf.API, s storage, state State) {
 	v1.Handle("/jobs/{group}/{project}/{id}", &handler{a, s, deleteJob}).Methods("DELETE")
 	v1.Handle("/jobs/{group}/{project}/{id}", &handler{a, s, updateJob}).Methods("PUT")
 	v1.Handle("/jobs/{group}/{project}/{id}/tasks", &handler{a, s, getTasks}).Methods("GET")
+	v1.Handle("/jobs/{group}/{project}/{id}/run", &handler{a, s, runJob}).Methods("POST")
 	v1.Handle("/metrics", promhttp.Handler())
 	srv := &http.Server{
 		Handler:      r,

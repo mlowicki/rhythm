@@ -451,6 +451,14 @@ diff.json:
 }
 ```
 
+### run-job
+Schedule job with the given fully-qualified ID for immediate run.
+
+Example:
+```
+$ rhythm run-job -addr https://example.com group/project/id
+```
+
 ### find-jobs
 Show IDs of jobs matching FILTER.
 
