@@ -285,6 +285,8 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 	return tasks
 }
 
+func strPtr(v string) *string { return &v }
+
 func (sched *Scheduler) newTaskInfo(job *model.Job) (*mesos.TaskInfo, error) {
 	taskID, err := newTaskID(job.Group, job.Project, job.ID)
 	if err != nil {
@@ -292,11 +294,14 @@ func (sched *Scheduler) newTaskInfo(job *model.Job) (*mesos.TaskInfo, error) {
 	}
 	env := mesos.Environment{
 		Variables: []mesos.Environment_Variable{
-			{Name: "TASK_ID", Value: &taskID},
+			{Name: "RHYTHM_TASK_ID", Value: &taskID},
+			{Name: "RHYTHM_MEM", Value: strPtr(fmt.Sprintf("%g", job.Mem))},
+			{Name: "RHYTHM_DISK", Value: strPtr(fmt.Sprintf("%g", job.Disk))},
+			{Name: "RHYTHM_CPU", Value: strPtr(fmt.Sprintf("%g", job.CPUs))},
 		},
 	}
 	for k, v := range job.Env {
-		envvar := mesos.Environment_Variable{Name: k, Value: func(v string) *string { return &v }(v)}
+		envvar := mesos.Environment_Variable{Name: k, Value: strPtr(v)}
 		env.Variables = append(env.Variables, envvar)
 	}
 	for k, v := range job.Secrets {
