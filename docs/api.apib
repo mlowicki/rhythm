@@ -570,6 +570,8 @@ Available under /api/v1/.
 
 ### Schedule job for immediate run [POST]
 
+If job is already queued (scheduled but not launched yet) then request will be no-op.
+
 + Parameters
     + group: a (required, string) - ID of the group
     + project: b (required, string) - ID of the project

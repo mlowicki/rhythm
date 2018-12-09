@@ -34,6 +34,7 @@ func (c *RunJobCommand) Help() string {
 Usage: rhythm run-job [options] FQID
 
   Schedule job with the given fully-qualified ID (e.g. "group/project/id") for immediate run.
+  If job is already queued (scheduled but not launched yet) then command will be no-op.
 
 ` + c.Flags().help()
 	return strings.TrimSpace(help)
