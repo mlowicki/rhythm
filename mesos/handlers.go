@@ -76,7 +76,7 @@ func buildOffersEventHandler(cli calls.Caller, jobsSched *jobsscheduler.Schedule
 				break
 			}
 			offer := offers[i]
-			tasks := jobsSched.GetTasks(ctx, &offer)
+			tasks := jobsSched.FindTasksForOffer(ctx, &offer)
 			accept := calls.Accept(calls.OfferOperations{calls.OpLaunch(tasks...)}.WithOffers(offer.ID))
 			err := calls.CallNoData(ctx, cli, accept.With(calls.RefuseSeconds(time.Hour)))
 			if err != nil {

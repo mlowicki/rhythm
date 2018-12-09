@@ -251,12 +251,27 @@ func (sched *Scheduler) findTaskResources(taskResources, offerResources mesos.Re
 	return found
 }
 
-func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []mesos.TaskInfo {
-	var tasksResources []mesos.Resources
-	var runnableJobs []model.Job
-	resourcesLeft := mesos.Resources(offer.Resources).Unallocate()
-	resourcesLeftUnreserved := resourcesLeft.ToUnreserved()
-	log.Debugf("Getting tasks for offer: %s", resourcesLeft)
+func (sched *Scheduler) FindTasksForOffer(ctx context.Context, offer *mesos.Offer) []mesos.TaskInfo {
+	rs := mesos.Resources(offer.Resources)
+	log.Debugf("Finding tasks for offer: %s", rs)
+	jobs, jobsRs := sched.findJobsForResources(rs)
+	log.Debugf("Found %d tasks for offer", len(jobs))
+	tasks := sched.buildTasksForOffer(jobs, jobsRs, offer)
+	return tasks
+}
+
+/**
+ * Find jobs to run for specified resources.
+ *
+ * Returns two slices:
+ * - jobs to run
+ * - resources to use for respective job from 1st slice
+ */
+func (sched *Scheduler) findJobsForResources(res mesos.Resources) ([]model.Job, []mesos.Resources) {
+	var tasksRes []mesos.Resources
+	var jobs []model.Job
+	res = res.Unallocate()
+	resUnreserved := res.ToUnreserved()
 	sched.jobsMut.Lock()
 	sched.queuedJobsMut.Lock()
 	for _, job := range sched.jobs {
@@ -266,8 +281,8 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 		if _, isQueued := sched.queuedJobs[job.FQID()]; !job.IsRunnable() && !isQueued {
 			continue
 		}
-		jobResources := job.Resources()
-		if !resources.ContainsAll(resourcesLeftUnreserved, jobResources) {
+		jobRes := job.Resources()
+		if !resources.ContainsAll(resUnreserved, jobRes) {
 			continue
 		}
 		if job.IsRetryable() {
@@ -275,22 +290,26 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 		} else {
 			job.Retries = 0
 		}
-		taskResources := sched.findTaskResources(jobResources, resourcesLeft)
-		if len(taskResources) == 0 {
+		taskRes := sched.findTaskResources(jobRes, res)
+		if len(taskRes) == 0 {
 			log.Fatal("Resources not found")
 		}
 		log.Debugf("Found resources for job: %s", job)
-		runnableJobs = append(runnableJobs, *job)
-		tasksResources = append(tasksResources, taskResources)
-		resourcesLeft.Subtract(taskResources...)
-		resourcesLeftUnreserved = resourcesLeft.ToUnreserved()
+		jobs = append(jobs, *job)
+		tasksRes = append(tasksRes, taskRes)
+		res.Subtract(taskRes...)
+		resUnreserved = res.ToUnreserved()
 		sched.bookedJobs.Set(job.FQID())
 	}
 	sched.queuedJobsMut.Unlock()
 	sched.jobsMut.Unlock()
+	return jobs, tasksRes
+}
+
+func (sched *Scheduler) buildTasksForOffer(jobs []model.Job, ress []mesos.Resources, offer *mesos.Offer) []mesos.TaskInfo {
 	var tasks []mesos.TaskInfo
 	var wg sync.WaitGroup
-	for i := range runnableJobs {
+	for i := range jobs {
 		wg.Add(1)
 		go func(i int, job *model.Job) {
 			defer wg.Done()
@@ -318,7 +337,7 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 				job.CurrentTaskID = task.TaskID.GetValue()
 				job.CurrentAgentID = offer.AgentID.GetValue()
 				task.AgentID = offer.AgentID
-				task.Resources = tasksResources[i]
+				task.Resources = ress[i]
 				tasks = append(tasks, *task)
 			}
 			err = sched.storage.SaveJobRuntime(job.Group, job.Project, job.ID, &job.JobRuntime)
@@ -328,10 +347,9 @@ func (sched *Scheduler) GetTasks(ctx context.Context, offer *mesos.Offer) []meso
 			sched.setJob(*job)
 			sched.dequeueJob(job)
 			sched.bookedJobs.Del(job.FQID())
-		}(i, &runnableJobs[i])
+		}(i, &jobs[i])
 	}
 	wg.Wait()
-	log.Debugf("Number of tasks found for offer: %d", len(tasks))
 	return tasks
 }
 
