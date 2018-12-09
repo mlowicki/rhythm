@@ -1,7 +1,9 @@
 package model
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
@@ -148,4 +150,17 @@ type JobID struct {
 // Fully qualified identifier unique across jobs from all groups and projects.
 func (jid *JobID) FQID() string {
 	return fmt.Sprintf("%s:%s:%s", jid.Group, jid.Project, jid.ID)
+}
+
+func ParseJobFQID(fqid string) (*JobID, error) {
+	chunks := strings.Split(fqid, ":")
+	if len(chunks) != 3 {
+		return nil, errors.New("Invalid number of chunks")
+	}
+	jid := JobID{
+		Group:   chunks[0],
+		Project: chunks[1],
+		ID:      chunks[2],
+	}
+	return &jid, nil
 }

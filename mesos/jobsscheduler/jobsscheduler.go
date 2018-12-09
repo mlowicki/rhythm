@@ -49,9 +49,9 @@ type Scheduler struct {
 	queuedJobsMut sync.Mutex
 }
 
-func (sched *Scheduler) getJob(groupID, projectID, jobID string) (model.Job, bool) {
+func (sched *Scheduler) getJob(jid *model.JobID) (model.Job, bool) {
 	sched.jobsMut.Lock()
-	job, ok := sched.jobs[groupID+":"+projectID+":"+jobID]
+	job, ok := sched.jobs[jid.FQID()]
 	sched.jobsMut.Unlock()
 	return *job, ok
 }
@@ -74,7 +74,7 @@ func (sched *Scheduler) dequeueJob(job *model.Job) {
 
 func (sched *Scheduler) setJob(job model.Job) {
 	sched.jobsMut.Lock()
-	sched.jobs[job.Group+":"+job.Project+":"+job.ID] = &job
+	sched.jobs[job.FQID()] = &job
 	sched.jobsMut.Unlock()
 }
 
@@ -145,21 +145,21 @@ func (sched *Scheduler) syncJobsCache() {
 	}
 	sched.jobsMut.Lock()
 	ids := make(map[string]struct{}, len(newJobs))
-	for _, newJob := range newJobs {
-		id := newJob.Group + ":" + newJob.Project + ":" + newJob.ID
+	for _, job := range newJobs {
+		id := job.FQID()
 		ids[id] = struct{}{}
 		oldJob, ok := sched.jobs[id]
 		if ok {
 			// Modify only conf since running instance has most up-to-date
 			// runtime state as saving updates in storage can fail.
-			oldJob.JobConf = newJob.JobConf
+			oldJob.JobConf = job.JobConf
 		} else {
-			sched.jobs[id] = newJob
+			sched.jobs[id] = job
 		}
 	}
 	// Evict from cache jobs not present in storage.
 	for _, job := range sched.jobs {
-		id := job.Group + ":" + job.Project + ":" + job.ID
+		id := job.FQID()
 		_, ok := ids[id]
 		if !ok {
 			delete(sched.jobs, id)
@@ -170,18 +170,19 @@ func (sched *Scheduler) syncJobsCache() {
 }
 
 func (sched *Scheduler) HandleTaskStateUpdate(status *mesos.TaskStatus) {
-	taskID, err := parseTaskID(status.TaskID.Value)
+	tid := status.TaskID.Value
+	jid, err := parseTaskFQID(tid)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"taskID": status.TaskID.Value,
+			"taskID": tid,
 		}).Errorf("Error getting job ID from task ID: %s", err)
 		return
 	}
 	state := status.GetState()
-	log.Debugf("Task state update: %s (%s)", taskID, state)
-	job, ok := sched.getJob(taskID.groupID, taskID.projectID, taskID.jobID)
+	log.Debugf("Task state update: %s (%s)", tid, state)
+	job, ok := sched.getJob(jid)
 	if !ok {
-		log.Printf("Update for unknown job: %s", taskID)
+		log.Printf("Update for unknown job: %s", jid)
 	}
 	switch state {
 	case mesos.TASK_STAGING:
@@ -192,7 +193,7 @@ func (sched *Scheduler) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 		job.State = model.RUNNING
 	case mesos.TASK_FINISHED:
 		log.Debugf("Task finished successfully: %s", status.TaskID.Value)
-		sched.addTaskHistory(status, job.LastStart, taskID)
+		sched.addTaskHistory(status, job.LastStart, jid)
 		job.State = model.IDLE
 		job.CurrentTaskID = ""
 		job.CurrentAgentID = ""
@@ -221,8 +222,8 @@ func (sched *Scheduler) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 		reason := status.GetReason().String()
 		src := status.GetSource().String()
 		state := status.GetState()
-		log.Errorf("Task failed: %s (%s; %s; %s; %s)", taskID, state, msg, reason, src)
-		sched.addTaskHistory(status, job.LastStart, taskID)
+		log.Errorf("Task failed: %s (%s; %s; %s; %s)", tid, state, msg, reason, src)
+		sched.addTaskHistory(status, job.LastStart, jid)
 		job.State = model.FAILED
 		job.CurrentTaskID = ""
 		job.CurrentAgentID = ""
@@ -230,7 +231,7 @@ func (sched *Scheduler) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 		log.Panicf("Unknown state: %s", state)
 	}
 	sched.setJob(job)
-	err = sched.storage.SaveJobRuntime(taskID.groupID, taskID.projectID, taskID.jobID, &job.JobRuntime)
+	err = sched.storage.SaveJobRuntime(jid.Group, jid.Project, jid.ID, &job.JobRuntime)
 	if err != nil {
 		log.Errorf("Error saving job while handling update: %s", err)
 	}
@@ -356,13 +357,13 @@ func (sched *Scheduler) buildTasksForOffer(jobs []model.Job, ress []mesos.Resour
 func strPtr(v string) *string { return &v }
 
 func (sched *Scheduler) newTaskInfo(job *model.Job) (*mesos.TaskInfo, error) {
-	taskID, err := newTaskID(job.Group, job.Project, job.ID)
+	tid, err := newTaskFQID(&job.JobID)
 	if err != nil {
 		return nil, fmt.Errorf("Getting task ID failed: %s", err)
 	}
 	env := mesos.Environment{
 		Variables: []mesos.Environment_Variable{
-			{Name: "RHYTHM_TASK_ID", Value: &taskID},
+			{Name: "RHYTHM_TASK_ID", Value: &tid},
 			{Name: "RHYTHM_MEM", Value: strPtr(fmt.Sprintf("%g", job.Mem))},
 			{Name: "RHYTHM_DISK", Value: strPtr(fmt.Sprintf("%g", job.Disk))},
 			{Name: "RHYTHM_CPU", Value: strPtr(fmt.Sprintf("%g", job.CPUs))},
@@ -408,8 +409,8 @@ func (sched *Scheduler) newTaskInfo(job *model.Job) (*mesos.TaskInfo, error) {
 		}(v)
 	}
 	task := mesos.TaskInfo{
-		TaskID: mesos.TaskID{Value: taskID},
-		Name:   "Task " + taskID,
+		TaskID: mesos.TaskID{Value: tid},
+		Name:   "Task " + tid,
 		Command: &mesos.CommandInfo{
 			Value:       proto.String(job.Cmd),
 			Environment: &env,
@@ -424,7 +425,7 @@ func (sched *Scheduler) newTaskInfo(job *model.Job) (*mesos.TaskInfo, error) {
 }
 
 // Stores infomation about single run of a job.
-func (sched *Scheduler) addTaskHistory(status *mesos.TaskStatus, start time.Time, taskID *taskID) {
+func (sched *Scheduler) addTaskHistory(status *mesos.TaskStatus, start time.Time, jid *model.JobID) {
 	executorID := status.GetExecutorID().GetValue()
 	agentID := status.GetAgentID().GetValue()
 	frameworkID := sched.frameworkID()
@@ -442,47 +443,38 @@ func (sched *Scheduler) addTaskHistory(status *mesos.TaskStatus, start time.Time
 		task.Reason = status.GetReason().String()
 		task.Source = status.GetSource().String()
 	}
-	err := sched.storage.AddTask(taskID.groupID, taskID.projectID, taskID.jobID, &task)
+	err := sched.storage.AddTask(jid.Group, jid.Project, jid.ID, &task)
 	if err != nil {
 		log.Errorf("Error saving task: %s", err)
 	}
 }
 
 type taskID struct {
-	groupID   string
-	projectID string
-	jobID     string
-	uuid      string
+	jid  *model.JobID
+	uuid string
 }
 
 func (tid *taskID) String() string {
-	return fmt.Sprintf("%s:%s:%s:%s", tid.groupID, tid.projectID, tid.jobID, tid.uuid)
+	return tid.FQID()
 }
 
-func newTaskID(groupID, projectID, jobID string) (string, error) {
+func (tid *taskID) FQID() string {
+	return fmt.Sprintf("%s:%s", tid.jid.FQID(), tid.uuid)
+}
+
+func newTaskFQID(jid *model.JobID) (string, error) {
 	u4, err := uuid.NewV4()
 	if err != nil {
 		return "", err
 	}
-	tid := taskID{
-		groupID:   groupID,
-		projectID: projectID,
-		jobID:     jobID,
-		uuid:      u4.String(),
-	}
-	return tid.String(), nil
+	tid := taskID{jid: jid, uuid: u4.String()}
+	return tid.FQID(), nil
 }
 
-func parseTaskID(id string) (*taskID, error) {
-	chunks := strings.Split(id, ":")
-	if len(chunks) != 4 {
-		return nil, errors.New("Invalid number of chunks")
+func parseTaskFQID(tid string) (*model.JobID, error) {
+	idx := strings.LastIndex(tid, ":")
+	if idx == -1 {
+		return nil, errors.New("Task ID separator not found")
 	}
-	tid := taskID{
-		groupID:   chunks[0],
-		projectID: chunks[1],
-		jobID:     chunks[2],
-		uuid:      chunks[3],
-	}
-	return &tid, nil
+	return model.ParseJobFQID(tid[:idx])
 }
