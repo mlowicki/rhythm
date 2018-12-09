@@ -429,7 +429,7 @@ func (s *storage) SaveJob(job *model.Job) error {
 	return nil
 }
 
-func (s *storage) GetQueuedJobs() ([]model.JobID, error) {
+func (s *storage) GetQueuedJobsIDs() ([]model.JobID, error) {
 	children, _, err := s.conn.Children(s.dir + "/" + queuedJobsDir)
 	var ids []model.JobID
 	for _, child := range children {

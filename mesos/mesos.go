@@ -26,7 +26,7 @@ type storage interface {
 	SaveJobRuntime(group, project, id string, state *model.JobRuntime) error
 	GetJobConf(group, project, id string) (*model.JobConf, error)
 	SaveJobConf(state *model.JobConf) error
-	GetQueuedJobs() ([]model.JobID, error)
+	GetQueuedJobsIDs() ([]model.JobID, error)
 	DequeueJob(group, project, id string) error
 }
 

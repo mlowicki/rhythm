@@ -26,7 +26,7 @@ type storage interface {
 	GetJobs() ([]*model.Job, error)
 	AddTask(group, project, id string, task *model.Task) error
 	SaveJobRuntime(group, project, id string, state *model.JobRuntime) error
-	GetQueuedJobs() ([]model.JobID, error)
+	GetQueuedJobsIDs() ([]model.JobID, error)
 	DequeueJob(group, project, id string) error
 }
 
@@ -49,9 +49,9 @@ type Scheduler struct {
 	queuedJobsMut sync.Mutex
 }
 
-func (sched *Scheduler) getJob(jid *model.JobID) (model.Job, bool) {
+func (sched *Scheduler) getJob(jid string) (model.Job, bool) {
 	sched.jobsMut.Lock()
-	job, ok := sched.jobs[jid.FQID()]
+	job, ok := sched.jobs[jid]
 	sched.jobsMut.Unlock()
 	return *job, ok
 }
@@ -114,7 +114,7 @@ func (sched *Scheduler) syncQueuedJobsCache() {
 	var jids []model.JobID
 	for {
 		var err error
-		jids, err = sched.storage.GetQueuedJobs()
+		jids, err = sched.storage.GetQueuedJobsIDs()
 		if err == nil {
 			break
 		}
@@ -123,7 +123,7 @@ func (sched *Scheduler) syncQueuedJobsCache() {
 	}
 	queuedJobs := make(map[string]struct{}, len(jids))
 	for _, jid := range jids {
-		queuedJobs[jid.FQID()] = struct{}{}
+		queuedJobs[jid.String()] = struct{}{}
 	}
 	sched.queuedJobsMut.Lock()
 	sched.queuedJobs = queuedJobs
@@ -171,7 +171,7 @@ func (sched *Scheduler) syncJobsCache() {
 
 func (sched *Scheduler) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 	tid := status.TaskID.Value
-	jid, err := parseTaskFQID(tid)
+	jid, err := parseTaskID(tid)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"taskID": tid,
@@ -180,7 +180,7 @@ func (sched *Scheduler) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 	}
 	state := status.GetState()
 	log.Debugf("Task state update: %s (%s)", tid, state)
-	job, ok := sched.getJob(jid)
+	job, ok := sched.getJob(jid.String())
 	if !ok {
 		log.Printf("Update for unknown job: %s", jid)
 	}
@@ -357,7 +357,7 @@ func (sched *Scheduler) buildTasksForOffer(jobs []model.Job, ress []mesos.Resour
 func strPtr(v string) *string { return &v }
 
 func (sched *Scheduler) newTaskInfo(job *model.Job) (*mesos.TaskInfo, error) {
-	tid, err := newTaskFQID(&job.JobID)
+	tid, err := newTaskID(&job.JobID)
 	if err != nil {
 		return nil, fmt.Errorf("Getting task ID failed: %s", err)
 	}
@@ -455,26 +455,22 @@ type taskID struct {
 }
 
 func (tid *taskID) String() string {
-	return tid.FQID()
+	return fmt.Sprintf("%s:%s", tid.jid.String(), tid.uuid)
 }
 
-func (tid *taskID) FQID() string {
-	return fmt.Sprintf("%s:%s", tid.jid.FQID(), tid.uuid)
-}
-
-func newTaskFQID(jid *model.JobID) (string, error) {
+func newTaskID(jid *model.JobID) (string, error) {
 	u4, err := uuid.NewV4()
 	if err != nil {
 		return "", err
 	}
 	tid := taskID{jid: jid, uuid: u4.String()}
-	return tid.FQID(), nil
+	return tid.String(), nil
 }
 
-func parseTaskFQID(tid string) (*model.JobID, error) {
+func parseTaskID(tid string) (*model.JobID, error) {
 	idx := strings.LastIndex(tid, ":")
 	if idx == -1 {
 		return nil, errors.New("Task ID separator not found")
 	}
-	return model.ParseJobFQID(tid[:idx])
+	return model.ParseJobID(tid[:idx])
 }

@@ -78,6 +78,10 @@ type JobConf struct {
 	MaxRetries int
 }
 
+func (j *JobConf) FQID() string {
+	return j.JobID.String()
+}
+
 func (j *JobConf) String() string {
 	return j.FQID()
 }
@@ -148,12 +152,12 @@ type JobID struct {
 }
 
 // Fully qualified identifier unique across jobs from all groups and projects.
-func (jid *JobID) FQID() string {
+func (jid *JobID) String() string {
 	return fmt.Sprintf("%s:%s:%s", jid.Group, jid.Project, jid.ID)
 }
 
-func ParseJobFQID(fqid string) (*JobID, error) {
-	chunks := strings.Split(fqid, ":")
+func ParseJobID(v string) (*JobID, error) {
+	chunks := strings.Split(v, ":")
 	if len(chunks) != 3 {
 		return nil, errors.New("Invalid number of chunks")
 	}

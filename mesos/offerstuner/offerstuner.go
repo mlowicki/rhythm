@@ -41,7 +41,7 @@ func init() {
 
 type storage interface {
 	GetJobs() ([]*model.Job, error)
-	GetQueuedJobs() ([]model.JobID, error)
+	GetQueuedJobsIDs() ([]model.JobID, error)
 }
 
 func findMaxDelay(jobs []*model.Job) time.Duration {
@@ -81,7 +81,7 @@ func (t *Tuner) round(reviveTokens <-chan struct{}, suppressed bool) (bool, erro
 	if err != nil {
 		return suppressed, err
 	}
-	queuedJobs, err := t.stor.GetQueuedJobs()
+	queuedJobs, err := t.stor.GetQueuedJobsIDs()
 	if err != nil {
 		return suppressed, err
 	}

@@ -24,7 +24,7 @@ type storage interface {
 	SaveJobConf(state *model.JobConf) error
 	QueueJob(group, project, id string) error
 	DequeueJob(group, project, id string) error
-	GetQueuedJobs() ([]model.JobID, error)
+	GetQueuedJobsIDs() ([]model.JobID, error)
 }
 
 func New(c *conf.Storage) storage {
