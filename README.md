@@ -471,21 +471,21 @@ FILTER can be one of:
 Examples:
 ```
 $ rhythm find-jobs --addr=https://example.com
-group:project:id
-group:project:id2
-group:project2:id
-group2:project:id
+group:project:id Idle
+group:project:id2 Idle
+group:project2:id Running
+group2:project:id Failed
 ```
 
 ```
 $ rhythm find-jobs --addr=https://example.com group
-group:project:id
-group:project:id2
-group:project2:id
+group:project:id Idle
+group:project:id2 Running
+group:project2:id Failed
 ```
 
 ```
 $ rhythm find-jobs --addr=https://example.com group/project
-group:project:id
-group:project:id2
+group:project:id Idle
+group:project:id2 Idle
 ```

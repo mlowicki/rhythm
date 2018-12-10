@@ -9,8 +9,9 @@ import (
 
 type FindJobsCommand struct {
 	*BaseCommand
-	addr string
-	auth string
+	addr      string
+	auth      string
+	showState bool
 }
 
 func (c *FindJobsCommand) Run(args []string) int {
@@ -31,7 +32,11 @@ func (c *FindJobsCommand) Run(args []string) int {
 		return 1
 	}
 	for _, job := range jobs {
-		c.Printf("%s/%s/%s", job.Group, job.Project, job.ID)
+		state := ""
+		if c.showState {
+			state = coloredState(job.State)
+		}
+		c.Printf("%s/%s/%s %s", job.Group, job.Project, job.ID, state)
 	}
 	return 0
 }
@@ -56,6 +61,7 @@ func (c *FindJobsCommand) Flags() *flagSet {
 	fs.Usage = func() { c.Printf(c.Help()) }
 	fs.StringVar(&c.addr, "addr", "", "Address of Rhythm server (with protocol e.g. \"https://example.com\")")
 	fs.StringVar(&c.auth, "auth", "", "Authentication method (\"ldap\" or \"gitlab\")")
+	fs.BoolVar(&c.showState, "state", true, "Show job state")
 	return &flagSet{fs}
 }
 
