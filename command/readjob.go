@@ -31,13 +31,14 @@ func (c *ReadJobCommand) Run(args []string) int {
 	}
 	c.Printf("State: %s", coloredState(job.State))
 	if job.State == model.FAILED {
-		c.Printf("    Retries: %d out of %d", job.Retries, job.MaxRetries)
+		c.Printf("    Retries: %d", job.Retries)
 	}
 	if job.LastStart.IsZero() {
 		c.Printf("    Last start: Not started yet")
 	} else {
 		c.Printf("    Last start: %s", job.LastStart.Format(time.UnixDate))
 	}
+	c.Printf("    Max retries: %d", job.MaxRetries)
 	if t := job.Schedule.Type; t != model.Cron {
 		c.Printf("Unknown schedule type: %s", t)
 	}
