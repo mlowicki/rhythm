@@ -1,0 +1,102 @@
+
+# Gopkg.toml example
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#  name = "github.com/x/y"
+#  version = "2.4.0"
+
+
+[[constraint]]
+  name = "github.com/cenkalti/backoff"
+  version = "2.1.0"
+
+[[constraint]]
+  name = "github.com/evalphobia/logrus_sentry"
+  version = "0.5.0"
+
+[[constraint]]
+  name = "github.com/fatih/color"
+  version = "1.7.0"
+
+[[constraint]]
+  name = "github.com/getsentry/raven-go"
+  version = "0.2.0"
+
+[[constraint]]
+  name = "github.com/go-ldap/ldap"
+  version = "3.0.0"
+
+[[constraint]]
+  name = "github.com/gofrs/uuid"
+  version = "3.1.2"
+
+[[constraint]]
+  name = "github.com/gogo/protobuf"
+  version = "1.2.0"
+
+[[constraint]]
+  name = "github.com/gorilla/mux"
+  version = "1.6.2"
+
+[[constraint]]
+  name = "github.com/hashicorp/go-multierror"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/hashicorp/vault"
+  version = "1.0.1"
+
+[[constraint]]
+  name = "github.com/mesos/mesos-go"
+  version = "0.0.8"
+
+[[constraint]]
+  name = "github.com/mitchellh/cli"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/onrik/logrus"
+  version = "0.1.0"
+
+[[constraint]]
+  name = "github.com/prometheus/client_golang"
+  version = "0.9.2"
+
+[[constraint]]
+  name = "github.com/robfig/cron"
+  version = "1.1.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/samuel/go-zookeeper"
+
+[[constraint]]
+  name = "github.com/sirupsen/logrus"
+  version = "1.2.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/tevino/abool"
+
+[[constraint]]
+  name = "github.com/xanzy/go-gitlab"
+  version = "0.12.0"
+
+[[constraint]]
+  name = "github.com/xeipuuv/gojsonschema"
+  version = "1.0.0"
