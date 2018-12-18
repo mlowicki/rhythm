@@ -30,7 +30,7 @@ mesosmaster:
      - MESOS_HTTP_FRAMEWORK_AUTHENTICATORS=basic
      - MESOS_CREDENTIALS=/etc/mesos/credentials
      volumes:
-     - ./credentials:/etc/mesos/credentials
+     - ./mesos.credentials:/etc/mesos/credentials
 mesosslave:
      image: mesosphere/mesos-slave:1.7.0
      ports:
