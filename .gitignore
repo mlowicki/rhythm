@@ -20,3 +20,6 @@ tags
 
 # Built binaries
 dist/
+
+# Golang's vendor
+vendor/
