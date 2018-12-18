@@ -63,7 +63,7 @@
 
 [[constraint]]
   name = "github.com/mesos/mesos-go"
-  version = "0.0.8"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/mitchellh/cli"

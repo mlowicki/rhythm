@@ -346,7 +346,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:c502a3fc027000022080a7f0cf268b9827d92d574c85f706f3066fdb518ab9b2"
+  branch = "master"
+  digest = "1:f887abd6a1c686fb99747d4d6d4f74bbfae49dbb24ba769eeb21700aa8039151"
   name = "github.com/mesos/mesos-go"
   packages = [
     "api/v1/lib",
@@ -375,8 +376,7 @@
     "api/v1/lib/scheduler/events",
   ]
   pruneopts = ""
-  revision = "7ec2a64a36fe5bc22d3701558bc9aa1ac6acfac5"
-  version = "v0.0.8"
+  revision = "c333af76d75ed88f74e29864e229508e3a40f40a"
 
 [[projects]]
   digest = "1:bb7613fa9de3f211f6f09630e6c0a493285c1d2a162abf0d617bd522c3dd622a"
