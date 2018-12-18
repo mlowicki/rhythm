@@ -1,0 +1,20 @@
+{
+  "id": "echo",
+  "group": "group",
+  "project": "project",
+  "cpus": 1,
+  "mem": 128,
+  "cmd": "echo $FOO",
+  "user": "root",
+  "env": {
+    "FOO": "bar"
+  },
+  "schedule": {
+    "cron": "*/1 * * * *"
+  }, 
+  "container": {
+    "docker": {
+      "image": "alpine:3.8"
+    }
+  }
+}
