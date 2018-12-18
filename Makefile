@@ -9,4 +9,7 @@ linux:
 clean:
 	rm -rf dist
 
+runserver:
+	go run *.go server -config dev/server.json
+
 .PHONY: all osx linux clean
