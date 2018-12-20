@@ -46,7 +46,8 @@ func buildSubscribedEventHandler(fidStore store.Singleton, failoverTimeout time.
 }
 
 func buildUpdateEventHandler(cli calls.Caller, reconciler *reconciliation.Reconciliation, jobsSched *jobsscheduler.Scheduler) eventrules.Rule {
-	return controller.AckStatusUpdates(cli).AndThen().HandleF(func(ctx context.Context, e *scheduler.Event) error {
+	var h eventrules.Rule
+	h = func(ctx context.Context, e *scheduler.Event, err error, ch eventrules.Chain) (context.Context, *scheduler.Event, error) {
 		status := e.GetUpdate().GetStatus()
 		jobsSched.HandleTaskStateUpdate(&status)
 		reconciler.HandleTaskStateUpdate(&status)
@@ -62,9 +63,11 @@ func buildUpdateEventHandler(cli calls.Caller, reconciler *reconciliation.Reconc
 		case mesos.TASK_ERROR:
 			taskStateUpdatesCount.WithLabelValues("failed").Inc()
 		}
-		return nil
-	})
+		return ch(ctx, e, err)
+	}
+	return h.AndThen(controller.AckStatusUpdates(cli))
 }
+
 
 func buildOffersEventHandler(cli calls.Caller, jobsSched *jobsscheduler.Scheduler) events.HandlerFunc {
 	return func(ctx context.Context, e *scheduler.Event) error {
