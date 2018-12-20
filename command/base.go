@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/mitchellh/cli"
+	"github.com/mitchellh/go-homedir"
 	"github.com/mlowicki/rhythm/model"
 )
 
@@ -24,6 +27,26 @@ func (c *BaseCommand) Errorf(format string, a ...interface{}) {
 
 func (c *BaseCommand) Printf(format string, a ...interface{}) {
 	c.Ui.Output(fmt.Sprintf(format, a...))
+}
+
+func (c *BaseCommand) readLocalGitLabToken() (string, error) {
+	homePath, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+	f, err := os.Open(homePath + "/.rhythm-token")
+	if os.IsNotExist(err) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	buf := bytes.NewBuffer(nil)
+	if _, err := io.Copy(buf, f); err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(buf.String()), nil
 }
 
 /**
@@ -43,9 +66,15 @@ func (c *BaseCommand) authReq(method string) func(*http.Request) error {
 		case "":
 			return nil
 		case "gitlab":
-			token, err := c.Ui.AskSecret("GitLab token:")
+			token, err := c.readLocalGitLabToken()
 			if err != nil {
-				return err
+				c.Errorf("Error reading local GitLab access token: %s", err)
+			}
+			if token == "" {
+				token, err = c.Ui.AskSecret("GitLab token:")
+				if err != nil {
+					return err
+				}
 			}
 			req.Header.Add("X-Token", token)
 		case "ldap":

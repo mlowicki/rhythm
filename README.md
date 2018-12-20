@@ -308,7 +308,9 @@ Rhythm binary besides running in server mode provides also CLI tool. To see the 
 
 Address of Rhythm server is set either via `-addr` flag or `RHYTHM_ADDR` environment variable. If both are set then flag takes precedence.
 
-Authentication method is set either via `-auth` flag or `RHYTHM_AUTH` environment variable. If both are set then flag takes precedence. Possible values are `gitlab` or `ldap`. No method set means no authentication. 
+Authentication method is set either via `-auth` flag or `RHYTHM_AUTH` environment variable. If both are set then flag takes precedence. Possible values are `gitlab` or `ldap`. No method set means no authentication.
+
+To not enter GitLab access token every time, put token into `.rhythm-token` file in your home directory. CLI will use it when auth method is set to `gitlab`.
 
 ### health
 Provides basic information about state of the server.
