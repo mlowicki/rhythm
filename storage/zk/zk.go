@@ -123,6 +123,9 @@ func (s *storage) connect() error {
 func (s *storage) SetFrameworkID(id string) error {
 	path := s.dir + "/" + frameworkStateDir
 	payload, stat, err := s.conn.Get(path)
+	if err != nil {
+		return err
+	}
 	version := stat.Version
 	st := frameworkState{}
 	err = json.Unmarshal(payload, &st)
@@ -141,6 +144,9 @@ func (s *storage) SetFrameworkID(id string) error {
 func (s *storage) GetFrameworkID() (string, error) {
 	st := frameworkState{}
 	payload, _, err := s.conn.Get(s.dir + "/" + frameworkStateDir)
+	if err != nil {
+		return "", err
+	}
 	err = json.Unmarshal(payload, &st)
 	if err != nil {
 		return "", err
