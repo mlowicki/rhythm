@@ -86,7 +86,7 @@ var newJobSchema = schema{
 		"Container": schema{
 			"type": "object",
 			"oneOf": []schema{
-				schema{
+				{
 					"properties": schema{
 						"Docker": schema{
 							"type": "object",
@@ -99,7 +99,7 @@ var newJobSchema = schema{
 						},
 					},
 				},
-				schema{
+				{
 					"properties": schema{
 						"Mesos": schema{
 							"type": "object",
@@ -178,7 +178,7 @@ var updateJobSchema = schema{
 		"Container": schema{
 			"type": []string{"object", "null"},
 			"anyOf": []schema{
-				schema{
+				{
 					"properties": schema{
 						"Docker": schema{
 							"type": "object",
@@ -195,7 +195,7 @@ var updateJobSchema = schema{
 					},
 					"required": []string{},
 				},
-				schema{
+				{
 					"properties": schema{
 						"Mesos": schema{
 							"type": "object",

@@ -68,7 +68,6 @@ func buildUpdateEventHandler(cli calls.Caller, reconciler *reconciliation.Reconc
 	return h.AndThen(controller.AckStatusUpdates(cli))
 }
 
-
 func buildOffersEventHandler(cli calls.Caller, jobsSched *jobsscheduler.Scheduler) events.HandlerFunc {
 	return func(ctx context.Context, e *scheduler.Event) error {
 		offers := e.GetOffers().GetOffers()
