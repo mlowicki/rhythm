@@ -200,7 +200,7 @@ func (sched *Scheduler) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 	case mesos.TASK_LOST:
 		/*
 		 * 1. Reconciliation run gets running task A
-		 * 2. Task A finishes successfuly
+		 * 2. Task A finishes successfully
 		 * 3. Reconciliation for task A sent
 		 * 4. TASK_LOST is received which would mark job A as failed
 		 *
@@ -424,7 +424,7 @@ func (sched *Scheduler) newTaskInfo(job *model.Job) (*mesos.TaskInfo, error) {
 	return &task, nil
 }
 
-// Stores infomation about single run of a job.
+// Stores information about single run of a job.
 func (sched *Scheduler) addTaskHistory(status *mesos.TaskStatus, start time.Time, jid *model.JobID) {
 	executorID := status.GetExecutorID().GetValue()
 	agentID := status.GetAgentID().GetValue()

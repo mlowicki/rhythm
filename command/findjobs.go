@@ -19,7 +19,7 @@ func (c *FindJobsCommand) Run(args []string) int {
 	fs.Parse(args)
 	args = fs.Args()
 	if len(args) > 1 {
-		c.Errorf("Zero or one arugment is allowed")
+		c.Errorf("Zero or one argument is allowed")
 		return 1
 	}
 	var filter string

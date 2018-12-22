@@ -49,7 +49,7 @@ func newClient(addr string, token string, httpClient *http.Client) (*gitlab.Clie
 		return nil, fmt.Errorf("Error parsing GitLab address: %s\n", err)
 	}
 	if url.Scheme != "https" {
-		log.Warnf("GitLab address uses HTTP scheme which is insecure. It's recommented to use HTTPS instead.")
+		log.Warnf("GitLab address uses HTTP scheme which is insecure. It's recommended to use HTTPS instead.")
 	}
 	err = client.SetBaseURL(addr)
 	if err != nil {
