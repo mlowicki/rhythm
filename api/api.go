@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -509,12 +510,25 @@ func New(c *conf.API, s storage, state State) {
 	v1.Handle("/jobs/{group}/{project}/{id}/tasks", &handler{a, s, getTasks}).Methods("GET")
 	v1.Handle("/jobs/{group}/{project}/{id}/run", &handler{a, s, runJob}).Methods("POST")
 	v1.Handle("/metrics", promhttp.Handler())
+	tlsConf := &tls.Config{
+		MinVersion:               tls.VersionTLS12,
+		PreferServerCipherSuites: true,
+		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		},
+	}
 	srv := &http.Server{
 		Handler:      r,
 		Addr:         c.Addr,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
+		TLSConfig:    tlsConf,
+		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
 	}
 	go func() {
 		if c.CertFile != "" || c.KeyFile != "" {
