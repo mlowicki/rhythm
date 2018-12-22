@@ -23,3 +23,6 @@ dist/
 
 # Golang's vendor
 vendor/
+
+# Desktop Services Store on OSX
+.DS_Store
