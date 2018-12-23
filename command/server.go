@@ -76,7 +76,6 @@ func (c *ServerCommand) Run(args []string) int {
 			<-time.After(time.Second)
 		}
 	}
-	return 0
 }
 
 func (c *ServerCommand) Help() string {
