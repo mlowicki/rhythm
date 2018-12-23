@@ -69,7 +69,7 @@ func (c *ServerCommand) Run(args []string) int {
 		log.Info("Waiting until Mesos scheduler leader")
 		ctx := coord.WaitUntilLeader()
 		leader.Set()
-		err = mesos.Run(conf, ctx, stor, secr)
+		err = mesos.Run(ctx, conf, stor, secr)
 		leader.UnSet()
 		if err != nil {
 			log.Errorf("Controller error: %s", err)

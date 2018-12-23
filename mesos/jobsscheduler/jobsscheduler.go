@@ -78,7 +78,7 @@ func (sched *Scheduler) setJob(job model.Job) {
 	sched.jobsMut.Unlock()
 }
 
-func New(roles []string, stor storage, secr secrets, frameworkID, leaderURL func() string, ctx context.Context) *Scheduler {
+func New(ctx context.Context, roles []string, stor storage, secr secrets, frameworkID, leaderURL func() string) *Scheduler {
 	sched := Scheduler{
 		roles:       roles,
 		storage:     stor,

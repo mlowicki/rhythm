@@ -37,7 +37,7 @@ func getLeaderHost(info *mesos.MasterInfo) string {
 	return host
 }
 
-func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
+func Run(ctx context.Context, c *conf.Conf, stor storage, secr secrets) error {
 	frameworkIDStore, err := newFrameworkIDStore(stor)
 	if err != nil {
 		return err
@@ -56,7 +56,7 @@ func Run(c *conf.Conf, ctx context.Context, stor storage, secr secrets) error {
 	ctx, cancel := context.WithCancel(ctx)
 	reconciler := reconciliation.New(ctx, cli, stor)
 	offersTuner := offerstuner.New(ctx, cli, stor)
-	jobsSched := jobsscheduler.New(c.Mesos.Roles, stor, secr, frameworkID, leaderURL, ctx)
+	jobsSched := jobsscheduler.New(ctx, c.Mesos.Roles, stor, secr, frameworkID, leaderURL)
 	logger := controller.LogEvents(func(e *scheduler.Event) {
 		log.Printf("Event: %s", e)
 	}).Unless(c.Mesos.LogAllEvents)
