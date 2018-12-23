@@ -56,9 +56,8 @@ func (c *ServerCommand) Run(args []string) int {
 	}, func() float64 {
 		if leader.IsSet() {
 			return 1
-		} else {
-			return 0
 		}
+		return 0
 	})
 	prometheus.MustRegister(leaderGauge)
 	stor := storage.New(&conf.Storage)

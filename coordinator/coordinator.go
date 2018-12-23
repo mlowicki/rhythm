@@ -19,8 +19,7 @@ func New(c *conf.Coordinator) coordinator {
 			log.Fatal(err)
 		}
 		return coord
-	} else {
-		log.Fatalf("Unknown backend: %s", c.Backend)
-		return nil
 	}
+	log.Fatalf("Unknown backend: %s", c.Backend)
+	return nil
 }

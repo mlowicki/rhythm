@@ -34,8 +34,7 @@ func New(c *conf.Storage) storage {
 			log.Fatal(err)
 		}
 		return s
-	} else {
-		log.Fatalf("Unknown backend: %s", c.Backend)
-		return nil
 	}
+	log.Fatalf("Unknown backend: %s", c.Backend)
+	return nil
 }

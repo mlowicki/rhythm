@@ -104,9 +104,8 @@ func coloredState(state model.State) string {
 	fun, ok := stateColorFunc[state]
 	if ok {
 		return fun(state.String())
-	} else {
-		return state.String()
 	}
+	return state.String()
 }
 
 type flagSet struct {

@@ -84,10 +84,9 @@ func buildOffersEventHandler(cli calls.Caller, jobsSched *jobsscheduler.Schedule
 			if err != nil {
 				log.Errorf("Failed to accept offer: %s", err)
 				return nil
-			} else {
-				for _, task := range tasks {
-					log.Debugf("Task staged: %s", task.TaskID.Value)
-				}
+			}
+			for _, task := range tasks {
+				log.Debugf("Task staged: %s", task.TaskID.Value)
 			}
 			taskStateUpdatesCount.WithLabelValues("staged").Add(float64(len(tasks)))
 		}

@@ -257,9 +257,8 @@ func (a *Authorizer) GetProjectAccessLevel(r *http.Request, group string, projec
 	}
 	if readOnlyAccess {
 		return auth.ReadOnly, nil
-	} else {
-		return auth.NoAccess, nil
 	}
+	return auth.NoAccess, nil
 }
 
 func (a *Authorizer) getLevelFromACL(acl *map[string]map[string]string, name, group, project string) auth.AccessLevel {

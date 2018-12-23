@@ -82,9 +82,8 @@ func (a *Authorizer) GetProjectAccessLevel(r *http.Request, group string, projec
 	if perms.ProjectAccess == nil {
 		if perms.GroupAccess == nil {
 			return auth.NoAccess, nil
-		} else {
-			lvl = perms.GroupAccess.AccessLevel
 		}
+		lvl = perms.GroupAccess.AccessLevel
 	} else {
 		if perms.GroupAccess == nil {
 			lvl = perms.ProjectAccess.AccessLevel
