@@ -18,12 +18,14 @@ import (
 
 const envRhythmAddr = "RHYTHM_ADDR"
 
+// HealthInfo describes server status.
 type HealthInfo struct {
 	Leader     bool
 	Version    string
 	ServerTime string
 }
 
+// New creates instance of API client.
 func New(addr string, authReq func(*http.Request) error) *Client {
 	c := Client{
 		addr:    addr,
@@ -35,6 +37,7 @@ func New(addr string, authReq func(*http.Request) error) *Client {
 	return &c
 }
 
+// Client describes API client.
 type Client struct {
 	addr       string
 	authReq    func(*http.Request) error
@@ -91,6 +94,7 @@ func (c *Client) send(req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
+// Health returns server status info.
 func (c *Client) Health() (*HealthInfo, error) {
 	u, err := c.getAddr()
 	if err != nil {
@@ -121,6 +125,7 @@ func (c *Client) Health() (*HealthInfo, error) {
 	return &health, nil
 }
 
+// ReadTasks returns list of job's runs.
 func (c *Client) ReadTasks(fqid string) ([]*model.Task, error) {
 	u, err := c.getAddr()
 	if err != nil {
@@ -151,6 +156,7 @@ func (c *Client) ReadTasks(fqid string) ([]*model.Task, error) {
 	return tasks, nil
 }
 
+// ReadJob returns job's info.
 func (c *Client) ReadJob(fqid string) (*model.Job, error) {
 	if strings.Count(fqid, "/") != 2 {
 		return nil, fmt.Errorf("Invalid job ID")
@@ -187,6 +193,7 @@ func (c *Client) ReadJob(fqid string) (*model.Job, error) {
 	return &job, nil
 }
 
+// DeleteJob removes job.
 func (c *Client) DeleteJob(fqid string) error {
 	u, err := c.getAddr()
 	if err != nil {
@@ -212,6 +219,7 @@ func (c *Client) DeleteJob(fqid string) error {
 	return nil
 }
 
+// RunJob schedules job for immeddiate run.
 func (c *Client) RunJob(fqid string) error {
 	u, err := c.getAddr()
 	if err != nil {
@@ -237,6 +245,7 @@ func (c *Client) RunJob(fqid string) error {
 	return nil
 }
 
+// CreateJob adds new job.
 func (c *Client) CreateJob(jobEncoded []byte) error {
 	u, err := c.getAddr()
 	if err != nil {
@@ -262,6 +271,7 @@ func (c *Client) CreateJob(jobEncoded []byte) error {
 	return nil
 }
 
+// UpdateJob modifies existing job.
 func (c *Client) UpdateJob(fqid string, changesEncoded []byte) error {
 	u, err := c.getAddr()
 	if err != nil {
@@ -287,6 +297,7 @@ func (c *Client) UpdateJob(fqid string, changesEncoded []byte) error {
 	return nil
 }
 
+// FindJobs returns jobs matching filter.
 func (c *Client) FindJobs(filter string) ([]*model.Job, error) {
 	if strings.Count(filter, "/") > 1 {
 		return nil, fmt.Errorf("Invalid filter")
