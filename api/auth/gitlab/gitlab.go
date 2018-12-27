@@ -14,11 +14,13 @@ import (
 	"github.com/xanzy/go-gitlab"
 )
 
+// Authorizer provides access control level backed by GitLab server.
 type Authorizer struct {
 	addr       string
 	httpClient *http.Client
 }
 
+// New creates GitLab authorizer.
 func New(c *conf.APIAuthGitLab) (*Authorizer, error) {
 	var httpClient *http.Client
 	if c.CACert != "" {
@@ -58,6 +60,7 @@ func newClient(addr string, token string, httpClient *http.Client) (*gitlab.Clie
 	return client, nil
 }
 
+// GetProjectAccessLevel returns type of access to project for request sent by client.
 func (a *Authorizer) GetProjectAccessLevel(r *http.Request, group string, project string) (auth.AccessLevel, error) {
 	client, err := newClient(a.addr, r.Header.Get("X-Token"), a.httpClient)
 	if err != nil {
