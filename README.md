@@ -311,7 +311,7 @@ Address of Rhythm server is set either via `-addr` flag or `RHYTHM_ADDR` environ
 
 Authentication method is set either via `-auth` flag or `RHYTHM_AUTH` environment variable. If both are set then flag takes precedence. Possible values are `gitlab` or `ldap`. No method set means no authentication.
 
-To not enter GitLab access token every time, put token into `.rhythm-token` file in your home directory. CLI will use it when auth method is set to `gitlab`.
+To not enter GitLab access token every time, use [token-update command](#token-update).
 
 ### health
 Provides basic information about state of the server.
@@ -491,4 +491,13 @@ group:project2:id Failed
 $ rhythm find-jobs --addr=https://example.com group/project
 group:project:id Idle
 group:project:id2 Idle
+```
+
+## update-token
+Update (or set) authz token. Used to save token so subsequent commands requiring authorization won't require to enter token every time.
+By default it stores token on disk in the `~/.rhythm-token` file but it can be changed via the use of [token helper](./token_helper.md').
+
+```
+$ rhythm update-token
+Token:
 ```

@@ -4,18 +4,20 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
-	"strings"
+	"path/filepath"
 
 	"github.com/fatih/color"
 	"github.com/mitchellh/cli"
-	"github.com/mitchellh/go-homedir"
+	"github.com/mlowicki/rhythm/command/tokenhelper"
 	"github.com/mlowicki/rhythm/model"
 )
 
-const envRhythmAuth = "RHYTHM_AUTH"
+const (
+	envRhythmAuth        = "RHYTHM_AUTH"
+	envRhythmTokenHelper = "RHYTHM_TOKEN_HELPER"
+)
 
 type BaseCommand struct {
 	Ui cli.Ui
@@ -29,24 +31,29 @@ func (c *BaseCommand) Printf(format string, a ...interface{}) {
 	c.Ui.Output(fmt.Sprintf(format, a...))
 }
 
-func (c *BaseCommand) readLocalGitLabToken() (string, error) {
-	homePath, err := homedir.Dir()
+func (c *BaseCommand) getTokenHelper() (tokenhelper.Helper, error) {
+	if path := os.Getenv(envRhythmTokenHelper); path != "" {
+		// Absolute path are only allowed to avoid opening arbitrary binary
+		// from e.g. current directory.
+		if !filepath.IsAbs(path) {
+			return nil, fmt.Errorf("%s must be set to an absolute path", envRhythmTokenHelper)
+
+		}
+		return &tokenhelper.External{BinaryPath: path}, nil
+	}
+	return &tokenhelper.Internal{}, nil
+}
+
+func (c *BaseCommand) readGitLabToken() (string, error) {
+	helper, err := c.getTokenHelper()
 	if err != nil {
 		return "", err
 	}
-	f, err := os.Open(homePath + "/.rhythm-token")
-	if os.IsNotExist(err) {
-		return "", nil
-	}
+	token, err := helper.Read()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error getting token from token helper: %s", err)
 	}
-	defer f.Close()
-	buf := bytes.NewBuffer(nil)
-	if _, err := io.Copy(buf, f); err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(buf.String()), nil
+	return token, nil
 }
 
 /**
@@ -66,9 +73,9 @@ func (c *BaseCommand) authReq(method string) func(*http.Request) error {
 		case "":
 			return nil
 		case "gitlab":
-			token, err := c.readLocalGitLabToken()
+			token, err := c.readGitLabToken()
 			if err != nil {
-				c.Errorf("Error reading local GitLab access token: %s", err)
+				return err
 			}
 			if token == "" {
 				token, err = c.Ui.AskSecret("GitLab token:")

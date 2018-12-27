@@ -56,6 +56,9 @@ func main() {
 		"read-tasks": func() (cli.Command, error) {
 			return &command.ReadTasksCommand{BaseCommand: &baseCmd}, nil
 		},
+		"update-token": func() (cli.Command, error) {
+			return &command.UpdateTokenCommand{BaseCommand: &baseCmd}, nil
+		},
 	}
 	exitStatus, err := c.Run()
 	if err != nil {
