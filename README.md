@@ -8,6 +8,7 @@
 * [Cron syntax](http://www.nncron.ru/help/EN/working/cron-format.htm)
 * Integration with [Sentry](https://sentry.io/) for error tracking
 * Command-line client ([Documentation](#command-line-client))
+* Support for Linux and OSX
 
 ## Glossary
 
