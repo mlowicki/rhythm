@@ -1,4 +1,4 @@
-# Rhythm
+# Rhythm [![Go Report Card](https://goreportcard.com/badge/github.com/mlowicki/rhythm)](https://goreportcard.com/report/github.com/mlowicki/rhythm)
 
 ## Features
 
