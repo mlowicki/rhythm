@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Conf defines server options.
 type Conf struct {
 	API         API
 	Storage     Storage
@@ -16,6 +17,7 @@ type Conf struct {
 	Logging     Logging
 }
 
+// API defines API server options.
 type API struct {
 	Addr     string
 	CertFile string
@@ -23,23 +25,27 @@ type API struct {
 	Auth     APIAuth
 }
 
+// API server authz backends.
 const (
 	APIAuthBackendGitLab = "gitlab"
 	APIAuthBackendNone   = "none"
 	APIAuthBackendLDAP   = "ldap"
 )
 
+// APIAuth defines API server authz options.
 type APIAuth struct {
 	Backend string
 	GitLab  APIAuthGitLab
 	LDAP    APIAuthLDAP
 }
 
+// APIAuthGitLab defines options of GitLab authz backend.
 type APIAuthGitLab struct {
 	Addr   string
 	CACert string
 }
 
+// APIAuthLDAP defines options of LDAP authz backend.
 type APIAuthLDAP struct {
 	Addrs              []string
 	UserDN             string
@@ -56,13 +62,16 @@ type APIAuthLDAP struct {
 	CaseSensitiveNames bool
 }
 
+// Storage defines server storage options.
 type Storage struct {
 	Backend   string
 	ZooKeeper StorageZK
 }
 
+// StorageBackendZK denotes ZooKeeper storage backend.
 const StorageBackendZK = "zookeeper"
 
+// StorageZK defines ZooKeeper storage backend options.
 type StorageZK struct {
 	Dir     string
 	Addrs   []string
@@ -71,13 +80,16 @@ type StorageZK struct {
 	TaskTTL time.Duration
 }
 
+// CoordinatorBackendZK denotes ZooKeeper coordinator backend.
 const CoordinatorBackendZK = "zookeeper"
 
+// Coordinator defines server coordinator options.
 type Coordinator struct {
 	Backend   string
 	ZooKeeper CoordinatorZK
 }
 
+// CoordinatorZK defines ZooKeeper coordinator backend options.
 type CoordinatorZK struct {
 	Dir         string
 	Addrs       []string
@@ -86,31 +98,37 @@ type CoordinatorZK struct {
 	ElectionDir string
 }
 
+// ZooKeeper authn methods.
 const (
 	ZKAuthSchemeDigest = "digest"
 	ZKAuthSchemeWorld  = "world"
 )
 
+// ZKAuth defines ZooKeeper authn options.
 type ZKAuth struct {
 	Scheme string
 	Digest ZKAuthDigest
 }
 
+// ZKAuthDigest defines options of ZooKeeper's digest authn scheme.
 type ZKAuthDigest struct {
 	User     string
 	Password string
 }
 
+// Secrets backends.
 const (
 	SecretsBackendVault = "vault"
 	SecretsBackendNone  = "none"
 )
 
+// Secrets defines server secrets options.
 type Secrets struct {
 	Backend string
 	Vault   SecretsVault
 }
 
+// SecretsVault defines Vault secrets backend options.
 type SecretsVault struct {
 	Token   string
 	Addr    string
@@ -119,6 +137,7 @@ type SecretsVault struct {
 	CACert  string
 }
 
+// Mesos defines Mesos-related options.
 type Mesos struct {
 	Auth            MesosAuth
 	Addrs           []string
@@ -127,43 +146,53 @@ type Mesos struct {
 	FailoverTimeout time.Duration
 	Hostname        string
 	User            string
-	WebUiURL        string
+	WebUIURL        string
 	Principal       string
 	Labels          map[string]string
 	Roles           []string
 	LogAllEvents    bool
 }
 
+// Mesos authn schemes.
 const (
 	MesosAuthTypeBasic = "basic"
 	MesosAuthTypeNone  = "none"
 )
 
+// MesosAuth defines Mesos authn options.
 type MesosAuth struct {
 	Type  string
 	Basic MesosAuthBasic
 }
 
+// MesosAuthBasic defines options of Mesos' basic authn method.
 type MesosAuthBasic struct {
 	Username string
 	Password string
 }
 
+// Logging backends.
 const (
 	LoggingBackendNone   = "none"
 	LoggingBackendSentry = "sentry"
-	LoggingLevelDebug    = "debug"
-	LoggingLevelInfo     = "info"
-	LoggingLevelWarn     = "warn"
-	LoggingLevelError    = "error"
 )
 
+// Logging levels.
+const (
+	LoggingLevelDebug = "debug"
+	LoggingLevelInfo  = "info"
+	LoggingLevelWarn  = "warn"
+	LoggingLevelError = "error"
+)
+
+// Logging defines server logging options.
 type Logging struct {
 	Level   string
 	Backend string
 	Sentry  LoggingSentry
 }
 
+// LoggingSentry defines Sentry logging backend options.
 type LoggingSentry struct {
 	DSN    string
 	CACert string
@@ -186,6 +215,7 @@ func millisecondFieldsToDuration(v reflect.Value) {
 	}
 }
 
+// New creates new configuration struct.
 func New(path string) (*Conf, error) {
 	file, err := ioutil.ReadFile(path)
 	if err != nil {

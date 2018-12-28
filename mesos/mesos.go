@@ -46,7 +46,7 @@ func newFrameworkInfo(conf *conf.Mesos, idStore store.Singleton) *mesos.Framewor
 		},
 		Labels:          &mesos.Labels{labels},
 		FailoverTimeout: func() *float64 { ft := conf.FailoverTimeout.Seconds(); return &ft }(),
-		WebUiURL:        &conf.WebUiURL,
+		WebUiURL:        &conf.WebUIURL,
 		Hostname:        &conf.Hostname,
 		Principal:       &conf.Principal,
 		Roles:           conf.Roles,
