@@ -14,7 +14,7 @@ The interface to a token helper is extremely simple: the script is passed with o
 If program succeeds, it should exit with status code 0. If it encounters an issue that prevents it from working, it should exit with some other status code. You should write a user-friendly error message to `STDERR`. You should never write anything other than the token to `STDOUT`, as Rhythm assumes whatever it gets on `STDOUT` is the token.
 
 ## Example Token Helper
-This ia an example token helper that stores and retrives token in `~/.rhythm-token` in a similar way as default Rhythm CLI behaviour described above.
+This is an example token helper that stores and retrives token in `~/.rhythm-token` in a similar way as default Rhythm CLI behaviour described above.
 
 ```bash
 #!/usr/bin/env bash
@@ -34,5 +34,3 @@ else
 fi
 exit 0
 ```
-
-Save it on disk and set `RHYTHM_TOKEN_HELPER` to absolute path.
