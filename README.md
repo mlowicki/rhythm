@@ -311,7 +311,7 @@ Address of Rhythm server is set either via `-addr` flag or `RHYTHM_ADDR` environ
 
 Authentication method is set either via `-auth` flag or `RHYTHM_AUTH` environment variable. If both are set then flag takes precedence. Possible values are `gitlab` or `ldap`. No method set means no authentication.
 
-To not enter GitLab access token every time, use [token-update command](#token-update).
+To not enter GitLab access token every time, use [update-token](#update-token) command.
 
 ### health
 Provides basic information about state of the server.
