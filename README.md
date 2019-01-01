@@ -497,6 +497,7 @@ group:project:id2 Idle
 Update (or set) authz token. Used to save token so subsequent commands requiring authorization won't require to enter token every time.
 By default it stores token on disk in the `~/.rhythm-token` file but it can be changed via the use of [token helper](./token_helper.md').
 
+Example:
 ```
 $ rhythm update-token
 Token:
