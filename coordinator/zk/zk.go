@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Coordinator implements leader election systems backed by ZooKeeper.
 type Coordinator struct {
 	dir         string
 	electionDir string
@@ -25,6 +26,7 @@ type Coordinator struct {
 	sync.Mutex
 }
 
+// WaitUntilLeader blocks until this coordinator instance becomes a leader.
 func (coord *Coordinator) WaitUntilLeader() context.Context {
 	for {
 		isLeader, ch, err := coord.isLeader()
@@ -122,6 +124,7 @@ func (coord *Coordinator) initZK() error {
 	return nil
 }
 
+// New creates new ZooKeeper-backed coordinator.
 func New(c *conf.CoordinatorZK) (*Coordinator, error) {
 	conn, eventChan, err := zk.Connect(c.Addrs, c.Timeout)
 	if err != nil {

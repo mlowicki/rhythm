@@ -462,11 +462,13 @@ func updateJob(a authorizer, s storage, w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
+// State describes server info.
 type State struct {
 	IsLeader func() bool
 	Version  string
 }
 
+// New creates instance of API server and runs it in separate goroutine.
 func New(c *conf.API, s storage, state State) {
 	r := mux.NewRouter()
 	v1 := r.PathPrefix("/api/v1").Subrouter().StrictSlash(true)

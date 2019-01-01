@@ -29,7 +29,7 @@ type storage interface {
 
 func New(c *conf.Storage) storage {
 	if c.Backend == conf.StorageBackendZK {
-		s, err := zk.NewStorage(&c.ZooKeeper)
+		s, err := zk.New(&c.ZooKeeper)
 		if err != nil {
 			log.Fatal(err)
 		}

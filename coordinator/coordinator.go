@@ -12,6 +12,7 @@ type coordinator interface {
 	WaitUntilLeader() context.Context
 }
 
+// New creates fresh coordinator instance.
 func New(c *conf.Coordinator) coordinator {
 	if c.Backend == conf.CoordinatorBackendZK {
 		coord, err := zk.New(&c.ZooKeeper)

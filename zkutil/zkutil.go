@@ -7,6 +7,7 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 )
 
+// AddAuth authenticates connection to ZooKeeper.
 func AddAuth(conn *zk.Conn, c *conf.ZKAuth) (func(perms int32) []zk.ACL, error) {
 	if c.Scheme == conf.ZKAuthSchemeDigest {
 		err := conn.AddAuth("digest", []byte(c.Digest.User+":"+c.Digest.Password))

@@ -38,7 +38,8 @@ func init() {
 	prometheus.MustRegister(tasksCleanupCount)
 }
 
-func NewStorage(c *conf.StorageZK) (*storage, error) {
+// New creates fresh instance of ZooKeeper-backed storage.
+func New(c *conf.StorageZK) (*storage, error) {
 	s := &storage{
 		dir:     "/" + c.Dir,
 		addrs:   c.Addrs,

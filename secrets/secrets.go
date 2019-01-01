@@ -10,12 +10,14 @@ type secrets interface {
 	Read(string) (string, error)
 }
 
+// None is a simple secrets backend returning passed path.
 type None struct{}
 
 func (*None) Read(path string) (string, error) {
 	return path, nil
 }
 
+// New cretes secrets backend.
 func New(c *conf.Secrets) secrets {
 	var backend secrets
 	switch c.Backend {
