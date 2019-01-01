@@ -10,12 +10,14 @@ import (
 	"github.com/mlowicki/rhythm/model"
 )
 
+// ReadJobCommand implements command for getting job's info.
 type ReadJobCommand struct {
 	*BaseCommand
 	addr string
 	auth string
 }
 
+// Run executes a command.
 func (c *ReadJobCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
@@ -84,6 +86,7 @@ func (c *ReadJobCommand) printMap(title string, m map[string]string) {
 	}
 }
 
+// Help returns full manual.
 func (c *ReadJobCommand) Help() string {
 	help := `
 Usage: rhythm read-job [options] FQID
@@ -94,6 +97,7 @@ Usage: rhythm read-job [options] FQID
 	return strings.TrimSpace(help)
 }
 
+// Flags returns parameters associated with command.
 func (c *ReadJobCommand) Flags() *flagSet {
 	fs := flag.NewFlagSet("read-job", flag.ContinueOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
@@ -102,6 +106,7 @@ func (c *ReadJobCommand) Flags() *flagSet {
 	return &flagSet{fs}
 }
 
+// Synopsis returns short, one-line help.
 func (c *ReadJobCommand) Synopsis() string {
 	return "Show job configuration and state"
 }

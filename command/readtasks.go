@@ -9,12 +9,14 @@ import (
 	"github.com/mlowicki/rhythm/command/apiclient"
 )
 
+// ReadTaskCommand implements command for returning job's run (history).
 type ReadTasksCommand struct {
 	*BaseCommand
 	addr string
 	auth string
 }
 
+// Run executes a command.
 func (c *ReadTasksCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
@@ -69,6 +71,7 @@ func (c *ReadTasksCommand) Run(args []string) int {
 	return 0
 }
 
+// Help returns full manual.
 func (c *ReadTasksCommand) Help() string {
 	help := `
 Usage: rhythm read-tasks [options] FQID
@@ -79,6 +82,7 @@ Usage: rhythm read-tasks [options] FQID
 	return strings.TrimSpace(help)
 }
 
+// Flags returns parameters associated with command.
 func (c *ReadTasksCommand) Flags() *flagSet {
 	fs := flag.NewFlagSet("read-tasks", flag.ContinueOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
@@ -87,6 +91,7 @@ func (c *ReadTasksCommand) Flags() *flagSet {
 	return &flagSet{fs}
 }
 
+// Synopsis returns short, one-line help.
 func (c *ReadTasksCommand) Synopsis() string {
 	return "Show job's tasks (runs)"
 }

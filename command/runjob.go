@@ -7,12 +7,14 @@ import (
 	"github.com/mlowicki/rhythm/command/apiclient"
 )
 
+// RunJobCommand implements command for scheduling job for immediate run.
 type RunJobCommand struct {
 	*BaseCommand
 	addr string
 	auth string
 }
 
+// Run executes a command.
 func (c *RunJobCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
@@ -29,6 +31,7 @@ func (c *RunJobCommand) Run(args []string) int {
 	return 0
 }
 
+// Help returns full manual.
 func (c *RunJobCommand) Help() string {
 	help := `
 Usage: rhythm run-job [options] FQID
@@ -40,6 +43,7 @@ Usage: rhythm run-job [options] FQID
 	return strings.TrimSpace(help)
 }
 
+// Flags returns parameters associated with command.
 func (c *RunJobCommand) Flags() *flagSet {
 	fs := flag.NewFlagSet("run-job", flag.ContinueOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
@@ -48,6 +52,7 @@ func (c *RunJobCommand) Flags() *flagSet {
 	return &flagSet{fs}
 }
 
+// Synopsis returns short, one-line help.
 func (c *RunJobCommand) Synopsis() string {
 	return "Run job"
 }

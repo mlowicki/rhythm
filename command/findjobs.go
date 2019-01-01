@@ -7,6 +7,7 @@ import (
 	"github.com/mlowicki/rhythm/command/apiclient"
 )
 
+// FindJobsCommand implements command for searching based on specified pattern.
 type FindJobsCommand struct {
 	*BaseCommand
 	addr      string
@@ -14,6 +15,7 @@ type FindJobsCommand struct {
 	showState bool
 }
 
+// Run executes a command.
 func (c *FindJobsCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
@@ -41,6 +43,7 @@ func (c *FindJobsCommand) Run(args []string) int {
 	return 0
 }
 
+// Help returns full manual.
 func (c *FindJobsCommand) Help() string {
 	help := `
 Usage: rhythm find-jobs [options] FILTER
@@ -56,6 +59,7 @@ Usage: rhythm find-jobs [options] FILTER
 	return strings.TrimSpace(help)
 }
 
+// Flags returns parameters associated with command.
 func (c *FindJobsCommand) Flags() *flagSet {
 	fs := flag.NewFlagSet("find-jobs", flag.ContinueOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
@@ -65,6 +69,7 @@ func (c *FindJobsCommand) Flags() *flagSet {
 	return &flagSet{fs}
 }
 
+// Synopsis returns short, one-line help.
 func (c *FindJobsCommand) Synopsis() string {
 	return "Show IDs of jobs matching filter"
 }

@@ -7,12 +7,14 @@ import (
 	"github.com/mlowicki/rhythm/command/apiclient"
 )
 
+// DeleteJobCommand implements command for deleting existing job.
 type DeleteJobCommand struct {
 	*BaseCommand
 	addr string
 	auth string
 }
 
+// Run executes a command.
 func (c *DeleteJobCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
@@ -29,6 +31,7 @@ func (c *DeleteJobCommand) Run(args []string) int {
 	return 0
 }
 
+// Help returns full manual.
 func (c *DeleteJobCommand) Help() string {
 	help := `
 Usage: rhythm delete-job [options] FQID
@@ -39,6 +42,7 @@ Usage: rhythm delete-job [options] FQID
 	return strings.TrimSpace(help)
 }
 
+// Flags returns parameters associated with command.
 func (c *DeleteJobCommand) Flags() *flagSet {
 	fs := flag.NewFlagSet("delete-job", flag.ContinueOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
@@ -47,6 +51,7 @@ func (c *DeleteJobCommand) Flags() *flagSet {
 	return &flagSet{fs}
 }
 
+// Synopsis returns short, one-line help.
 func (c *DeleteJobCommand) Synopsis() string {
 	return "Remove job"
 }

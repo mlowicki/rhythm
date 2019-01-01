@@ -19,14 +19,17 @@ const (
 	envRhythmTokenHelper = "RHYTHM_TOKEN_HELPER"
 )
 
+// BaseCommand implements funcionality shared by all commands.
 type BaseCommand struct {
 	Ui cli.Ui
 }
 
+// Errrof outputs formatted error message.
 func (c *BaseCommand) Errorf(format string, a ...interface{}) {
 	c.Ui.Error(fmt.Sprintf(format, a...))
 }
 
+// Printf outputs formatted message.
 func (c *BaseCommand) Printf(format string, a ...interface{}) {
 	c.Ui.Output(fmt.Sprintf(format, a...))
 }

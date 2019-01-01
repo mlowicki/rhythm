@@ -8,12 +8,14 @@ import (
 	"github.com/mlowicki/rhythm/command/apiclient"
 )
 
+// CreateJobCommand implements command for adding new job.
 type CreateJobCommand struct {
 	*BaseCommand
 	addr string
 	auth string
 }
 
+// Run executes a command.
 func (c *CreateJobCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
@@ -35,6 +37,7 @@ func (c *CreateJobCommand) Run(args []string) int {
 	return 0
 }
 
+// Help returns full manual.
 func (c *CreateJobCommand) Help() string {
 	help := `
 Usage: rhythm create-job [options] PATH
@@ -45,6 +48,7 @@ Usage: rhythm create-job [options] PATH
 	return strings.TrimSpace(help)
 }
 
+// Flags returns parameters associated with command.
 func (c *CreateJobCommand) Flags() *flagSet {
 	fs := flag.NewFlagSet("create-job", flag.ContinueOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
@@ -53,6 +57,7 @@ func (c *CreateJobCommand) Flags() *flagSet {
 	return &flagSet{fs}
 }
 
+// Synopsis returns short, one-line help.
 func (c *CreateJobCommand) Synopsis() string {
 	return "Add new job"
 }

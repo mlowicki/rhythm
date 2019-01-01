@@ -21,6 +21,7 @@ import (
 	"github.com/tevino/abool"
 )
 
+// ServerCommand implements command for running server.
 type ServerCommand struct {
 	*BaseCommand
 	Version     string
@@ -28,6 +29,7 @@ type ServerCommand struct {
 	testLogging bool
 }
 
+// Run executes a command.
 func (c *ServerCommand) Run(args []string) int {
 	var infoGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "rhythm_info",
@@ -77,6 +79,7 @@ func (c *ServerCommand) Run(args []string) int {
 	}
 }
 
+// Help returns full manual.
 func (c *ServerCommand) Help() string {
 	help := `
 Usage: rhythm server [options]
@@ -91,6 +94,7 @@ Usage: rhythm server [options]
 	return strings.TrimSpace(help)
 }
 
+// Flags returns parameters associated with command.
 func (c *ServerCommand) Flags() *flagSet {
 	fs := flag.NewFlagSet("server", flag.ContinueOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
@@ -99,6 +103,7 @@ func (c *ServerCommand) Flags() *flagSet {
 	return &flagSet{fs}
 }
 
+// Synopsis returns short, one-line help.
 func (c *ServerCommand) Synopsis() string {
 	return "Start a Rhythm server"
 }
