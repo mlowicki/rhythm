@@ -13,7 +13,7 @@ func init() {
 	log.AddHook(filename.NewHook())
 }
 
-const version = "0.12"
+const version = "0.13"
 
 func main() {
 	ui := &cli.BasicUi{
