@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 )
 
+// BuildCertPool returns set of certificates stored under `path`.
 func BuildCertPool(path string) (*x509.CertPool, error) {
 	pool := x509.NewCertPool()
 	certs, err := ioutil.ReadFile(path)

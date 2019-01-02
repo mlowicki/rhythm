@@ -9,7 +9,7 @@ import (
 	"github.com/mlowicki/rhythm/command/apiclient"
 )
 
-// ReadTaskCommand implements command for returning job's run (history).
+// ReadTasksCommand implements command for returning job's run (history).
 type ReadTasksCommand struct {
 	*BaseCommand
 	addr string

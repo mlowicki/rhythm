@@ -5,10 +5,12 @@ import (
 	"strings"
 )
 
+// UpdateTokenCommand implements command for updating authz token.
 type UpdateTokenCommand struct {
 	*BaseCommand
 }
 
+// Run executes a command.
 func (c *UpdateTokenCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
@@ -30,6 +32,7 @@ func (c *UpdateTokenCommand) Run(args []string) int {
 	return 0
 }
 
+// Help returns full manual.
 func (c *UpdateTokenCommand) Help() string {
 	help := `
 Usage: rhythm update-token
@@ -40,12 +43,14 @@ Usage: rhythm update-token
 	return strings.TrimSpace(help)
 }
 
+// Flags returns parameters associated with command.
 func (c *UpdateTokenCommand) Flags() *flagSet {
 	fs := flag.NewFlagSet("update-token", flag.ExitOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
 	return &flagSet{fs}
 }
 
+// Synopsis returns short, one-line help.
 func (c *UpdateTokenCommand) Synopsis() string {
 	return "Update (or set) authz token"
 }

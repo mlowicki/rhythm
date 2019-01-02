@@ -30,7 +30,7 @@ type storage interface {
 	DequeueJob(group, project, id string) error
 }
 
-// Decides which jobs to run in response to received offers.
+// Scheduler decides which jobs to run in response to received offers.
 type Scheduler struct {
 	roles       []string
 	storage     storage
@@ -78,6 +78,7 @@ func (sched *Scheduler) setJob(job model.Job) {
 	sched.jobsMut.Unlock()
 }
 
+// New creates fresh instance of jobs scheduler.
 func New(ctx context.Context, roles []string, stor storage, secr secrets, frameworkID, leaderURL func() string) *Scheduler {
 	sched := Scheduler{
 		roles:       roles,
@@ -169,6 +170,7 @@ func (sched *Scheduler) syncJobsCache() {
 	log.Debugf("Jobs cache synced")
 }
 
+// HandleTaskStateUpdate processes task state change.
 func (sched *Scheduler) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 	tid := status.TaskID.Value
 	jid, err := parseTaskID(tid)
@@ -252,6 +254,7 @@ func (sched *Scheduler) findTaskResources(taskResources, offerResources mesos.Re
 	return found
 }
 
+// FindTasksForOffer returns tasks to run for passed offer.
 func (sched *Scheduler) FindTasksForOffer(ctx context.Context, offer *mesos.Offer) []mesos.TaskInfo {
 	rs := mesos.Resources(offer.Resources)
 	log.Debugf("Finding tasks for offer: %s", rs)

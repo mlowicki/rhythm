@@ -27,6 +27,7 @@ type storage interface {
 	GetQueuedJobsIDs() ([]model.JobID, error)
 }
 
+// New creates fresh instance of storage.
 func New(c *conf.Storage) storage {
 	if c.Backend == conf.StorageBackendZK {
 		s, err := zk.New(&c.ZooKeeper)

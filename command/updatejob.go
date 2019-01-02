@@ -8,12 +8,14 @@ import (
 	"github.com/mlowicki/rhythm/command/apiclient"
 )
 
+// UpdateJobCommand implements command for changing existing job.
 type UpdateJobCommand struct {
 	*BaseCommand
 	addr string
 	auth string
 }
 
+// Run executes a command.
 func (c *UpdateJobCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
@@ -35,6 +37,7 @@ func (c *UpdateJobCommand) Run(args []string) int {
 	return 0
 }
 
+// Help returns full manual.
 func (c *UpdateJobCommand) Help() string {
 	help := `
 Usage: rhythm update-job [options] FQID PATH
@@ -46,6 +49,7 @@ Usage: rhythm update-job [options] FQID PATH
 	return strings.TrimSpace(help)
 }
 
+// Flags returns parameters associated with command.
 func (c *UpdateJobCommand) Flags() *flagSet {
 	fs := flag.NewFlagSet("update-job", flag.ContinueOnError)
 	fs.Usage = func() { c.Printf(c.Help()) }
@@ -54,6 +58,7 @@ func (c *UpdateJobCommand) Flags() *flagSet {
 	return &flagSet{fs}
 }
 
+// Synopsis returns short, one-line help.
 func (c *UpdateJobCommand) Synopsis() string {
 	return "Modify job"
 }

@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Client implements Vault client reading secrets with specified prefix.
 type Client struct {
 	c    *vault.Client
 	root string
@@ -37,7 +38,8 @@ func (c *Client) Read(path string) (string, error) {
 	}
 }
 
-func NewClient(c *conf.SecretsVault) (*Client, error) {
+// New creates fresh instance of Vault client.
+func New(c *conf.SecretsVault) (*Client, error) {
 	url, err := url.Parse(c.Addr)
 	if err != nil {
 		return nil, err

@@ -23,7 +23,7 @@ func New(c *conf.Secrets) secrets {
 	switch c.Backend {
 	case conf.SecretsBackendVault:
 		var err error
-		backend, err = vault.NewClient(&c.Vault)
+		backend, err = vault.New(&c.Vault)
 		if err != nil {
 			log.Fatal(err)
 		}

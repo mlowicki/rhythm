@@ -24,7 +24,7 @@ type BaseCommand struct {
 	Ui cli.Ui
 }
 
-// Errrof outputs formatted error message.
+// Errorf outputs formatted error message.
 func (c *BaseCommand) Errorf(format string, a ...interface{}) {
 	c.Ui.Error(fmt.Sprintf(format, a...))
 }
