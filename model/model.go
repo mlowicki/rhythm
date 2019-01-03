@@ -65,7 +65,7 @@ const (
 	Mesos = "Mesos"
 )
 
-// JobsSchedule defines fields related to job's timetable.
+// JobSchedule defines fields related to job's timetable.
 type JobSchedule struct {
 	Type ScheduleType
 	Cron string `json:",omitempty"`
@@ -117,7 +117,7 @@ func (j *JobConf) Resources() mesos.Resources {
 	return res
 }
 
-// JobConf defines job's runtime fields.
+// JobRuntime defines job's runtime fields.
 type JobRuntime struct {
 	State          State
 	LastStart      time.Time
@@ -126,6 +126,7 @@ type JobRuntime struct {
 	Retries        int
 }
 
+// Job encompasses fields for job's configuration and runtime.
 type Job struct {
 	JobConf
 	JobRuntime
