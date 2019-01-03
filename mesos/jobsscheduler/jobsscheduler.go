@@ -184,7 +184,8 @@ func (sched *Scheduler) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 	log.Debugf("Task state update: %s (%s)", tid, state)
 	job, ok := sched.getJob(jid.String())
 	if !ok {
-		log.Printf("Update for unknown job: %s", jid)
+		log.Warnf("Update for unknown job: %s", jid)
+		return
 	}
 	switch state {
 	case mesos.TASK_STAGING:
