@@ -27,6 +27,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Authorizer provides access control level backed by LDAP server.
 type Authorizer struct {
 	addrs              []string
 	userDN             string
@@ -43,13 +44,13 @@ type Authorizer struct {
 }
 
 const (
-	READONLY  = "readonly"
-	READWRITE = "readwrite"
+	readonly  = "readonly"
+	readwrite = "readwrite"
 )
 
 var timeoutMut sync.Mutex
 
-// This function sets package-level variable in github.com/go-ldap/ldap.
+// SetTimeout changes timeout used by `ldap` package by setting package-level variable.
 func SetTimeout(timeout time.Duration) {
 	timeoutMut.Lock()
 	ldap.DefaultTimeout = timeout
@@ -213,6 +214,7 @@ func getCN(dn string) string {
 	return dn
 }
 
+// GetProjectAccessLevel returns type of access to project for request sent by client.
 func (a *Authorizer) GetProjectAccessLevel(r *http.Request, group string, project string) (auth.AccessLevel, error) {
 	username, password, ok := r.BasicAuth()
 	if !ok {
@@ -280,9 +282,9 @@ func (a *Authorizer) getLevelFromACL(acl *map[string]map[string]string, name, gr
 			continue
 		}
 		switch level {
-		case READONLY:
+		case readonly:
 			return auth.ReadOnly
-		case READWRITE:
+		case readwrite:
 			return auth.ReadWrite
 		}
 	}
@@ -292,7 +294,7 @@ func (a *Authorizer) getLevelFromACL(acl *map[string]map[string]string, name, gr
 func validateACL(acl *map[string]map[string]string) error {
 	for outerKey, rules := range *acl {
 		for innerKey, level := range rules {
-			if level != READONLY && level != READWRITE {
+			if level != readonly && level != readwrite {
 				return fmt.Errorf("invalid access level [%s][%s]: %s", outerKey, innerKey, level)
 			}
 		}
@@ -300,6 +302,7 @@ func validateACL(acl *map[string]map[string]string) error {
 	return nil
 }
 
+// New returns fresh instance of LDAP authorizer.
 func New(c *conf.APIAuthLDAP) (*Authorizer, error) {
 	if len(c.Addrs) == 0 {
 		return nil, errors.New("addrs is empty")

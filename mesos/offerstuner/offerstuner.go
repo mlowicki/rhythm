@@ -70,6 +70,7 @@ func findMinDeadline(jobs []*model.Job) time.Duration {
 	return minDeadline
 }
 
+// Tuner controls offers flow by REVIVE and SUPPRESS calls.
 type Tuner struct {
 	ctx  context.Context
 	cli  calls.Caller
@@ -101,26 +102,25 @@ func (t *Tuner) round(reviveTokens <-chan struct{}, suppressed bool) (bool, erro
 			err := calls.CallNoData(t.ctx, t.cli, calls.Revive())
 			if err != nil {
 				return suppressed, err
-			} else {
-				reviveCount.Inc()
-				suppressed = false
-				log.Debug("Revived offers")
 			}
+			reviveCount.Inc()
+			suppressed = false
+			log.Debug("Revived offers")
 		default:
 		}
 	} else if maxDelay == 0 && minDeadline > roundInterval/4 && !suppressed {
 		err := calls.CallNoData(t.ctx, t.cli, calls.Suppress())
 		if err != nil {
 			return suppressed, err
-		} else {
-			suppressCount.Inc()
-			suppressed = true
-			log.Debug("Suppressed offers")
 		}
+		suppressCount.Inc()
+		suppressed = true
+		log.Debug("Suppressed offers")
 	}
 	return suppressed, nil
 }
 
+// Run starts offers tuner in separate goroutine and exits.
 func (t *Tuner) Run() {
 	go func() {
 		log.Println("Started")
@@ -155,6 +155,7 @@ func (t *Tuner) Run() {
 	}()
 }
 
+// New returns fresh offers tuner instance.
 func New(ctx context.Context, cli calls.Caller, stor storage) *Tuner {
 	tuner := Tuner{
 		ctx:  ctx,

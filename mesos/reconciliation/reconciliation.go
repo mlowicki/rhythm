@@ -18,6 +18,8 @@ const (
 	initialReconcileTimeout = time.Second * 4
 )
 
+// Reconciliation implements explicit reconciliation algorithm as defined on
+// https://mesos.apache.org/documentation/latest/reconciliation/#algorithm
 type Reconciliation struct {
 	ctx       context.Context
 	cli       calls.Caller
@@ -32,6 +34,7 @@ type storage interface {
 	GetJobs() ([]*model.Job, error)
 }
 
+// HandleTaskStateUpdate process changes of tasks statuses.
 func (rec *Reconciliation) HandleTaskStateUpdate(status *mesos.TaskStatus) {
 	if status.GetReason() != mesos.REASON_RECONCILIATION {
 		return
@@ -89,6 +92,7 @@ func (rec *Reconciliation) queueRound() {
 	}
 }
 
+// Run starts reconciler in separate goroutine and exits.
 func (rec *Reconciliation) Run() {
 	rec.mut.Lock()
 	if !rec.running {
@@ -122,6 +126,7 @@ func (rec *Reconciliation) Run() {
 	rec.queueRound()
 }
 
+// New returns fresh instance of reconciler.
 func New(ctx context.Context, cli calls.Caller, stor storage) *Reconciliation {
 	rec := &Reconciliation{
 		ctx:       ctx,

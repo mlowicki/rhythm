@@ -37,6 +37,7 @@ func getLeaderHost(info *mesos.MasterInfo) string {
 	return host
 }
 
+// Run starts Mesos controller and exists when controller ends its execution.
 func Run(ctx context.Context, c *conf.Conf, stor storage, secr secrets) error {
 	frameworkIDStore, err := newFrameworkIDStore(stor)
 	if err != nil {
