@@ -5,7 +5,6 @@ go:
 
 os:
   - linux
-  - osx
 
 env:
   - DEP_VERSION="0.5.0"
