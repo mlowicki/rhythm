@@ -12,55 +12,74 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// CronParser is a package-level parser for cron syntax.
 var CronParser = cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 
+// State defines job position.
 type State string
 
 const (
-	IDLE     State = "Idle"
-	STAGING        = "Staging"
-	STARTING       = "Starting"
-	RUNNING        = "Running"
-	FAILED         = "Failed"
+	// IDLE denotes not running job which either hasn't been scheduled yet or its last run was successful.
+	IDLE State = "Idle"
+	// STAGING denotes job which has been scheduled to run in response to offer.
+	STAGING = "Staging"
+	// STARTING denotes job which has been lanunched by executor.
+	STARTING = "Starting"
+	// RUNNING denotes job which has been started.
+	RUNNING = "Running"
+	// FAILED denotes job whose last run failed.
+	FAILED = "Failed"
 )
 
 func (s State) String() string {
 	return string(s)
 }
 
+// JobDocker defines fields for job running inside Docker container.
 type JobDocker struct {
 	Image          string
 	ForcePullImage bool
 }
 
+// JobMesos defines fields for job running inside Mesos container.
+// https://mesos.apache.org/documentation/latest/mesos-containerizer/
 type JobMesos struct {
 	Image string
 }
 
+// JobContainer defines containerizer-related fields for job.
 type JobContainer struct {
 	Type   ContainerType
 	Docker *JobDocker `json:",omitempty"`
 	Mesos  *JobMesos  `json:",omitempty"`
 }
 
+// ContainerType defines containerizer genre.
 type ContainerType string
 
 const (
+	// Docker denotes Docker containerizer.
 	Docker ContainerType = "Docker"
-	Mesos                = "Mesos"
+	// Mesos denotes Mesos containerizer.
+	// https://mesos.apache.org/documentation/latest/container-image/
+	Mesos = "Mesos"
 )
 
+// JobsSchedule defines fields related to job's timetable.
 type JobSchedule struct {
 	Type ScheduleType
 	Cron string `json:",omitempty"`
 }
 
+// ScheduleType defines timetable genre.
 type ScheduleType string
 
 const (
+	// Cron denotes cron-like timetable.
 	Cron ScheduleType = "Cron"
 )
 
+// JobConf defines job's configuration fields.
 type JobConf struct {
 	JobID
 	Schedule   JobSchedule
@@ -78,6 +97,7 @@ type JobConf struct {
 	MaxRetries int
 }
 
+// FQID returns globablly unique identifier (acrsoss all groups and projects).
 func (j *JobConf) FQID() string {
 	return j.JobID.String()
 }
@@ -86,6 +106,7 @@ func (j *JobConf) String() string {
 	return j.FQID()
 }
 
+// Resources returns resources required by job.
 func (j *JobConf) Resources() mesos.Resources {
 	res := mesos.Resources{}
 	res.Add(
@@ -96,6 +117,7 @@ func (j *JobConf) Resources() mesos.Resources {
 	return res
 }
 
+// JobConf defines job's runtime fields.
 type JobRuntime struct {
 	State          State
 	LastStart      time.Time
@@ -109,6 +131,7 @@ type Job struct {
 	JobRuntime
 }
 
+// NextRun returnes time when job should be launched.
 func (job *Job) NextRun() time.Time {
 	if job.IsRetryable() {
 		return job.LastStart
@@ -123,14 +146,17 @@ func (job *Job) NextRun() time.Time {
 	return sched.Next(job.LastStart)
 }
 
+// IsRetryable returns true if job's last run failed and job is eligible for retry.
 func (job *Job) IsRetryable() bool {
 	return job.State == FAILED && job.Retries < job.MaxRetries
 }
 
+// IsRunnable returns true if job should be launched.
 func (job *Job) IsRunnable() bool {
 	return (job.State == IDLE || job.State == FAILED) && job.NextRun().Before(time.Now())
 }
 
+// Task is a single run (failed or successful) of job.
 type Task struct {
 	Start       time.Time
 	End         time.Time
@@ -145,6 +171,7 @@ type Task struct {
 	Source  string
 }
 
+// JobID defines job identifier.
 type JobID struct {
 	Group   string
 	Project string
@@ -156,6 +183,7 @@ func (jid *JobID) String() string {
 	return fmt.Sprintf("%s:%s:%s", jid.Group, jid.Project, jid.ID)
 }
 
+// ParseJobID parses serialized job ID returned by String JobID.String method.
 func ParseJobID(v string) (*JobID, error) {
 	chunks := strings.Split(v, ":")
 	if len(chunks) != 3 {
