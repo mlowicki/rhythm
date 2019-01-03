@@ -1,4 +1,4 @@
-# Rhythm [![Go Report Card](https://goreportcard.com/badge/github.com/mlowicki/rhythm)](https://goreportcard.com/report/github.com/mlowicki/rhythm)
+# Rhythm [![Go Report Card](https://goreportcard.com/badge/github.com/mlowicki/rhythm)](https://goreportcard.com/report/github.com/mlowicki/rhythm) [![Travis CI](https://travis-ci.org/mlowicki/rhythm.svg?branch=master)](https://travis-ci.org/mlowicki/rhythm)
 
 ## Features
 
