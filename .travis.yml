@@ -3,8 +3,18 @@ language: go
 go:
   - "1.11.x"
 
-install: true
-
 env:
     - GIMME_OS=linux GIMME_ARCH=amd64
     - GIMME_OS=darwin GIMME_ARCH=amd64
+
+env:
+  - DEP_VERSION="0.5.0"
+
+before_install:
+  - curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
+  - chmod +x $GOPATH/bin/dep
+
+install:
+  - dep ensure
+
+script: go test

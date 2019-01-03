@@ -12,7 +12,4 @@ clean:
 runserver:
 	go run *.go server -config dev/server.json
 
-test:
-	go test
-
 .PHONY: all osx linux clean
