@@ -184,6 +184,11 @@ func (jid *JobID) String() string {
 	return fmt.Sprintf("%s:%s:%s", jid.Group, jid.Project, jid.ID)
 }
 
+// Path returns ID formatted as file system path.
+func (jid *JobID) Path() string {
+	return fmt.Sprintf("%s/%s/%s", jid.Group, jid.Project, jid.ID)
+}
+
 // ParseJobID parses serialized job ID returned by String JobID.String method.
 func ParseJobID(v string) (*JobID, error) {
 	chunks := strings.Split(v, ":")

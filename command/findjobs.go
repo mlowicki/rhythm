@@ -35,14 +35,14 @@ func (c *FindJobsCommand) Run(args []string) int {
 		return 1
 	}
 	sort.SliceStable(jobs, func(i, j int) bool {
-		return jobs[i].FQID() < jobs[j].FQID()
+		return jobs[i].Path() < jobs[j].Path()
 	})
 	for _, job := range jobs {
 		state := ""
 		if c.showState {
 			state = coloredState(job.State)
 		}
-		c.Printf("%s %s", job.FQID(), state)
+		c.Printf("%s %s", job.Path(), state)
 	}
 	return 0
 }
