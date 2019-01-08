@@ -7,9 +7,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/mitchellh/cli"
+	"github.com/mlowicki/rhythm/command/apiclient"
 	"github.com/mlowicki/rhythm/command/tokenhelper"
 	"github.com/mlowicki/rhythm/model"
 )
@@ -101,6 +105,109 @@ func (c *BaseCommand) authReq(method string) func(*http.Request) error {
 			return fmt.Errorf("Unknown authentication method: %s", method)
 		}
 		return nil
+	}
+}
+
+func (c *BaseCommand) printHealth(health *apiclient.HealthInfo) {
+	c.Printf("Leader: %t", health.Leader)
+	c.Printf("Version: %s", health.Version)
+	c.Printf("ServerTime: %s", health.ServerTime)
+}
+
+func (c *BaseCommand) printJob(job *model.Job) {
+	c.Printf("State: %s", coloredState(job.State))
+	if job.State == model.FAILED {
+		c.Printf("    Retries: %d", job.Retries)
+	}
+	if job.LastStart.IsZero() {
+		c.Printf("    Last start: Not started yet")
+	} else {
+		c.Printf("    Last start: %s", job.LastStart.Format(time.UnixDate))
+	}
+	c.Printf("    Max retries: %d", job.MaxRetries)
+	if t := job.Schedule.Type; t != model.Cron {
+		c.Printf("Unknown schedule type: %s", t)
+	}
+	c.Printf("Scheduler: Cron")
+	c.Printf("    Rule: %s", job.Schedule.Cron)
+	c.Printf("    Next start: %s", job.NextRun().Format(time.UnixDate))
+	switch job.Container.Type {
+	case model.Mesos:
+		c.Printf("Container: Mesos")
+		c.Printf("    Image: %s", job.Container.Mesos.Image)
+	case model.Docker:
+		c.Printf("Container: Docker")
+		c.Printf("    Image: %s", job.Container.Docker.Image)
+		c.Printf("    Force pull image: %t", job.Container.Docker.ForcePullImage)
+	}
+	if job.Shell {
+		c.Printf("Cmd: /bin/sh -c '%s'", job.Cmd)
+	} else {
+		c.Printf("Cmd: %s %s", job.Cmd, strings.Join(job.Arguments, " "))
+	}
+	c.printMap("Environment", job.Env)
+	c.printMap("Secrets", job.Secrets)
+	c.Printf("User: %s", job.User)
+	c.Printf("Resources:")
+	c.Printf("    Memory: %.1f MB", job.Mem)
+	c.Printf("    Disk: %.1f MB", job.Disk)
+	c.Printf("    CPUs: %.1f", job.CPUs)
+	c.printMap("Labels", job.Labels)
+}
+
+func (c *BaseCommand) printTasks(tasks []*model.Task) {
+	for i, task := range tasks {
+		if i > 0 {
+			c.Printf("")
+		}
+		var status string
+		if task.Source == "" {
+			status = color.GreenString("SUCCESS")
+		} else {
+			status = color.RedString("FAIL")
+		}
+		c.Printf("Status: \t%s", status)
+		c.Printf("Start: \t\t%s", task.Start.Format(time.UnixDate))
+		c.Printf("End: \t\t%s", task.Start.Format(time.UnixDate))
+		if task.TaskID != "" {
+			c.Printf("Task ID: \t%s", task.TaskID)
+		}
+		if task.ExecutorID != "" {
+			c.Printf("Executor ID: \t%s", task.ExecutorID)
+		}
+		if task.AgentID != "" {
+			c.Printf("Agent ID: \t%s", task.AgentID)
+		}
+		if task.FrameworkID != "" {
+			c.Printf("Framework ID: \t%s", task.FrameworkID)
+		}
+		if task.ExecutorURL != "" {
+			c.Printf("Executor URL: \t%s", task.ExecutorURL)
+		}
+		if task.Message != "" {
+			c.Printf("Message: \t%s", task.Message)
+		}
+		if task.Reason != "" {
+			c.Printf("Reason: \t%s", task.Reason)
+		}
+		if task.Source != "" {
+			c.Printf("Source: \t%s", task.Source)
+		}
+	}
+}
+
+func (c *BaseCommand) printMap(title string, m map[string]string) {
+	if len(m) == 0 {
+		return
+	}
+	c.Printf("%s:", title)
+	var keys []string
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		c.Printf("    %s: %s", k, m[k])
 	}
 }
 

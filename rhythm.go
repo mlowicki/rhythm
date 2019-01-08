@@ -59,6 +59,9 @@ func main() {
 		"update-token": func() (cli.Command, error) {
 			return &command.UpdateTokenCommand{BaseCommand: &baseCmd}, nil
 		},
+		"client": func() (cli.Command, error) {
+			return &command.ClientCommand{BaseCommand: &baseCmd, Version: version}, nil
+		},
 	}
 	exitStatus, err := c.Run()
 	if err != nil {

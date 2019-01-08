@@ -104,3 +104,7 @@
 [[constraint]]
   name = "github.com/mitchellh/go-homedir"
   version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/c-bata/go-prompt"
+  version = "0.2.3"

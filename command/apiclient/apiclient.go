@@ -26,43 +26,35 @@ type HealthInfo struct {
 }
 
 // New creates instance of API client.
-func New(addr string, authReq func(*http.Request) error) *Client {
+func New(addr string, auth func(*http.Request) error) (*Client, error) {
 	c := Client{
-		addr:    addr,
-		authReq: authReq,
+		auth: auth,
 		httpClient: &http.Client{
 			Timeout: time.Second * 10,
 		},
 	}
-	return &c
+	if v := os.Getenv(envRhythmAddr); addr == "" && v != "" {
+		addr = v
+	}
+	u, err := url.Parse(addr)
+	if err != nil {
+		return nil, fmt.Errorf("Failed parsing server address: %s.", err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return nil, fmt.Errorf("Invalid server address scheme: %s.", u.Scheme)
+	}
+	if u.Scheme == "http" {
+		log.Warnf("HTTP scheme is used to talk with Rhythm API. HTTPS is highly recommended.")
+	}
+	c.addr = u
+	return &c, nil
 }
 
 // Client describes API client.
 type Client struct {
-	addr       string
-	authReq    func(*http.Request) error
+	addr       *url.URL
+	auth       func(*http.Request) error
 	httpClient *http.Client
-}
-
-func (c *Client) getAddr() (*url.URL, error) {
-	var addr string
-	if v := os.Getenv(envRhythmAddr); v != "" {
-		addr = v
-	}
-	if c.addr != "" {
-		addr = c.addr
-	}
-	u, err := url.Parse(addr)
-	if err != nil {
-		return nil, fmt.Errorf("Failed parsing server address: %s", err)
-	}
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return nil, fmt.Errorf("Invalid server address scheme: %s", u.Scheme)
-	}
-	if u.Scheme == "http" {
-		log.Warnf("HTTP scheme is used to talk with Rhythm API. Consider using HTTPS")
-	}
-	return u, nil
 }
 
 func (c *Client) parseErrResp(body []byte) error {
@@ -72,7 +64,7 @@ func (c *Client) parseErrResp(body []byte) error {
 	}
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
-		return fmt.Errorf("Error decoding response: %s", err)
+		return fmt.Errorf("Error decoding response: %s (%s)", err, body)
 	}
 	for _, err := range resp.Errors {
 		errs = multierror.Append(errs, fmt.Errorf(err))
@@ -80,70 +72,67 @@ func (c *Client) parseErrResp(body []byte) error {
 	return errs
 }
 
-func (c *Client) send(req *http.Request) (*http.Response, error) {
-	if c.authReq != nil {
-		err := c.authReq(req)
+func (c *Client) send(req *http.Request, auth func(*http.Request) error) (*http.Response, error) {
+	if auth != nil {
+		err := auth(req)
 		if err != nil {
-			return nil, fmt.Errorf("Authentication failed: %s", err)
+			return nil, fmt.Errorf("Authentication failed: %s.", err)
 		}
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error sending request: %s", err)
+		return nil, fmt.Errorf("Error sending request: %s.", err)
 	}
 	return resp, nil
 }
 
 // Health returns server status info.
 func (c *Client) Health() (*HealthInfo, error) {
-	u, err := c.getAddr()
-	if err != nil {
-		return nil, err
-	}
+	u, _ := url.Parse(c.addr.String())
 	u.Path = "api/v1/health"
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating request: %s", err)
+		return nil, fmt.Errorf("Error creating request: %s.", err)
 	}
-	resp, err := c.send(req)
+	resp, err := c.send(req, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading response: %s", err)
+		return nil, fmt.Errorf("Error reading response: %s.", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Server error: %d", resp.StatusCode)
+		return nil, fmt.Errorf("Server error: %d.", resp.StatusCode)
 	}
 	var health HealthInfo
 	err = json.Unmarshal(body, &health)
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding server status: %s", err)
+		return nil, fmt.Errorf("Error decoding server status: %s.", err)
 	}
 	return &health, nil
 }
 
 // ReadTasks returns list of job's runs.
 func (c *Client) ReadTasks(fqid string) ([]*model.Task, error) {
-	u, err := c.getAddr()
-	if err != nil {
-		return nil, err
-	}
+	u, _ := url.Parse(c.addr.String())
 	u.Path = fmt.Sprintf("api/v1/jobs/%s/tasks", fqid)
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating request: %s", err)
+		return nil, fmt.Errorf("Error creating request: %s.", err)
 	}
-	resp, err := c.send(req)
+	resp, err := c.send(req, c.auth)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading response: %s", err)
+		return nil, fmt.Errorf("Error reading response: %s.", err)
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("Job not found.")
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, c.parseErrResp(body)
@@ -151,7 +140,7 @@ func (c *Client) ReadTasks(fqid string) ([]*model.Task, error) {
 	var tasks []*model.Task
 	err = json.Unmarshal(body, &tasks)
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding tasks: %s", err)
+		return nil, fmt.Errorf("Error decoding tasks: %s.", err)
 	}
 	return tasks, nil
 }
@@ -159,28 +148,25 @@ func (c *Client) ReadTasks(fqid string) ([]*model.Task, error) {
 // ReadJob returns job's info.
 func (c *Client) ReadJob(fqid string) (*model.Job, error) {
 	if strings.Count(fqid, "/") != 2 {
-		return nil, fmt.Errorf("Invalid job ID")
+		return nil, fmt.Errorf("Invalid job ID.")
 	}
-	u, err := c.getAddr()
-	if err != nil {
-		return nil, err
-	}
+	u, _ := url.Parse(c.addr.String())
 	u.Path = "api/v1/jobs/" + fqid
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating request: %s", err)
+		return nil, fmt.Errorf("Error creating request: %s.", err)
 	}
-	resp, err := c.send(req)
+	resp, err := c.send(req, c.auth)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, fmt.Errorf("Job not found")
+		return nil, fmt.Errorf("Job not found.")
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading response: %s", err)
+		return nil, fmt.Errorf("Error reading response: %s.", err)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, c.parseErrResp(body)
@@ -188,30 +174,27 @@ func (c *Client) ReadJob(fqid string) (*model.Job, error) {
 	var job model.Job
 	err = json.Unmarshal(body, &job)
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding job: %s", err)
+		return nil, fmt.Errorf("Error decoding job: %s.", err)
 	}
 	return &job, nil
 }
 
 // DeleteJob removes job.
 func (c *Client) DeleteJob(fqid string) error {
-	u, err := c.getAddr()
-	if err != nil {
-		return err
-	}
+	u, _ := url.Parse(c.addr.String())
 	u.Path = "api/v1/jobs/" + fqid
 	req, err := http.NewRequest("DELETE", u.String(), nil)
 	if err != nil {
-		return fmt.Errorf("Error creating request: %s", err)
+		return fmt.Errorf("Error creating request: %s.", err)
 	}
-	resp, err := c.send(req)
+	resp, err := c.send(req, c.auth)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("Error reading response: %s", err)
+		return fmt.Errorf("Error reading response: %s.", err)
 	}
 	if resp.StatusCode != http.StatusNoContent {
 		return c.parseErrResp(body)
@@ -221,23 +204,20 @@ func (c *Client) DeleteJob(fqid string) error {
 
 // RunJob schedules job for immeddiate run.
 func (c *Client) RunJob(fqid string) error {
-	u, err := c.getAddr()
-	if err != nil {
-		return err
-	}
+	u, _ := url.Parse(c.addr.String())
 	u.Path = "api/v1/jobs/" + fqid + "/run"
 	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
-		return fmt.Errorf("Error creating request: %s", err)
+		return fmt.Errorf("Error creating request: %s.", err)
 	}
-	resp, err := c.send(req)
+	resp, err := c.send(req, c.auth)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("Error reading response: %s", err)
+		return fmt.Errorf("Error reading response: %s.", err)
 	}
 	if resp.StatusCode != http.StatusNoContent {
 		return c.parseErrResp(body)
@@ -247,23 +227,20 @@ func (c *Client) RunJob(fqid string) error {
 
 // CreateJob adds new job.
 func (c *Client) CreateJob(jobEncoded []byte) error {
-	u, err := c.getAddr()
-	if err != nil {
-		return err
-	}
+	u, _ := url.Parse(c.addr.String())
 	u.Path = "api/v1/jobs"
 	req, err := http.NewRequest("POST", u.String(), bytes.NewReader(jobEncoded))
 	if err != nil {
-		return fmt.Errorf("Error creating request: %s", err)
+		return fmt.Errorf("Error creating request: %s.", err)
 	}
-	resp, err := c.send(req)
+	resp, err := c.send(req, c.auth)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("Error reading response: %s", err)
+		return fmt.Errorf("Error reading response: %s.", err)
 	}
 	if resp.StatusCode != http.StatusNoContent {
 		return c.parseErrResp(body)
@@ -273,26 +250,20 @@ func (c *Client) CreateJob(jobEncoded []byte) error {
 
 // UpdateJob modifies existing job.
 func (c *Client) UpdateJob(fqid string, changesEncoded []byte) error {
-	u, err := c.getAddr()
-	if err != nil {
-		return err
-	}
+	u, _ := url.Parse(c.addr.String())
 	u.Path = "api/v1/jobs/" + fqid
 	req, err := http.NewRequest("PUT", u.String(), bytes.NewReader(changesEncoded))
 	if err != nil {
-		return fmt.Errorf("Error creating request: %s", err)
+		return fmt.Errorf("Error creating request: %s.", err)
 	}
-	resp, err := c.send(req)
+	resp, err := c.send(req, c.auth)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("Error reading response: %s", err)
-	}
-	if resp.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("Job not found.")
+		return fmt.Errorf("Error reading response: %s.", err)
 	}
 	if resp.StatusCode != http.StatusNoContent {
 		return c.parseErrResp(body)
@@ -303,25 +274,22 @@ func (c *Client) UpdateJob(fqid string, changesEncoded []byte) error {
 // FindJobs returns jobs matching filter.
 func (c *Client) FindJobs(filter string) ([]*model.Job, error) {
 	if strings.Count(filter, "/") > 1 {
-		return nil, fmt.Errorf("Invalid filter")
+		return nil, fmt.Errorf("Invalid filter.")
 	}
-	u, err := c.getAddr()
-	if err != nil {
-		return nil, err
-	}
+	u, _ := url.Parse(c.addr.String())
 	u.Path = fmt.Sprintf("api/v1/jobs/%s", filter)
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating request: %s", err)
+		return nil, fmt.Errorf("Error creating request: %s.", err)
 	}
-	resp, err := c.send(req)
+	resp, err := c.send(req, c.auth)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading response: %s", err)
+		return nil, fmt.Errorf("Error reading response: %s.", err)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, c.parseErrResp(body)
@@ -329,7 +297,7 @@ func (c *Client) FindJobs(filter string) ([]*model.Job, error) {
 	var jobs []*model.Job
 	err = json.Unmarshal(body, &jobs)
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding jobs: %s", err)
+		return nil, fmt.Errorf("Error decoding jobs: %s.", err)
 	}
 	return jobs, nil
 }

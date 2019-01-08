@@ -39,6 +39,14 @@
   version = "v0.1.0"
 
 [[projects]]
+  digest = "1:b8c8b2fb93b4f775c8abb632448dad00492e0d7c5d7e1ca4b88b44dcbb57d8d5"
+  name = "github.com/c-bata/go-prompt"
+  packages = ["."]
+  pruneopts = ""
+  revision = "4b35da6de174f52d037dc6e9008772ef31990ed3"
+  version = "v0.2.3"
+
+[[projects]]
   digest = "1:27a0ba2be705618c3a7015ad9641635c1c4a552175576149d57bb9cf71cb0513"
   name = "github.com/cenkalti/backoff"
   packages = ["."]
@@ -338,6 +346,22 @@
   version = "v0.0.4"
 
 [[projects]]
+  branch = "master"
+  digest = "1:9ee32ea3a8acd51346391ae253ed42526069669b8a9a60b00e68e09d21a4b563"
+  name = "github.com/mattn/go-runewidth"
+  packages = ["."]
+  pruneopts = ""
+  revision = "703b5e6b11ae25aeb2af9ebb5d5fdf8fa2575211"
+
+[[projects]]
+  branch = "master"
+  digest = "1:c7cf6afa6acd2fcb81fbfe6c4a40a568391e75ca1e236816f9ab0814eb3a168b"
+  name = "github.com/mattn/go-tty"
+  packages = ["."]
+  pruneopts = ""
+  revision = "e4f871175a2f903ed2e6353334fdccb507c1d09e"
+
+[[projects]]
   digest = "1:63722a4b1e1717be7b98fc686e0b30d5e7f734b9e93d7dee86293b6deab7ea28"
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
@@ -444,6 +468,14 @@
   pruneopts = ""
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:226173c254ceb3cbe9e1ee137e97dd79622419f9ccbec0eff38f1e6fce9583dc"
+  name = "github.com/pkg/term"
+  packages = ["termios"]
+  pruneopts = ""
+  revision = "27bbf2edb814447174b568fc0875a8e0c1608fae"
 
 [[projects]]
   digest = "1:1302e261c39c982bc47d6c1802f8a2ec88327da1fb5be8aec08b877028a5240e"
@@ -742,6 +774,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/c-bata/go-prompt",
     "github.com/cenkalti/backoff",
     "github.com/evalphobia/logrus_sentry",
     "github.com/fatih/color",

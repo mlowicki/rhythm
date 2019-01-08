@@ -17,14 +17,17 @@ type HealthCommand struct {
 func (c *HealthCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
-	health, err := apiclient.New(c.addr, nil).Health()
+	cli, err := apiclient.New(c.addr, nil)
+	if err != nil {
+		c.Errorf("Error creating API client: %s", err)
+		return 1
+	}
+	health, err := cli.Health()
 	if err != nil {
 		c.Errorf("%s", err)
 		return 1
 	}
-	c.Printf("Leader: %t", health.Leader)
-	c.Printf("Version: %s", health.Version)
-	c.Printf("ServerTime: %s", health.ServerTime)
+	c.printHealth(health)
 	return 0
 }
 

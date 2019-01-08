@@ -29,7 +29,12 @@ func (c *CreateJobCommand) Run(args []string) int {
 		c.Errorf("%s", err)
 		return 1
 	}
-	err = apiclient.New(c.addr, c.authReq(c.auth)).CreateJob(jobEncoded)
+	cli, err := apiclient.New(c.addr, c.authReq(c.auth))
+	if err != nil {
+		c.Errorf("Error creating API client: %s", err)
+		return 1
+	}
+	err = cli.CreateJob(jobEncoded)
 	if err != nil {
 		c.Errorf("%s", err)
 		return 1

@@ -51,7 +51,12 @@ func (c *UpdateJobCommand) Run(args []string) int {
 		}
 		fqid = jid.Path()
 	}
-	err = apiclient.New(c.addr, c.authReq(c.auth)).UpdateJob(fqid, updates)
+	cli, err := apiclient.New(c.addr, c.authReq(c.auth))
+	if err != nil {
+		c.Errorf("Error creating API client: %s", err)
+		return 1
+	}
+	err = cli.UpdateJob(fqid, updates)
 	if err != nil {
 		c.Errorf("%s", err)
 		return 1

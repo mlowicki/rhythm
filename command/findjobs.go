@@ -29,7 +29,12 @@ func (c *FindJobsCommand) Run(args []string) int {
 	if len(args) == 1 {
 		filter = args[0]
 	}
-	jobs, err := apiclient.New(c.addr, c.authReq(c.auth)).FindJobs(filter)
+	cli, err := apiclient.New(c.addr, c.authReq(c.auth))
+	if err != nil {
+		c.Errorf("Error creating API client: %s", err)
+		return 1
+	}
+	jobs, err := cli.FindJobs(filter)
 	if err != nil {
 		c.Errorf("%s", err)
 		return 1

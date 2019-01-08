@@ -23,7 +23,12 @@ func (c *RunJobCommand) Run(args []string) int {
 		c.Errorf("Exactly one argument is required (fully-qualified job ID)")
 		return 1
 	}
-	err := apiclient.New(c.addr, c.authReq(c.auth)).RunJob(args[0])
+	cli, err := apiclient.New(c.addr, c.authReq(c.auth))
+	if err != nil {
+		c.Errorf("Error creating API client: %s", err)
+		return 1
+	}
+	err = cli.RunJob(args[0])
 	if err != nil {
 		c.Errorf("%s", err)
 		return 1

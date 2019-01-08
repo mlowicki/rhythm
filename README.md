@@ -305,7 +305,7 @@ Examples:
 There is `-testlogging` option which is used to test events logging. It logs sample error and then program exits. Useful to test backend like Sentry to verify that events are received.
 
 ## Command-line client
-Rhythm binary besides running in server mode provides also CLI tool. To see the list of available commands use `-help`.
+Rhythm binary besides running in server mode provides also CLI tool. To see the list of available commands use `-help`. There is also [interactive client](#client) with auto-completion.
 
 Address of Rhythm server is set either via `-addr` flag or `RHYTHM_ADDR` environment variable. If both are set then flag takes precedence.
 
@@ -517,3 +517,13 @@ Example:
 $ rhythm update-token
 Token:
 ```
+
+## client
+Start interactive client. To see list of top-level commands press tab or space key.
+
+Examples:
+```
+$ rhythm client
+```
+
+![](docs/client_demo.gif)
