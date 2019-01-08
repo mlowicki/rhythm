@@ -89,7 +89,7 @@ func (c *Client) send(req *http.Request) (*http.Response, error) {
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading tasks: %s", err)
+		return nil, fmt.Errorf("Error sending request: %s", err)
 	}
 	return resp, nil
 }
