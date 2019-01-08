@@ -2,6 +2,7 @@ package command
 
 import (
 	"flag"
+	"sort"
 	"strings"
 
 	"github.com/mlowicki/rhythm/command/apiclient"
@@ -33,12 +34,15 @@ func (c *FindJobsCommand) Run(args []string) int {
 		c.Errorf("%s", err)
 		return 1
 	}
+	sort.SliceStable(jobs, func(i, j int) bool {
+		return jobs[i].FQID() < jobs[j].FQID()
+	})
 	for _, job := range jobs {
 		state := ""
 		if c.showState {
 			state = coloredState(job.State)
 		}
-		c.Printf("%s/%s/%s %s", job.Group, job.Project, job.ID, state)
+		c.Printf("%s %s", job.FQID(), state)
 	}
 	return 0
 }
