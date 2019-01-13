@@ -291,6 +291,9 @@ func (c *Client) UpdateJob(fqid string, changesEncoded []byte) error {
 	if err != nil {
 		return fmt.Errorf("Error reading response: %s", err)
 	}
+	if resp.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("Job not found.")
+	}
 	if resp.StatusCode != http.StatusNoContent {
 		return c.parseErrResp(body)
 	}

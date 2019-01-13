@@ -1,11 +1,13 @@
 package command
 
 import (
+	"encoding/json"
 	"flag"
 	"io/ioutil"
 	"strings"
 
 	"github.com/mlowicki/rhythm/command/apiclient"
+	"github.com/mlowicki/rhythm/model"
 )
 
 // UpdateJobCommand implements command for changing existing job.
@@ -20,16 +22,36 @@ func (c *UpdateJobCommand) Run(args []string) int {
 	fs := c.Flags()
 	fs.Parse(args)
 	args = fs.Args()
-	if len(args) != 2 {
-		c.Errorf("Exactly two arguments are required (fully-qualified job ID and path to job config)")
+	var path string
+	var fqid string
+	if len(args) == 1 {
+		path = args[0]
+	} else if len(args) == 2 {
+		fqid = args[0]
+		path = args[1]
+	} else {
+		c.Errorf("One argument (path to job config) or two (fully-qualified job ID and path to job config) are required.")
 		return 1
 	}
-	changesEncoded, err := ioutil.ReadFile(args[1])
+	updates, err := ioutil.ReadFile(path)
 	if err != nil {
-		c.Errorf("%s", err)
+		c.Errorf("Errorf reading config file: %s", err)
 		return 1
 	}
-	err = apiclient.New(c.addr, c.authReq(c.auth)).UpdateJob(args[0], changesEncoded)
+	if len(args) == 1 {
+		var jid model.JobID
+		var err = json.Unmarshal(updates, &jid)
+		if err != nil {
+			c.Errorf("Error decoding config file: %s", err)
+			return 1
+		}
+		if jid.Group == "" || jid.Project == "" || jid.ID == "" {
+			c.Errorf("If only path to job config is passed then config must contain group, project and ID.")
+			return 1
+		}
+		fqid = jid.Path()
+	}
+	err = apiclient.New(c.addr, c.authReq(c.auth)).UpdateJob(fqid, updates)
 	if err != nil {
 		c.Errorf("%s", err)
 		return 1

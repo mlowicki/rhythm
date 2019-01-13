@@ -439,7 +439,8 @@ echo.json:
 ```
 
 ### update-job
-Modify job specified by given fully-qualified ID (e.g. "group/project/id") with config file containing parameters to change.
+Modify job with config file containing job's parameters to change.
+Can we launched with either one arguments or two. If one argument is set then it must be path to job config file which contains also job's group, project and ID. If two arguments are set then first one must be fully-qualified ID (e.g. "group/project/id") and second one path to job config file.
 Only parameters form config file will be changed - absent parameters wont' be modified.
 
 Example:
@@ -450,6 +451,21 @@ $ rhythm update-job --addr=https://example.com group/project/id diff.json
 diff.json:
 ```javascript
 {
+    "user": "root"
+}
+```
+
+Example:
+```
+$ rhythm update-job --addr=https://example.com diff.json
+```
+
+diff.json:
+```javascript
+{
+    "group": "group",
+    "project": "project",
+    "id": "id",
     "user": "root"
 }
 ```
