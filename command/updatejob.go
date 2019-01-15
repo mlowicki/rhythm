@@ -70,8 +70,8 @@ func (c *UpdateJobCommand) Help() string {
 Usage: rhythm update-job [options] [FQID] PATH
 
   Modify job specified by given fully-qualified ID (e.g. "group/project/id") with config file located under PATH.
-  If only one parameter is passed then it must be config file containing job's group, project and ID.
-  Only parameters form config file will be changed - absent parameters wont' be modified.
+  If only one parameter is passed then it's path to config file containing job's group, project and ID.
+  Only parameters from config file will be changed - absent parameters wont' be modified.
 
 ` + c.Flags().help()
 	return strings.TrimSpace(help)
