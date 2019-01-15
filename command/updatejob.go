@@ -67,9 +67,10 @@ func (c *UpdateJobCommand) Run(args []string) int {
 // Help returns full manual.
 func (c *UpdateJobCommand) Help() string {
 	help := `
-Usage: rhythm update-job [options] FQID PATH
+Usage: rhythm update-job [options] [FQID] PATH
 
   Modify job specified by given fully-qualified ID (e.g. "group/project/id") with config file located under PATH.
+  If only one parameter is passed then it must be config file containing job's group, project and ID.
   Only parameters form config file will be changed - absent parameters wont' be modified.
 
 ` + c.Flags().help()
