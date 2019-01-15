@@ -35,13 +35,13 @@ type ClientCommand struct {
 }
 
 var topLevelSuggestions = []prompt.Suggest{
+	{"cd", "Go to group, project or back"},
+	{"delete", "Delete job"},
 	{"health", "Show server info"},
 	{"ls", "List jobs"},
-	{"cd", "Go to group, project or back"},
 	{"read", "Show job configuration and state"},
 	{"run", "Schedule job for immediate run"},
 	{"tasks", "Show job tasks (runs)"},
-	{"delete", "Delete job"},
 }
 
 func (c *ClientCommand) completeRead(word string, words []string) []prompt.Suggest {
