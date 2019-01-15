@@ -59,7 +59,7 @@ func (c *ClientCommand) completeRead(word string, words []string) []prompt.Sugge
 		names[c.relativeJobID(job)] = struct{}{}
 	}
 	suggestions := make([]prompt.Suggest, 0, len(names))
-	for key, _ := range names {
+	for key := range names {
 		if len(words) == 1 || (len(words) > 1 && strings.Contains(key, words[1])) {
 			suggestions = append(suggestions, prompt.Suggest{key, ""})
 		}
@@ -114,7 +114,7 @@ func (c *ClientCommand) completeCd(word string, words []string) []prompt.Suggest
 		names[".."] = struct{}{}
 	}
 	suggestions := make([]prompt.Suggest, 0, len(names))
-	for key, _ := range names {
+	for key := range names {
 		if len(words) == 1 || (len(words) > 1 && strings.HasPrefix(key, words[1])) {
 			suggestions = append(suggestions, prompt.Suggest{key, ""})
 		}
@@ -324,12 +324,6 @@ func (c *ClientCommand) prefix() (string, bool) {
 		prefix += "/" + c.project
 	}
 	return fmt.Sprintf("%s> ", prefix), true
-	if c.project != "" {
-		return fmt.Sprintf("%s/%s%s", c.group, c.project, prefix), true
-	} else if c.group != "" {
-		return fmt.Sprintf("%s%s", c.group, prefix), true
-	}
-	return prefix, true
 }
 
 func (c *ClientCommand) authReq() func(*http.Request) error {
