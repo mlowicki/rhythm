@@ -10,7 +10,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/gogo/protobuf/proto"
-	"github.com/mesos/mesos-go/api/v1/lib"
+	mesos "github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/resources"
 	"github.com/mlowicki/rhythm/model"
 	log "github.com/sirupsen/logrus"
@@ -53,7 +53,12 @@ func (sched *Scheduler) getJob(jid string) (model.Job, bool) {
 	sched.jobsMut.Lock()
 	job, ok := sched.jobs[jid]
 	sched.jobsMut.Unlock()
-	return *job, ok
+
+	if !ok {
+		return model.Job{}, false
+	}
+
+	return *job, true
 }
 
 func (sched *Scheduler) dequeueJob(job *model.Job) {
